@@ -32,7 +32,7 @@ extern bool TRACE_EXECUTION;
 extern bool COMPILE_ONLY;
 extern int TRACE_SKIP;
 extern bool REPL;
-extern bool LOAD_LIB;
+extern bool REPL_PRINT_NIL;
 extern bool preload_finished;
 
 char *read_file(const char *path);

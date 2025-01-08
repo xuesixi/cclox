@@ -84,6 +84,7 @@ extern char *BOLD_MAGENTA;
 
 void start_color(char *color);
 void end_color();
+bool test_bool(Value value);
 void print_value_with_color(Value value);
 
 #endif //CLOX_VALUE_H

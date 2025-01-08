@@ -120,7 +120,9 @@ The value on the right hand side of the equal sign must be an array. It is an er
 The global scope is different. If a variable cannot be resolved at compiled time, it is assumed to be global. If such a variable does not exist at runtime, a runtime error occurs. 
 
 ## print
-Lox provides a built-in keyword `print` to output to stdout. A new line will be appended to the end automatically..
+Lox provides a built-in keyword `print` to output to stdout. A new line will be appended to the end automatically.
+
+Use `stdout.write()` if the newline is not desired. 
 
 ## condition and logical operators
 * Only `nil` and `false` are considered "falsy". All other values, including empty string `""` and `0`, are true.
@@ -213,10 +215,10 @@ switch num {
 	case a: { 
 		var money = 40;
 		print money; 
-    } 
+	} 
 	case a + 2 | 5 * a | 6:
 		print "huhu";
-    default:
+	default:
 		print 998;
 }
 ```

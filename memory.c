@@ -59,6 +59,7 @@ static void mark_roots() {
     mark_object((Object *) HASH);
     mark_object((Object *) MESSAGE);
     mark_object((Object *) POSITION);
+    mark_object((Object *) FD);
 
 //    // mark open upvalues ? 暂时无法理解。这些值是open的，意味着它们仍然在作用域内，要么是在stack上，要么是在globals中。我认为没必要额外标记
 //    UpValueObject *curr = vm.open_upvalues;

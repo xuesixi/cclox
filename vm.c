@@ -248,8 +248,7 @@ static void map_indexing_get() {
             stack_push(stack_peek(1)); // map, key0, key1, key0
             invoke_and_wait(EQUAL, 1); // map, key0, bool
             Value cmp_result = stack_pop(); // map, key0
-            assert_value_type(cmp_result, VAL_BOOL, "bool");
-            bool eq = as_bool(cmp_result);
+            bool eq = test_bool(cmp_result);
             if (eq) {
                 stack_pop();
                 stack_pop();
@@ -310,8 +309,7 @@ static void map_indexing_set_with_hash(bool keep_map) {
             invoke_and_wait(EQUAL, 1);
             // map, k0, v, bool
             Value eq_result = stack_pop(); // map, k0, v
-            assert_value_type(eq_result, VAL_BOOL, "bool");
-            bool eq = as_bool(eq_result);
+            bool eq = test_bool(eq_result);
             if (eq) {
                 entry->value = stack_pop(); // map, k0
                 stack_pop();  // map
@@ -397,8 +395,7 @@ void map_delete() {
             invoke_and_wait(EQUAL, 1);
             // map, k0, bool
             Value eq_result = stack_pop(); // map, k0
-            assert_value_type(eq_result, VAL_BOOL, "bool");
-            bool eq = as_bool(eq_result);
+            bool eq = test_bool(eq_result);
             if (eq) {
                 stack_push(entry->value); // [map, key, value]
                 map->active_count --;
@@ -1616,10 +1613,12 @@ static InterpretResult run_frame_until(int end_when) {
             }
             case OP_REPL_AUTO_PRINT: {
                 Value to_print = stack_pop();
-                start_color(GRAY);
-                print_value(to_print);
-                NEW_LINE();
-                end_color();
+                if (!is_nil(to_print) || REPL_PRINT_NIL) {
+                    start_color(GRAY);
+                    print_value(to_print);
+                    NEW_LINE();
+                    end_color();
+                }
                 break;
             }
             case OP_POP:

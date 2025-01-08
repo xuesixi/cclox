@@ -21,7 +21,7 @@ bool COMPILE_ONLY = false;
 bool RUN_BYTECODE = false;
 bool DISASSEMBLE_ONLY = false;
 bool REPL = false;
-bool LOAD_LIB = true;
+bool REPL_PRINT_NIL = false;
 bool preload_finished = false;
 bool SHOW_COMPILE_RESULT = false;
 bool TRACE_EXECUTION = false;
@@ -235,7 +235,6 @@ int main(int argc, char *const argv[]) {
                 break;
             case 'c': // compile only
                 COMPILE_ONLY = true;
-                LOAD_LIB = false;
                 strcpy(OUTPUT_PATH, optarg);
                 break;
             case 'b': // run bytecode
@@ -244,8 +243,8 @@ int main(int argc, char *const argv[]) {
             case 'v':
                 DISASSEMBLE_ONLY = true;
                 break;
-            case 'n': // do not load libraries
-                LOAD_LIB = false;
+            case 'n': // print out nil expression in repl
+                REPL_PRINT_NIL = true;
                 break;
             case 'h':
             default:

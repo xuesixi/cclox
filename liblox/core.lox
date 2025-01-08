@@ -155,8 +155,36 @@ class IOError: Error {
     }
 }
 
+class File {
+    init(path: String, mode: String = "r", std_stream: Int = -1) {
+        this.path = path;
+        this.fd = native_open_file(path, mode, std_stream);
+    }
+    write(content: String, new_line: Bool = false) {
+        this.native_file_write(content, new_line);
+    }
+    seek(offset: Int, whence: Int = 0) {
+        this.native_file_seek(offset, whence);
+    }
+    iterator() {
+        return this;
+    }
+    has_next() {
+        this.next_line = this.read_line();
+        return this.next_line;
+    }
+    next() {
+        return this.next_line;
+    }
+}
+
+const stdin  = File("", "", 0);
+const stdout = File("", "", 1);
+const stderr = File("", "", 2);
+
 export 
-Obj, String, Array, Int, Float, Bool, Nil, Function, Method, Native, Module, Class, Closure, Map, NativeMethod, NativeObject,
+Obj, String, Array, Int, Float, Bool, Nil, Map, Function, Method, Native, Module, Class, Closure, NativeMethod, NativeObject,
 concat, join, string_join, benchmark, 
-Error, TypeError, IndexError, ArgError, NameError, PropertyError, ValueError, FatalError, CompileError, IOError
+Error, TypeError, IndexError, ArgError, NameError, PropertyError, ValueError, FatalError, CompileError, IOError,
+File, stdin, stdout, stderr
 ;

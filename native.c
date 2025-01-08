@@ -30,6 +30,7 @@ Class *nil_class;
 Class *module_class;
 Class *native_object_class;
 Class *native_method_class;
+Class *file_class;
 
 Class *Error;
 Class *TypeError;
@@ -51,6 +52,7 @@ String *EQUAL = NULL;
 String *HASH = NULL;
 String *MESSAGE = NULL;
 String *POSITION = NULL;
+String *FD = NULL;
 
 /**
  * @return true: one等于two，或者one是two的子类
@@ -108,17 +110,6 @@ bool multi_value_of(int count, Value *values) {
 
 static Value native_value_of(int count, Value *values) {
     (void ) count;
-//    Value v = values[0];
-//    Value arg_class = values[1];
-//    assert_ref_type(arg_class, OBJ_CLASS, "class");
-//    bool result;
-//    Class *class = value_class(v);
-//    if (is_ref_of(v, OBJ_INSTANCE)) {
-//        result = is_subclass(class, as_class(arg_class));
-//    } else {
-//        result = class == as_class(arg_class);
-//    }
-//    return bool_value(result);
     bool result = multi_value_of(1, values);
     return bool_value(result);
 }
@@ -230,6 +221,10 @@ static void add_native_method(Class *class, const char *name, NativeImplementati
 
     stack_pop();
     stack_pop();
+}
+
+static void add_builtin_field(const char *name, Value value) {
+    table_add_new(&vm.builtin, auto_length_string_copy(name), value, true, true);
 }
 
 static void add_native_class_static_function(Class *class, const char *name, NativeImplementation impl, int arity) {
@@ -742,12 +737,166 @@ Value native_method_value_equal(int count, Value *values) {
 
 Value native_map_iter(int count, Value *value) {
     (void ) count;
-    assert_ref_type(*value, OBJ_MAP, "map");
+    assert_ref_type(*value, OBJ_MAP, "Map");
     NativeObject *nativeObject = new_native_object(NativeMapIter, 2);
     // curr, map
     nativeObject->values[0] = int_value(0);
     nativeObject->values[1] = *value;
     return ref_value((Object*) nativeObject);
+}
+
+Value native_open_file(int count, Value *value) {
+    (void ) count;
+    assert_ref_type(value[0], OBJ_STRING, "String");
+    assert_ref_type(value[1], OBJ_STRING, "String");
+    assert_value_type(value[2], VAL_INT, "Int");
+    String *path = as_string(value[0]);
+    String *mode = as_string(value[1]);
+    int fd = as_int(value[2]);
+    Value res;
+    res.type = VAL_ABSENCE;
+    switch (fd) {
+        case 0:
+            res.as.reference = (Object *) stdin;
+            break;
+        case 1:
+            res.as.reference = (Object *) stdout;
+            break;
+        case 2:
+            res.as.reference = (Object *) stderr;
+            break;
+        default: {
+            FILE *file = fopen(path->chars, mode->chars);
+            if (file == NULL) {
+                throw_new_runtime_error(Error_IOError, "IOError: cannot open the file: %s", path->chars);
+            }
+            res.as.reference = (Object *) file;
+            break;
+        }
+    }
+    return res;
+}
+
+Value native_file_method_read_chars(int count, Value *value) {
+    // file, limit
+    (void ) count;
+    assert_ref_type(value[-1], OBJ_INSTANCE, "File");
+    assert_value_type(value[0], VAL_INT, "Int");
+    Instance *ins = as_instance(value[-1]);
+    int limit = as_int(value[0]);
+    if (limit <= 0) {
+        throw_new_runtime_error(Error_ValueError, "ValueError: can only read positive amount of chars, but got: %d", limit);
+    }
+    Value temp;
+    table_get(&ins->fields, FD, &temp);
+    FILE *file = (FILE *) temp.as.reference;
+    if (file == NULL) {
+        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    }
+    char *buf = malloc(limit + 1);
+    if (fgets(buf, limit + 1, file)) {
+        String *str = auto_length_string_copy(buf);
+        free(buf);
+        return ref_value_cast(str);
+    } else if (ferror(file)){
+        free(buf);
+        throw_new_runtime_error(Error_IOError, "IOError: error when reading from the file");
+        return nil_value();
+    } else {
+        free(buf);
+        return nil_value();
+    }
+}
+
+Value native_file_method_read_line(int count, Value *value) {
+    (void ) count;
+    assert_ref_type(value[-1], OBJ_INSTANCE, "File");
+    Instance *ins = as_instance(value[-1]);
+    Value temp;
+    table_get(&ins->fields, FD, &temp);
+    FILE *file = (FILE *) temp.as.reference;
+    if (file == NULL) {
+        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    }
+    char *buf = NULL;
+    size_t cap = 0;
+    int len = getline(&buf, &cap, file);
+    if (len != -1) {
+        String *line = string_copy(buf, len);
+        free(buf);
+        return ref_value_cast(line);
+    } else if (ferror(file)){
+        free(buf);
+        throw_new_runtime_error(Error_IOError, "IOError: error when reading from the file");
+        return nil_value();
+    } else {
+        free(buf);
+        return nil_value();
+    }
+}
+
+Value native_file_method_write(int count, Value *value) {
+    (void ) count;
+    assert_ref_type(value[0], OBJ_STRING, "String");
+    String *str = as_string(value[0]);
+    bool new_line = test_bool(value[1]);
+    Instance *ins = as_instance(value[-1]);
+    Value temp;
+    table_get(&ins->fields, FD, &temp);
+    FILE *file = (FILE *) temp.as.reference;
+    if (file == NULL) {
+        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    }
+    if (EOF == fputs(str->chars, file)) {
+        throw_new_runtime_error(Error_IOError, "IOError: error when writing to the file");
+    } else if (new_line){
+        fputs("\n", file);
+    }
+    return nil_value();
+}
+
+Value native_file_method_close(int count, Value *value) {
+    (void ) count;
+    Instance *ins = as_instance(value[-1]);
+    Value temp;
+    table_get(&ins->fields, FD, &temp);
+    FILE *file = (FILE *) temp.as.reference;
+    if (file == NULL) {
+        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    }
+    fclose(file);
+    temp.as.reference = NULL;
+    return nil_value();
+}
+
+Value native_file_method_seek(int count, Value *value) {
+    (void ) count;
+    assert_value_type(value[0], VAL_INT, "Int");
+    assert_value_type(value[1], VAL_INT, "Int");
+    Instance *ins = as_instance(value[-1]);
+    int offset = as_int(value[0]);
+    int whence = as_int(value[1]);
+    Value temp;
+    table_get(&ins->fields, FD, &temp);
+    FILE *file = (FILE *) temp.as.reference;
+    if (file == NULL) {
+        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    }
+    fseek(file, offset, whence);
+    return nil_value();
+}
+
+Value native_file_method_tell(int count, Value *value) {
+    (void ) count;
+    Value temp;
+    Instance *ins = as_instance(value[-1]);
+    table_get(&ins->fields, FD, &temp);
+    FILE *file = (FILE *) temp.as.reference;
+    if (file == NULL) {
+        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    }
+    int position = ftell(file);
+    return int_value(position);
 }
 
 void init_vm_native() {
@@ -767,6 +916,7 @@ void init_vm_native() {
     define_native("backtrace", native_backtrace, 0);
     define_native("value_of", native_value_of, 2);
     define_native("is_object", native_is_object, 1);
+    define_native("native_open_file", native_open_file, 3);
 //    define_native("array_copy", native_array_copy, 5);
 }
 
@@ -785,13 +935,14 @@ void init_static_strings() {
     HASH = auto_length_string_copy("hash");
     MESSAGE = auto_length_string_copy("message");
     POSITION = auto_length_string_copy("position");
+    FD = auto_length_string_copy("fd");
 }
 
 /**
  * 如果 LOAD_LIB 不为false，则加载标准库（执行字节码），将标准库的成员导入builtin命名空间中。
  */
 void load_libraries() {
-    if (!LOAD_LIB) {
+    if (COMPILE_ONLY) {
         return;
     }
 
@@ -881,12 +1032,14 @@ void load_libraries() {
     table_get(&vm.builtin, auto_length_string_copy("IOError"), &class_value);
     IOError = as_class(class_value);
 
+    table_get(&vm.builtin, auto_length_string_copy("File"), &class_value);
+    file_class = as_class(class_value);
+
     add_native_method(string_class, "substring", native_string_method_substring, 2);
     add_native_method(string_class, "replace", native_string_method_replace, 3);
     add_native_method(string_class, "char_at", native_string_method_char_at, 1);
     add_native_method(map_class, "delete", native_map_method_delete, 1);
     add_native_method(class_class, "subclass_of", native_class_method_subclass_of, 1);
-    add_native_class_static_function(array_class, "copy", native_array_copy, 5);
 
     add_native_method(int_class, "hash", native_method_general_hash, 0);
     add_native_method(nil_class, "hash", native_method_general_hash, 0);
@@ -918,5 +1071,14 @@ void load_libraries() {
     add_native_method(string_class, "equal", native_method_value_equal, 1);
     add_native_method(native_object_class, "equal", native_method_value_equal, 1);
 
+    add_native_method(file_class, "read_chars", native_file_method_read_chars, 1);
+    add_native_method(file_class, "read_line", native_file_method_read_line, 0);
+    add_native_method(file_class, "native_file_write", native_file_method_write, 2);
+    add_native_method(file_class, "close", native_file_method_close, 0);
+    add_native_method(file_class, "native_file_seek", native_file_method_seek, 2);
+    add_native_method(file_class, "tell", native_file_method_tell, 0);
+
+    add_native_class_static_function(array_class, "copy", native_array_copy, 5);
+    add_builtin_field("endl", ref_value_cast(auto_length_string_copy("\n")));
     preload_finished = true;
 }

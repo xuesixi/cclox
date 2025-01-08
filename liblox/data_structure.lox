@@ -143,7 +143,7 @@ class Vector {
         this.backing[index] = element;
     }
 
-    append(element) {
+    push(element) {
         if (this.backing.length == this.size) {
             var backing = this.backing;
             var new_capacity = 2 * backing.length;
@@ -158,7 +158,7 @@ class Vector {
     }
 
     insert(element, index: Int) {
-        if (index < 0 or index > this.size) {
+        if (index > this.size) {
             throw IndexError(f("can only add to index in range [#, #]", index, 0, this.size));
         }
         var backing = this.backing;
@@ -190,7 +190,7 @@ class Vector {
         if (this.size == 0) {
             throw NoDataError("cannot delete from an empty vector");
         }
-        if (index < 0 or index >= this.size) {
+        if (index >= this.size) {
             throw IndexError(f("can only delete at index in range [#, #]", index, 0, this.size - 1));
         }
         var backing = this.backing;
