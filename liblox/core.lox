@@ -85,7 +85,7 @@ class StringIter {
 fun benchmark(task) {
     var start = clock();
     task();
-    print f("takes time: #", clock() - start);
+    print f("takes time: {}", clock() - start);
 }
 
 class Error {

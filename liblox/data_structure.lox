@@ -131,14 +131,14 @@ class Vector {
 
     get(index: Int) {
         if (index >= this.size) {
-            throw IndexError(f("Index # is out of bound [#, #]", index, 0, this.size - 1));
+            throw IndexError(f("Index {} is out of bound [{}, {}]", index, 0, this.size - 1));
         }
         return this.backing[index];
     }
 
     set(index: Int, element) {
         if (index >= this.size) {
-            throw IndexError(f("can only set element at index in range [#, #]", index, 0, this.size - 1));
+            throw IndexError(f("can only set element at index in range [{}, {}]", index, 0, this.size - 1));
         }
         this.backing[index] = element;
     }
@@ -159,7 +159,7 @@ class Vector {
 
     insert(element, index: Int) {
         if (index > this.size) {
-            throw IndexError(f("can only add to index in range [#, #]", index, 0, this.size));
+            throw IndexError(f("can only add to index in range [{}, {}]", index, 0, this.size));
         }
         var backing = this.backing;
         if (backing.length == this.size) {
@@ -191,7 +191,7 @@ class Vector {
             throw NoDataError("cannot delete from an empty vector");
         }
         if (index >= this.size) {
-            throw IndexError(f("can only delete at index in range [#, #]", index, 0, this.size - 1));
+            throw IndexError(f("can only delete at index in range [{}, {}]", index, 0, this.size - 1));
         }
         var backing = this.backing;
         var move_length = this.size - 1 - index; 

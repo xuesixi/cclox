@@ -304,6 +304,10 @@ static inline int max(int a, int b) {
     return a > b ? a : b;
 }
 
+static inline bool is_placeholder(const char *str) {
+    return str[0] == '{' && str[1] == '}';
+}
+
 static Value native_format(int count, Value *values) {
     const char *format = as_string(*values)->chars;
     static int capacity = 0;
@@ -314,7 +318,7 @@ static Value native_format(int count, Value *values) {
     int curr_v = 0;
 
     while (true) {
-        while (format[curr] != '\0' && format[curr] != '#') {
+        while (format[curr] != '\0' && !is_placeholder(format + curr)) {
             curr++;
         }
 
@@ -337,7 +341,7 @@ static Value native_format(int count, Value *values) {
             break;
         }
 
-        if (format[curr] == '#') {
+        if (is_placeholder(format + curr)) {
             if (curr_v == count - 1) {
                 free(buf);
                 throw_new_runtime_error(Error_ArgError, "ArgError: more placeholders than arguments");
@@ -353,7 +357,7 @@ static Value native_format(int count, Value *values) {
             }
             memcpy(buf + buf_len, v_chars, v_chars_len);
             buf_len += v_chars_len;
-            curr++;
+            curr += 2;
             pre = curr;
             curr_v++;
             free(v_chars);
