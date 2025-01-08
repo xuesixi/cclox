@@ -530,7 +530,6 @@ static Value native_string_join(int count, Value *values) {
  */
 static Value native_string_method_replace(int count, Value *values) {
     (void ) count;
-    assert_ref_type(values[-1], OBJ_STRING, "String");
     assert_value_type(values[0], VAL_INT, "Int");
     assert_value_type(values[1], VAL_INT, "Int");
     assert_ref_type(values[2], OBJ_STRING, "String");
@@ -554,12 +553,27 @@ static Value native_string_method_replace(int count, Value *values) {
     return ref_value_cast(result);
 }
 
+static Value native_string_method_strip(int count, Value *values) {
+    (void ) count;
+    String *str = as_string(values[-1]);
+    char *start = str->chars;
+    char *end = str->chars + str->length - 1; // a, b, c, d
+    while (*start == ' ' || *start == '\t' || *start == '\n') {
+        start++;
+    }
+    while (end > start && ( *end == ' ' || *end == '\t' || *end == '\n' )) {
+        end--;
+    }
+    int len = end - start + 1;
+    String *res = string_copy(start, len);
+    return ref_value_cast(res);
+}
+
 /**
  * @param value [receiver(str), start, end]
  */
 static Value native_string_method_substring(int count, Value *value) {
     (void ) count;
-    assert_ref_type(value[-1], OBJ_STRING, "String");
     assert_value_type(value[0], VAL_INT, "Int");
     assert_value_type(value[1], VAL_INT, "Int");
     String *str = as_string(value[-1]);
@@ -921,7 +935,6 @@ void init_vm_native() {
     define_native("value_of", native_value_of, 2);
     define_native("is_object", native_is_object, 1);
     define_native("native_open_file", native_open_file, 3);
-//    define_native("array_copy", native_array_copy, 5);
 }
 
 void additional_repl_init() {
@@ -1042,6 +1055,7 @@ void load_libraries() {
     add_native_method(string_class, "substring", native_string_method_substring, 2);
     add_native_method(string_class, "replace", native_string_method_replace, 3);
     add_native_method(string_class, "char_at", native_string_method_char_at, 1);
+    add_native_method(string_class, "strip", native_string_method_strip, 0);
     add_native_method(map_class, "delete", native_map_method_delete, 1);
     add_native_method(class_class, "subclass_of", native_class_method_subclass_of, 1);
 
