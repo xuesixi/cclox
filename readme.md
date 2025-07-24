@@ -6,6 +6,20 @@ I read the book [Crafting Interpreters](https://craftinginterpreters.com) and ma
 
 Lox is a dynamic-typed, gc language, similar to javascript and python. 
 
+## Contents
+- [Docker & Build Instructions](#dockerbuild)
+- [Usage](#usage)
+- [Language Overview](#the-lox-programming-language)
+  - [Types](#type)
+  - [Control Flow](#control-flow)
+  - [Functions](#function)
+  - [Classes](#class)
+  - [Data Structure](#data-structure)
+  - [Modules](#module)
+  - [Error Handling](#error-handling)
+  - [Native Functions](#native-functions)
+  - [REPL](#repl)
+
 ## docker/build
 
 The implementation uses `asprintf()`  a lot. It also requires GNU/readline. A docker image is provided.
@@ -14,7 +28,7 @@ The implementation uses `asprintf()`  a lot. It also requires GNU/readline. A do
 
 ***
 
-* `$ docker run --rm -itv .:/clox xuesixi/clox` : run the image and mount current directory into the `/clox`. You should run this command in the root of the project. 
+* `$ docker run --rm -itv .:/clox xuesixi/clox` : run the image and mount current directory into the `/clox`. You should run this command from the root of the project. 
   
 * If that does not work, you may try `$ docker run --platform linux/arm64/v8 --rm -itv .:/clox xuesixi/clox`
   
@@ -36,7 +50,7 @@ Clox does have a circular dependency issue.
 
 As long as`liblox_core.h, liblox_iter.h, liblox_data_structure.h`  exist to provide some placeholders initially, the makefile will handle the building process. 
 
-Tht provided docker image uses an entrypoint script to do that automatically when entering the container. If you are not using the docker image, you can create those files by doing:
+Tht provided docker image uses an entrypoint script to handle that automatically when you enter the container. If you are not using the docker image, you can create those files by doing:
 
 ```shell
 $ touch liblox_core liblox_iter liblox_data_structure
@@ -83,6 +97,19 @@ Reference types:
 * `object`
 * ***`Array`***
 * ***`Map`***
+
+### type annotation
+
+***You can have type annotation for function parameter, return value or variable. Type annotation is basically embeded comment, which is completely ignored by the interpreter.*** 
+
+`|` may be used to represent union of types, like `Int|Float`
+
+```lox
+var name: String = "anda";
+const num: Int = 10;
+
+fun test(num: Int|Float, name: String): Bool {}
+```
 
 ## arithmetic
 
@@ -164,9 +191,9 @@ for (var i = 0; i < 1; i += 1) {
 ```
 
 ### for in
-It requires the value after `in` to be "iterable".
+It requires the value after `in` to be "iterable". Array and map are iterable.
 
-* Iterable: has the `iterator` property: `iterator(): Iterator` and map are iterable. 
+* Iterable: has the `iterator` property: `iterator(): Iterator`  
 * Iterator: an object with `has_next` and `next` callable properties. 
     * `has_next(): Bool`
     * `next(): any`
@@ -185,7 +212,7 @@ for i in range(10) { // range is a optimized function
 var map = {
 	1: 10,
 	2: 20,
-	3: "huhuh",
+	3: "huhuh"
 };
 
 for k, v in map { // support defining multiple variables 
@@ -258,7 +285,7 @@ var hello = $(name) {
 
 ### optional parameter
 
-***When defining a function, we can give parameters default values. At runtime, if the coressponding argument is absent, the value will be computed by evaluating the expression.***
+***When defining a function, we can give parameters default values. If the corresponding argument is absent, the value will be computed by evaluating the expression at runtime.***
 
 ```lox
 fun add(a, b = 2 * a + 1) {
@@ -276,7 +303,7 @@ All optionals parameters must go after any definite parameters.
 ```lox
 fun hey(greeting = "good day", names...) {
 	for name in names {
-		print f("#, #", greeting, name);
+		print "{}, {}".f(greeting, name);
 	}
 }
 ```
@@ -291,7 +318,7 @@ class Dog: Animal {
 	static dog_count = 0;
 
 	static show_count() {
-		print f("the count is #", Dog.dog_count);
+		print "the count is {}".f(Dog.dog_count);
 	}
 
 	init(name, age) {
@@ -301,12 +328,12 @@ class Dog: Animal {
 	}
 
 	eat(food) {
-		print f("the dog # is eating #", this.name, food);
+		print "the dog {} is eating {}".f(this.name, food);
 	}
 	
 	run() {
 		super.run();
-		print f("the dog # is also running!", this.name);
+		print "the dog {} is also running!".f(this.name);
 	}
 }
 
@@ -318,11 +345,11 @@ Dog.show_count();
 
 ### method 
 
-Inside a function, you can define methods (you don't need `fun` here). `this` is supported and bounded to an object. It should work as you may expect. 
+Inside a class, you can define methods (you don't need `fun` here). `this` is supported and bounded to an object. It should work as you may expect. 
 
 ### init
 
-Like python, lox does not use the `new` keyword to create an instance. `init` is a special method that is called on the new created instance if defined. . 
+Like python, lox does not use the `new` keyword to create an instance. `init` is a special method that is called on the new created instance if defined. 
 
 ### static
 
@@ -347,6 +374,8 @@ A subclass method can use `super.` to access a method of the superclass (this is
 * Arrays have only one field: `length`, but have some other methods. 
 * Arrays are iterable.
 
+Out-of-bound accessing throws a `IndexError`
+
 ```lox
 var two_d = [3][4];
 
@@ -365,9 +394,9 @@ for i in arr {
 
 ***A map stores key-value pairs.***
 
-* A map has a`length` field.
-* In context where an expression is expected, `{}` creates a map. We can initialize the map with `key : value` pairs separated by `,`.
-* If the key does not exist in the map, `map[key]` returns `nil`.
+* A map has a `length` field.
+* In context where an expression is expected, `{}` creates a map (instead of starting a new scope). We can initialize the map with `key : value` pairs separated by `,`.
+* If the key does not exist in the map, `map[key]` throws an `IndexError`
 * Maps are also iterable. The iterator returns the key-value pair array (of length 2) each time. Map iteration is unordered. 
 
 ```lox
@@ -383,7 +412,7 @@ var name = m["name"]; // map get
 m[true] += 3; // map set
 
 for k, v in m {
-	print f("key: #, value: #", k, v);
+	print "key: {}, value: {}".f(k, v);
 }
 ```
 
@@ -426,18 +455,6 @@ export hey, Animal, time; // export multiple members at a time
 * Import specific members. `import "path/to/animal.lox":Dog, Cat;` In such case, you can use `Dog`, `Cat` directly.
 * Rename. `import "path/to/animal.lox": Dog as ModuleDog, Cat;` You can use `as` to rename one or more members to prevent naming conflicts. 
 * The path is relative to the directory of current module (at compile time). 
-## type annotation
-
-***You can have type annotation for function parameter or variable. Type annotation is basically embeded comment, which is completely ignored by the interpreter.*** 
-
-`|` may be used to represent union of types, like `Int|Float`
-
-```lox
-var name: String = "anda";
-const num: Int = 10;
-
-fun test(num: Int|Float, name: String): Bool {}
-```
 
 ## Error Handling
 
@@ -479,7 +496,7 @@ Common error types include:
 * `ValueError`: "bad input" (but typically with correct type)
 * `ArgError`: incorrect amount of arguments to functions
 * `IndexError`: index out of bound for arrays, or use non-existent keys for maps
-* `NameError`: access undefined variables
+* `NameError`: access undefined variables. 
 * `PropertyError`: access undefined properties
 * `FatalError`: serious errors like stack overflow
 * `IOError`: cannot find the file to import
@@ -493,9 +510,6 @@ Clox has some built-in functions written in C.
 * `int(input: String|Float): Int`: convert string or float to int
 * `float(input: String|Int): Float`: convert int or string to float
 * `rand(low: Int, high: Int): Int`: return a random int in [low, high]. Both arguments need to be int. 
-* `f(format: String, values...): String`: return a formated string according to the specify format. `#` is used as the placeholder. 
-    * For example, ` var str = f("the name is #, age is #", "anda", 22)`
-* `read(prompt: String): String`: read a line of string from the keyboard (excluding the newline). If `prompt` is provided, it will be printed out first.
 * `type(value): Class`: return the type (a class object) of the input
 * `backtrace(): String`: return a string representing the call frames.
 * `value_of(value, t: Class): Bool`: return if the give value is of the given type.

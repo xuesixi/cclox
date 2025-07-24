@@ -109,7 +109,7 @@ static void iteration_statement() ;
 
 static inline void begin_scope();
 
-static void new_var_declaration(bool is_public, bool is_const);
+static void var_declaration(bool is_public, bool is_const);
 
 static void declare_local(bool is_const, Token *token);
 
@@ -574,9 +574,9 @@ static void declaration() {
         }
     }
     if (match(TOKEN_VAR)) {
-        new_var_declaration(is_export, false);
+        var_declaration(is_export, false);
     } else if (match(TOKEN_CONST)) {
-        new_var_declaration(is_export, true);
+        var_declaration(is_export, true);
     } else if (match(TOKEN_FUN)) {
         fun_declaration(is_export);
     } else if (match(TOKEN_CLASS)) {
@@ -596,10 +596,19 @@ static void declaration() {
 
 /**
  * 让刚刚解析的那个本地变量标记为已初始化。如果不是本地变量，什么都不做。
+ * 之所以有初始化的标记规则，是为在编译层面禁止 var num = num * 1 这样的在初始化中访问自己的情况。
  */
 static inline void mark_initialized() {
     if (current_scope->depth > 0) {
         current_scope->locals[current_scope->local_count - 1].depth = current_scope->depth;
+    }
+}
+
+static void mark_initialized_n(int num) {
+    if (current_scope->depth > 0) {
+        for (int i = 0; i < num; ++i) {
+            current_scope->locals[current_scope->local_count - 1 - i].depth = current_scope->depth;
+        }
     }
 }
 
@@ -638,7 +647,6 @@ static void function_statement(FunctionType type) {
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             parse_identifier_declaration(false);
-            mark_initialized();
 
             if (match(TOKEN_COLON)) {
                 parse_type_hint();
@@ -647,6 +655,7 @@ static void function_statement(FunctionType type) {
             // var arg
             if (match(TOKEN_DOT_DOT_DOT)) {
                 current_scope->function->var_arg = true;
+                mark_initialized();
                 break;
             }
             // 解析可选参数
@@ -676,6 +685,8 @@ static void function_statement(FunctionType type) {
                 error_at_previous("cannot have more than 254 parameters");
                 return;
             }
+
+            mark_initialized();
         } while (match(TOKEN_COMMA));
     }
 
@@ -722,7 +733,7 @@ static void fun_declaration(bool is_public) {
     }
 }
 
-static void new_var_declaration(bool is_public, bool is_const) {
+static void var_declaration(bool is_public, bool is_const) {
 
     static int indices[UINT8_MAX + 1];
     int count = 0;
@@ -733,12 +744,14 @@ static void new_var_declaration(bool is_public, bool is_const) {
         }
         int index = parse_identifier_declaration(false);
         indices[count++] = index;
-        mark_initialized();
+//        mark_initialized();
     } while (match(TOKEN_COMMA));
 
     if (match(TOKEN_COLON)) {
         parse_type_hint();
     }
+
+    mark_initialized_n(count);
 
     if (match(TOKEN_EQUAL)) {
         expression();
@@ -754,7 +767,7 @@ static void new_var_declaration(bool is_public, bool is_const) {
         error_at_current("const variables must be initialized");
         return;
     }
-    consume(TOKEN_SEMICOLON, "Expect ';' after end the var declaration");
+    consume(TOKEN_SEMICOLON, "Expect ';' after the variable declaration");
 
     if (current_scope->depth == 0) {
         if (is_const) {
@@ -1288,7 +1301,7 @@ static void for_statement() {
     if (match(TOKEN_SEMICOLON)) {
 
     } else if (match(TOKEN_VAR)) {
-        new_var_declaration(false, false);
+        var_declaration(false, false);
     } else {
         expression_statement();
     }

@@ -1182,10 +1182,11 @@ static void call_closure(Closure *closure, int arg_count) {
  * 注意，如果该native是作为method调用的，那么其receiver处于values[-1]的位置
  */
 static void call_native(NativeFunction *native , int arg_count) {
-    if (native->arity != arg_count && native->arity != -1) {
+    if (native->arity >= 0 && native->arity != arg_count ) {
         throw_new_runtime_error(Error_ArgError, "ArgError: %s expects %d arguments, but got %d", native->name->chars, native->arity,
                                 arg_count);
     }
+    // if arity < 0, the arg checking is performed by the native impl itself
     Value result = native->impl(arg_count, vm.stack_top - arg_count); //
     vm.stack_top -= arg_count + 1;
     stack_push(result);

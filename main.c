@@ -253,7 +253,7 @@ int main(int argc, char *const argv[]) {
                 printf("-d: trace the execution\n");
                 printf("-c path/to/output: compile and write the result to the specified path\n");
                 printf("-b: treat the given file as bytecode\n");
-                printf("-v: treat the given file as bytecode and disassemble it (but don't run it)");
+                printf("-v: treat the given file as bytecode and disassemble it (but don't run it)\n");
                 exit(1);
         }
     }

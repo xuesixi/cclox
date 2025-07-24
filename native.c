@@ -285,21 +285,6 @@ static Value native_type(int count, Value *value) {
     return ref_value((Object *)value_class(*value));
 }
 
-/**
- * read a line. Return it as a String. the \n will not be included
- * */
-static Value native_read(int count, Value *values) {
-    if (count > 0) {
-        print_value(*values);
-    }
-    size_t len;
-    char *line;
-    getline(&line, &len, stdin);
-    String *str = string_copy(line, len - 1); // NOLINT
-    free(line);
-    return ref_value((Object *) str);
-}
-
 static inline int max(int a, int b) {
     return a > b ? a : b;
 }
@@ -308,8 +293,8 @@ static inline bool is_placeholder(const char *str) {
     return str[0] == '{' && str[1] == '}';
 }
 
-static Value native_format(int count, Value *values) {
-    const char *format = as_string(*values)->chars;
+static Value native_string_method_format(int count, Value *values) {
+    const char *format = as_string(values[-1])->chars;
     static int capacity = 0;
     static char *buf = NULL;
     int pre = 0;
@@ -334,7 +319,7 @@ static Value native_format(int count, Value *values) {
         pre = curr;
 
         if (format[curr] == '\0') {
-            if (curr_v != count - 1) {
+            if (curr_v != count) {
                 free(buf);
                 throw_new_runtime_error(Error_ArgError, "ArgError: more arguments than placeholders");
             }
@@ -342,12 +327,12 @@ static Value native_format(int count, Value *values) {
         }
 
         if (is_placeholder(format + curr)) {
-            if (curr_v == count - 1) {
+            if (curr_v == count) {
                 free(buf);
                 throw_new_runtime_error(Error_ArgError, "ArgError: more placeholders than arguments");
             }
 
-            Value v = values[curr_v + 1];
+            Value v = values[curr_v];
             int v_chars_len;
             char *v_chars = value_to_chars(v, &v_chars_len);
 
@@ -795,22 +780,26 @@ Value native_open_file(int count, Value *value) {
     return res;
 }
 
-Value native_file_method_read_chars(int count, Value *value) {
-    // file, limit
-    (void ) count;
+FILE *native_file_method_helper_get_file(Value *value) {
     assert_ref_type(value[-1], OBJ_INSTANCE, "File");
-    assert_value_type(value[0], VAL_INT, "Int");
     Instance *ins = as_instance(value[-1]);
-    int limit = as_int(value[0]);
-    if (limit <= 0) {
-        throw_new_runtime_error(Error_ValueError, "ValueError: can only read positive amount of chars, but got: %d", limit);
-    }
     Value temp;
     table_get(&ins->fields, FD, &temp);
     FILE *file = (FILE *) temp.as.reference;
     if (file == NULL) {
         throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
     }
+    return file;
+}
+
+Value native_file_method_read_chars(int count, Value *value) {
+    // file, limit
+    (void ) count;
+    int limit = as_int(value[0]);
+    if (limit <= 0) {
+        throw_new_runtime_error(Error_ValueError, "ValueError: can only read positive amount of chars, but got: %d", limit);
+    }
+    FILE *file = native_file_method_helper_get_file(value);
     char *buf = malloc(limit + 1);
     if (fgets(buf, limit + 1, file)) {
         String *str = auto_length_string_copy(buf);
@@ -828,14 +817,7 @@ Value native_file_method_read_chars(int count, Value *value) {
 
 Value native_file_method_read_line(int count, Value *value) {
     (void ) count;
-    assert_ref_type(value[-1], OBJ_INSTANCE, "File");
-    Instance *ins = as_instance(value[-1]);
-    Value temp;
-    table_get(&ins->fields, FD, &temp);
-    FILE *file = (FILE *) temp.as.reference;
-    if (file == NULL) {
-        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
-    }
+    FILE *file = native_file_method_helper_get_file(value);
     char *buf = NULL;
     size_t cap = 0;
     int len = getline(&buf, &cap, file);
@@ -853,18 +835,44 @@ Value native_file_method_read_line(int count, Value *value) {
     }
 }
 
-Value native_file_method_write(int count, Value *value) {
+static Value native_file_method_read_all(int count, Value *value) {
     (void ) count;
+    FILE *file = native_file_method_helper_get_file(value);
+    if (feof(file)) {
+        return nil_value();
+    }
+
+    fseek(file, 0L, SEEK_END);
+    size_t size = ftell(file);
+    rewind(file);
+
+    char *buffer = malloc(size + 1);
+    assert(buffer != NULL);
+    size_t read_size = fread(buffer, 1, size + 1, file); // size + 1 to set eof flag
+    if (ferror(file)) {
+        free(buffer);
+        throw_new_runtime_error(Error_IOError, "IOError: error when reading the file");
+        return nil_value();
+    }
+    buffer[read_size] = '\0';
+    String *str = string_allocate(buffer, read_size);
+    return ref_value_cast(str);
+}
+
+Value native_file_method_write(int count, Value *value) {
+    // count: 1 or 2
     assert_ref_type(value[0], OBJ_STRING, "String");
     String *str = as_string(value[0]);
-    bool new_line = test_bool(value[1]);
-    Instance *ins = as_instance(value[-1]);
-    Value temp;
-    table_get(&ins->fields, FD, &temp);
-    FILE *file = (FILE *) temp.as.reference;
-    if (file == NULL) {
-        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    bool new_line;
+    if (count == 1) {
+        new_line = false;
+    } else if (count == 2) {
+        new_line = test_bool(value[1]);
+    } else {
+        throw_new_runtime_error(Error_ArgError, "ArgError: expect 1 or 2 arguments, but got %d", count);
     }
+
+    FILE *file = native_file_method_helper_get_file(value);
     if (EOF == fputs(str->chars, file)) {
         throw_new_runtime_error(Error_IOError, "IOError: error when writing to the file");
     } else if (new_line){
@@ -888,31 +896,28 @@ Value native_file_method_close(int count, Value *value) {
 }
 
 Value native_file_method_seek(int count, Value *value) {
-    (void ) count;
-    assert_value_type(value[0], VAL_INT, "Int");
-    assert_value_type(value[1], VAL_INT, "Int");
-    Instance *ins = as_instance(value[-1]);
-    int offset = as_int(value[0]);
-    int whence = as_int(value[1]);
-    Value temp;
-    table_get(&ins->fields, FD, &temp);
-    FILE *file = (FILE *) temp.as.reference;
-    if (file == NULL) {
-        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
+    int whence;
+    if (count == 1) {
+        whence = 0;
+    } else if (count == 2) {
+        assert_value_type(value[1], VAL_INT, "Int");
+        whence = as_int(value[1]);
+    } else {
+        whence = 0;
+        throw_new_runtime_error(Error_ArgError, "ArgError: expect 1 or 2 arguments, but got %d", count);
     }
+    assert_value_type(value[0], VAL_INT, "Int");
+    int offset = as_int(value[0]);
+
+    FILE *file = native_file_method_helper_get_file(value);
+
     fseek(file, offset, whence);
     return nil_value();
 }
 
 Value native_file_method_tell(int count, Value *value) {
     (void ) count;
-    Value temp;
-    Instance *ins = as_instance(value[-1]);
-    table_get(&ins->fields, FD, &temp);
-    FILE *file = (FILE *) temp.as.reference;
-    if (file == NULL) {
-        throw_new_runtime_error(Error_IOError, "IOError: the file is closed");
-    }
+    FILE *file = native_file_method_helper_get_file(value);
     int position = ftell(file);
     return int_value(position);
 }
@@ -922,8 +927,6 @@ void init_vm_native() {
     define_native("int", native_int, 1);
     define_native("float", native_float, 1);
     define_native("rand", native_rand, 2);
-    define_native("f", native_format, -1);
-    define_native("read", native_read, -1);
     define_native("type", native_type, 1);
     define_native("native_string_combine_array", native_string_combine_array, 1);
     define_native("native_value_join", native_value_join, 4);
@@ -1056,6 +1059,8 @@ void load_libraries() {
     add_native_method(string_class, "replace", native_string_method_replace, 3);
     add_native_method(string_class, "char_at", native_string_method_char_at, 1);
     add_native_method(string_class, "strip", native_string_method_strip, 0);
+    add_native_method(string_class, "f", native_string_method_format, -1);
+
     add_native_method(map_class, "delete", native_map_method_delete, 1);
     add_native_method(class_class, "subclass_of", native_class_method_subclass_of, 1);
 
@@ -1091,9 +1096,10 @@ void load_libraries() {
 
     add_native_method(file_class, "read_chars", native_file_method_read_chars, 1);
     add_native_method(file_class, "read_line", native_file_method_read_line, 0);
-    add_native_method(file_class, "native_file_write", native_file_method_write, 2);
+    add_native_method(file_class, "read_all", native_file_method_read_all, 0);
+    add_native_method(file_class, "write", native_file_method_write, -1);
     add_native_method(file_class, "close", native_file_method_close, 0);
-    add_native_method(file_class, "native_file_seek", native_file_method_seek, 2);
+    add_native_method(file_class, "seek", native_file_method_seek, -1);
     add_native_method(file_class, "tell", native_file_method_tell, 0);
 
     add_native_class_static_function(array_class, "copy", native_array_copy, 5);

@@ -160,12 +160,6 @@ class File {
         this.path = path;
         this.fd = native_open_file(path, mode, std_stream);
     }
-    write(content: String, new_line: Bool = false) {
-        this.native_file_write(content, new_line);
-    }
-    seek(offset: Int, whence: Int = 0) {
-        this.native_file_seek(offset, whence);
-    }
     iterator() {
         return this;
     }

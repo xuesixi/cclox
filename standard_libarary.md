@@ -19,7 +19,10 @@
 
 * `substring(start: Int, end: Int): String`: return a new substring.
 * `replace(start: Int, end: Int, insert: String): String`: return a new string which is equal to the old string with the part `[start, end)` replaced by the `insert` string. 
+* `char_at(index: Int): String`: return a char at the specified index. The same as `string[index]`.
+* `strip(): String`:  return a string having the same content but without space, tab, newline in the beginning and end.
 * `iterator(): Iterator`: Each time, the iterator returns a character.
+* `f(args...): String`: use this string as the format to produce a formatted string. e.g. `var str = "name is {}, age is {}".f("anda", 10);`
 * `static concat(values...): String`: concatenate values into one string. The values can be of any types. 
 
 ## Class
@@ -31,10 +34,11 @@
 The File class only supports text io. 
 
 * `init(path: String, mode: String)`: open a file at specified path with the specified mode
-* `read_line(): String`: return the next line. If end of file, return nil
-* `read_chars(limit: Int): String`: return next `limit` characters. If end of file, return nil
+* `read_line(): String`: return the next line. If end of file, return `nil`
+* `read_chars(limit: Int): String`: return next `limit` characters. If end of file, return `nil`
+* `read_all(): String`: return the content of a file as a string. 
 * `write(content: String, new_line: Bool = false)`: write `content` into the file. Append a newline if `new_line` is true.
-* `tell(): Int`: return the position of the file pointer. Similar to `fseek()` in c and `seek()` in python.
+* `tell(): Int`: return the position of the file pointer. Similar to `ftell()` in c and `tell()` in python.
 * `seek(offset: Int, whence: Int = 0)`: move the file pointer. Similar to `fseek()` in c and `seek()` in python.
 * `close()`: close the file
 * `iterator(): Iterator`: Each time, the iterator moves the file pointer and returns next line. 
