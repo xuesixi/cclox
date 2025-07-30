@@ -21,6 +21,13 @@ add_executable(cclox
         src/include/value.h
         src/include/bytes.h
         src/include/error.h
+        src/include/common.h
+        src/include/disassembler.h
+        src/disassembler.cc
+        src/include/vm_visualizer.h
+        src/vm_visualizer.cc
+        src/include/vm.h
+        src/vm.cc
         src/main.cc)
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 target_link_libraries(cclox m readline fmt)

@@ -5,20 +5,32 @@
 #ifndef CCLOX_CHUNK_H
 #define CCLOX_CHUNK_H
 
+#include <utility>
 #include <vector>
 #include <limits>
 #include "value.h"
 #include "bytes.h"
 #include "error.h"
 
+class VM;
+
+class Disassembler;
+
 enum class OpCode: uint8_t {
     Return,
     LoadConstant8,
     LoadConstant16,
+    Negate,
+    Add,
+    Subtract,
+    Multipy,
+    Divide,
 };
 
 class Chunk {
 public:
+    friend class VM;
+    friend class Disassembler;
     void write_opcode(OpCode byte, int line) {
         code.push_back(static_cast<uint8_t>(byte));
         lines.push_back(line);
@@ -45,13 +57,7 @@ public:
         return constants.size() - 1;
     }
 
-    void disassemble(const char *name);
-
 private:
-    size_t disassemble_instruction(size_t offset);
-    size_t instruction_operand_0(OpCode instruction, size_t offset);
-    size_t instruction_operand_1(OpCode instruction, size_t offset);
-    size_t instruction_operand_2(OpCode instruction, size_t offset);
 
     std::vector<uint8_t> code;
     std::vector<Value> constants;

@@ -9,6 +9,15 @@
 
 using Value = std::variant<long, double, bool>;
 
-std::string value_to_string(Value value);
+namespace LoxValue {
+    std::string to_string(const Value &value);
+    void print(const Value &value);
+}
+
+Value operator-(const Value &value);
+Value operator-(const Value &a, const Value &b);
+Value operator+(const Value &a, const Value &b);
+Value operator*(const Value &a, const Value &b);
+Value operator/(const Value &a, const Value &b);
 
 #endif //CCLOX_VALUE_H
