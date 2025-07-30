@@ -2,15 +2,15 @@
 // Created by Yue Xue  on 11/16/24.
 //
 
-#include "vm.h"
+#include "vm.hpp"
 #include "libgen.h"
-#include "native.h"
+#include "native.hpp"
 
-#include "compiler.h"
-#include "io.h"
-#include "debug.h"
-#include "memory.h"
-#include "object.h"
+#include "compiler.hpp"
+#include "io.hpp"
+#include "debug.hpp"
+#include "memory.hpp"
+#include "object.hpp"
 #include "time.h"
 #include "math.h"
 

@@ -5,7 +5,7 @@
 #ifndef CLOX_CHUNK_H
 #define CLOX_CHUNK_H
 
-#include "value.h"
+#include "value.hpp"
 
 typedef enum OpCode{
     OP_RETURN,

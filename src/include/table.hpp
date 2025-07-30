@@ -1,7 +1,7 @@
 #ifndef CLOX_TABLE_H
 #define CLOX_TABLE_H
 
-#include "value.h"
+#include "value.hpp"
 
 #define MODULO(a, b) ((a) & ((b) - 1))
 

@@ -2,12 +2,12 @@
 // Created by Yue Xue  on 11/14/24.
 //
 
-#include "value.h"
+#include "value.hpp"
 
 #include <string.h>
 
-#include "memory.h"
-#include "object.h"
+#include "memory.hpp"
+#include "object.hpp"
 
 char *RED = "\033[31m";
 char *BOLD_RED = "\033[31;1m";
@@ -51,27 +51,27 @@ void print_value_with_color(Value value) {
             break;
         case VAL_REF: {
             switch (as_ref(value)->type) {
-                case OBJ_NATIVE:
-                case OBJ_NATIVE_METHOD:
-                case OBJ_NATIVE_OBJECT:
+                case ObjectType::NATIVE:
+                case ObjectType::NATIVE_METHOD:
+                case ObjectType::NATIVE_OBJECT:
                     break;
-                case OBJ_STRING:
+                case ObjectType::STRING:
                     start_color(MAGENTA);
                     break;
-                case OBJ_CLOSURE:
-                case OBJ_FUNCTION:
-                case OBJ_METHOD:
+                case ObjectType::CLOSURE:
+                case ObjectType::FUNCTION:
+                case ObjectType::METHOD:
                     start_color(BLUE);
                     break;
-                case OBJ_UPVALUE:
+                case ObjectType::UPVALUE:
                     break;
-                case OBJ_CLASS:
-                case OBJ_MODULE:
+                case ObjectType::CLASS:
+                case ObjectType::MODULE:
                     start_color(BOLD_BLUE);
                     break;
-                case OBJ_INSTANCE:
-                case OBJ_ARRAY:
-                case OBJ_MAP:
+                case ObjectType::INSTANCE:
+                case ObjectType::ARRAY:
+                case ObjectType::MAP:
                     start_color(BOLD_CYAN);
                     break;
             }
@@ -137,7 +137,7 @@ bool object_equal(Object *a, Object *b) {
         return false;
     }
     switch (a->type) {
-        case OBJ_STRING: {
+        case ObjectType::STRING: {
             String *a_str = (String *) a;
             String *b_str = (String *) b;
             return a_str->length == b_str->length &&
@@ -152,14 +152,14 @@ static char *ref_to_chars(Value value, int *len) {
     char *buffer = NULL;
     ObjectType type = as_ref(value)->type;
     switch (type) {
-        case OBJ_STRING: {
+        case ObjectType::STRING : {
             String *str = as_string(value);
             buffer = malloc(str->length + 1);
             memcpy(buffer, str->chars, str->length + 1);
             *len = str->length;
             break;
         }
-        case OBJ_CLOSURE: {
+        case ObjectType::CLOSURE: {
             LoxFunction *fun = as_closure(value)->function;
             Closure *closure = as_closure(value);
             if (fun->type == TYPE_MAIN) {
@@ -171,10 +171,10 @@ static char *ref_to_chars(Value value, int *len) {
             }
             break;
         }
-        case OBJ_NATIVE:
+        case ObjectType::NATIVE:
             *len = asprintf(&buffer, "<native fn: %s>", as_native(value)->name->chars);
             break;
-        case OBJ_FUNCTION: {
+        case ObjectType::FUNCTION: {
             LoxFunction *fun = as_function(value);
             if (fun->type == TYPE_MAIN) {
                 *len = asprintf(&buffer, "<proto: main>");
@@ -185,46 +185,46 @@ static char *ref_to_chars(Value value, int *len) {
             }
             break;
         }
-        case OBJ_UPVALUE:
+        case ObjectType::UPVALUE:
             *len = asprintf(&buffer, "<upvalue>");
             break;
-        case OBJ_CLASS: {
+        case ObjectType::CLASS: {
             Class *class = as_class(value);
             *len = asprintf(&buffer, "<cls: %s>", class->name->chars);
             break;
         }
-        case OBJ_INSTANCE: {
+        case ObjectType::INSTANCE: {
             Instance *instance = as_instance(value);
             if (instance->class != NULL) {
                 *len = asprintf(&buffer, "<obj: %s>", instance->class->name->chars);
             }
             break;
         }
-        case OBJ_METHOD: {
+        case ObjectType::METHOD: {
             Method *method = as_method(value);
             *len = asprintf(&buffer, "<mthd: %s>", method->closure->function->name->chars);
             break;
         }
-        case OBJ_ARRAY: {
+        case ObjectType::ARRAY: {
             Array *array = as_array(value);
             *len = asprintf(&buffer, "<array: %d>", array->length);
             break;
         }
-        case OBJ_MODULE: {
+        case ObjectType::MODULE: {
             char *filename = get_filename(as_module(value)->path->chars);
             *len = asprintf(&buffer, "<mod: %s>", filename);
             break;
         }
-        case OBJ_NATIVE_OBJECT: {
+        case ObjectType::NATIVE_OBJECT: {
             *len = asprintf(&buffer, "<native obj>");
             break;
         }
-        case OBJ_MAP: {
+        case ObjectType::MAP: {
             Map *map = as_map(value);
             *len = asprintf(&buffer, "<map: %d/%d>", map->active_count, map->capacity);
             break;
         }
-        case OBJ_NATIVE_METHOD: {
+        case ObjectType::NATIVE_METHOD: {
             NativeMethod *method = as_native_method(value);
             *len = asprintf(&buffer, "<native mthd: %s>", method->fun->name->chars);
             break;

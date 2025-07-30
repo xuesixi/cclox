@@ -6,7 +6,7 @@
 #define CLOX_COMPILER_H
 
 // #include "chunk.h"
-#include "object.h"
+#include "object.hpp"
 
 LoxFunction *compile(const char* source);
 

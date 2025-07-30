@@ -7,7 +7,7 @@
 
 #define RUNTIME_ERROR_VA_BUF_LEN 256
 
-#include "object.h"
+#include "object.hpp"
 
 extern Class *array_class;
 extern Class *string_class;

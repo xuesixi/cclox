@@ -7,11 +7,11 @@
 #include <readline/history.h>
 #include "stdlib.h"
 #include <unistd.h>
-#include "memory.h"
-#include "native.h"
+#include "memory.hpp"
+#include "native.hpp"
 #include "string.h"
 #include "limits.h"
-#include "vm.h"
+#include "vm.hpp"
 
 #define REPL_FILE_NAME "LOX_REPL"
 

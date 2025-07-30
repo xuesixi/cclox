@@ -1,6 +1,6 @@
-#include "table.h"
+#include "table.hpp"
 
-#include "memory.h"
+#include "memory.hpp"
 #include "string.h"
 
 /**

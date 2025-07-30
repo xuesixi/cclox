@@ -2,10 +2,10 @@
 // Created by Yue Xue  on 11/14/24.
 //
 
-#include "chunk.h"
+#include "chunk.hpp"
 
-#include "vm.h"
-#include "memory.h"
+#include "vm.hpp"
+#include "memory.hpp"
 
 static void init_constant(Chunk *chunk) {
     add_constant(chunk, int_value(0));

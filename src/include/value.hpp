@@ -5,20 +5,23 @@
 #ifndef CLOX_VALUE_H
 #define CLOX_VALUE_H
 
-#include "common.h"
+#include "common.hpp"
 
 typedef struct Object Object;
 
-typedef enum {
+//typedef enum {
+//} ValueType;
+
+enum class ValueType {
     VAL_NIL,
     VAL_FLOAT,
     VAL_BOOL,
     VAL_INT,
     VAL_ABSENCE,
     VAL_REF,
-} ValueType;
+};
 
-typedef struct Value{
+struct Value{
     union {
         double decimal;
         int integer;
@@ -26,13 +29,13 @@ typedef struct Value{
         Object *reference;
     } as;
     ValueType type;
-} Value;
+};
 
-typedef struct ValueArray{
+struct ValueArray{
     int capacity;
     int count;
     Value *values;
-} ValueArray;
+};
 
 void init_ValueArray(ValueArray *array);
 
@@ -65,6 +68,11 @@ char *value_to_chars(Value value, int *len);
 #define ref_value(v) ((Value) {.type = VAL_REF, .as = {.reference = (v)}})
 #define ref_value_cast(v) ref_value((Object *)(v))
 #define absence_value() ((Value) {.type = VAL_ABSENCE, .as = {}})
+
+template <ValueType T>
+bool is(Value value) {
+    return value.type == T;
+}
 
 bool value_equal(Value a, Value b);
 bool object_equal(Object *a, Object *b);

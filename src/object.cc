@@ -1,9 +1,9 @@
-#include "object.h"
+#include "object.hpp"
 
 #include <string.h>
 
-#include "memory.h"
-#include "vm.h"
+#include "memory.hpp"
+#include "vm.hpp"
 
 /**
  * 使用指定的 src 产生一个 String。

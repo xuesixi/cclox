@@ -2,12 +2,12 @@
 // Created by Yue Xue  on 11/14/24.
 //
 
-#include "memory.h"
-#include "native.h"
-#include "compiler.h"
+#include "memory.hpp"
+#include "native.hpp"
+#include "compiler.hpp"
 
 #include "assert.h"
-#include "vm.h"
+#include "vm.hpp"
 
 bool gc_enabled = false;
 

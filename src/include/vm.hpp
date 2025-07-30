@@ -5,8 +5,8 @@
 #ifndef CLOX_VM_H
 #define CLOX_VM_H
 
-#include "table.h"
-#include "object.h"
+#include "table.hpp"
+#include "object.hpp"
 
 typedef struct CallFrame {
     Closure *closure;

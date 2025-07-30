@@ -9,14 +9,14 @@
  * 
  * */
 
-#include "compiler.h"
-#include "memory.h"
-#include "object.h"
-#include "scanner.h"
-#include "table.h"
-#include "string.h"
-#include "stdlib.h"
-#include "debug.h"
+#include "compiler.hpp"
+#include "memory.hpp"
+#include "object.hpp"
+#include "scanner.hpp"
+#include "table.hpp"
+#include <cstring>
+#include <cstdlib>
+#include "debug.hpp"
 
 typedef struct Parser {
     Token previous;
@@ -89,7 +89,7 @@ typedef struct Scope {
 
 Parser parser;
 Scope *current_scope;
-ClassScope *current_class = NULL;
+ClassScope *current_class = nullptr;
 
 static Token literal_token(const char *text);
 
@@ -312,11 +312,11 @@ void mark_compiler_roots() {
 
 static void array_literal(bool can_assign) {
 //    (void ) can_assign;
-    parse_precedence(PREC_COMMA + 1);
+    parse_precedence(static_cast<Precedence>(PREC_COMMA + 1));
     (void) can_assign;
     int length = 2;
     while (!check(TOKEN_EOF) && match(TOKEN_COMMA)) {
-        parse_precedence(PREC_COMMA + 1);
+        parse_precedence(static_cast<Precedence>(PREC_COMMA + 1));
         length ++;
     }
     emit_u8_u8(OP_MAKE_ARRAY, length);

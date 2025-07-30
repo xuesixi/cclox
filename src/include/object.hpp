@@ -3,25 +3,25 @@
 #define CLOX_OBJECT_H
 #define NATIVE_OBJECT_VALUE_SIZE 4
 
-#include "value.h"
-#include "chunk.h"
-#include "table.h"
+#include "value.hpp"
+#include "chunk.hpp"
+#include "table.hpp"
 
-typedef enum {
-  OBJ_STRING,
-  OBJ_FUNCTION,
-  OBJ_NATIVE,
-  OBJ_CLOSURE,
-  OBJ_UPVALUE,
-  OBJ_CLASS,
-  OBJ_INSTANCE,
-  OBJ_METHOD,
-  OBJ_ARRAY,
-  OBJ_MODULE,
-  OBJ_NATIVE_OBJECT,
-  OBJ_NATIVE_METHOD,
-  OBJ_MAP,
-} ObjectType;
+enum class ObjectType{
+  STRING,
+  FUNCTION,
+  NATIVE,
+  CLOSURE,
+  UPVALUE,
+  CLASS,
+  INSTANCE,
+  METHOD,
+  ARRAY,
+  MODULE,
+  NATIVE_OBJECT,
+  NATIVE_METHOD,
+  MAP,
+};
 
 typedef enum NativeObjectType {
     NativeRangeIter,
@@ -29,11 +29,11 @@ typedef enum NativeObjectType {
     NativeMapIter
 } NativeObjectType;
 
-typedef struct Object{
+struct Object{
     ObjectType type;
     Object *next;
     bool is_marked;
-} Object;
+};
 
 typedef struct Module {
     Object object;

@@ -2,8 +2,8 @@
 // Created by Yue Xue  on 11/17/24.
 //
 
-#include "scanner.h"
-#include "common.h"
+#include "scanner.hpp"
+#include "common.hpp"
 #include "string.h"
 
 typedef struct {

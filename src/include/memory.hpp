@@ -5,7 +5,7 @@
 #ifndef CLOX_MEMORY_H
 #define CLOX_MEMORY_H
 
-#include "object.h"
+#include "object.hpp"
 #include "stdlib.h"
 
 #define INITIAL_GC_SIZE 1024

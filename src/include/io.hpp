@@ -5,7 +5,7 @@
 #ifndef CLOX_IO_H
 #define CLOX_IO_H
 
-#include "object.h"
+#include "object.hpp"
 
 
 void write_function(FILE *file, LoxFunction *function);

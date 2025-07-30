@@ -2,8 +2,8 @@
 // Created by Yue Xue  on 11/14/24.
 //
 
-#include "debug.h"
-#include "object.h"
+#include "debug.hpp"
+#include "object.hpp"
 
 
 /**

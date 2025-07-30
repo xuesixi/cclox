@@ -2,12 +2,12 @@
 // Created by Yue Xue  on 12/23/24.
 //
 
-#include "native.h"
-#include "object.h"
+#include "native.hpp"
+#include "object.hpp"
 #include "liblox_core.h"
 #include "liblox_iter.h"
 #include "liblox_data_structure.h"
-#include "vm.h"
+#include "vm.hpp"
 #include "stdlib.h"
 #include "string.h"
 #include "time.h"
