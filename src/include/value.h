@@ -9,4 +9,6 @@
 
 using Value = std::variant<long, double, bool>;
 
+std::string value_to_string(Value value);
+
 #endif //CCLOX_VALUE_H

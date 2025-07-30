@@ -49,9 +49,9 @@ public:
 
 private:
     size_t disassemble_instruction(size_t offset);
-    size_t instruction_0_operand(OpCode instruction, size_t offset);
-    size_t instruction_1_operand(OpCode instruction, size_t offset);
-    size_t instruction_2_operand(OpCode instruction, size_t offset);
+    size_t instruction_operand_0(OpCode instruction, size_t offset);
+    size_t instruction_operand_1(OpCode instruction, size_t offset);
+    size_t instruction_operand_2(OpCode instruction, size_t offset);
 
     std::vector<uint8_t> code;
     std::vector<Value> constants;

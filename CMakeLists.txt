@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 include(FetchContent)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 FetchContent_Declare(
         fmt
         GIT_REPOSITORY https://github.com/fmtlib/fmt.git
