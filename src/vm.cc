@@ -1,7 +1,6 @@
 #include "vm.h"
 #include "chunk.h"
 #include "value.h"
-#include <algorithm>
 #include <iostream>
 #include <variant>
 #include "common.h"

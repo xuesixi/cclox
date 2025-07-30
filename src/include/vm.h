@@ -2,7 +2,7 @@
 #ifndef CCLOX_VM_H
 #define CCLOX_VM_H
 
-#include "bytes.h"
+#include "cclox_util.h"
 #include "chunk.h"
 #include "value.h"
 #include <cstddef>
@@ -46,30 +46,34 @@ private:
         return value;
     }
 
+    // 读取下一个指令
     OpCode read_opcode() {
         return static_cast<OpCode>(chunk->code.at(pc++));
     }
+    // 读取下一个操作数
     uint8_t read_operand_1() {
         return chunk->code.at(pc++);
     }
+    // 读取后两个操作数，将它们解释为一个uint16
     uint16_t read_operand_2() {
         uint8_t low = chunk->code.at(pc++);
         uint8_t high = chunk->code.at(pc++);
         return u8_to_u16(low, high);
     }
+    // 读取下一个操作数作为索引，从常数池中读取对应的值
     Value read_constant_1() {
         uint8_t index = read_operand_1();
         return chunk->constants.at(index);
     }
+    // 读取下两个操作数作为uint16索引，从常数池中读取对应的值
     Value read_constant_2() {
         uint16_t index = read_operand_2();
         return chunk->constants.at(index);
     }
 
-
     std::shared_ptr<Chunk> chunk;
-    std::vector<Value> stack;
-    size_t pc; // index of the next-to-run instruction in the vector of bytecodes
+    std::vector<Value> stack; // 栈
+    size_t pc; // 下一个要执行的指令在字节码vector中的索引
 };
 
 #endif

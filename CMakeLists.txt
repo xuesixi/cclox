@@ -19,7 +19,7 @@ add_executable(cclox
         src/chunk.cc
         src/value.cc
         src/include/value.h
-        src/include/bytes.h
+        src/include/cclox_util.h
         src/include/error.h
         src/include/common.h
         src/include/disassembler.h

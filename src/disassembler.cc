@@ -5,6 +5,9 @@
 
 using std::cout;
 
+/**
+ * 指令和其字符串表达的映射
+ */
 const std::unordered_map<OpCode, std::string> opcode_names {
         {OpCode::Return, "Return" },
         {OpCode::LoadConstant8, "LoadConstant8"},
@@ -16,10 +19,14 @@ const std::unordered_map<OpCode, std::string> opcode_names {
         {OpCode::Divide, "Divide"},
 };
 
+// 四个空格。格式化的时候偶尔会用到。
 static std::string spaces_4("    ");
 
 void Disassembler::disassemble(const char *name) {
     cout << fmt::format("--------- start disassembling chunk: {} ---------\n", name);
+
+    // offset代表当前指令在chunk的字节码中的索引。有的指令有额外的参数（占用超过一个字节），
+    // 因此下一个指令的索引将由disassemble_instruction函数判断
     for (size_t offset = 0; offset < chunk->code.size();) {
         offset = disassemble_instruction(offset);
     }
