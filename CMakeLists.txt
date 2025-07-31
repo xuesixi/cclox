@@ -17,17 +17,22 @@ FetchContent_MakeAvailable(fmt)
 add_executable(cclox
         src/include/chunk.h
         src/chunk.cc
-        src/value.cc
         src/include/value.h
-        src/include/cclox_util.h
-        src/include/error.h
-        src/include/common.h
+        src/value.cc
         src/include/disassembler.h
         src/disassembler.cc
         src/include/vm_visualizer.h
         src/vm_visualizer.cc
         src/include/vm.h
         src/vm.cc
+        src/include/compiler.h
+        src/compiler.cc
+        src/include/scanner.h
+        src/scanner.cc
+        src/include/cclox_util.h
+        src/cclox_util.cc
+        src/include/error.h
+        src/include/common.h
         src/main.cc)
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 target_link_libraries(cclox m readline fmt)

@@ -2,8 +2,10 @@
 // Created by Yue Xue  on 7/30/25.
 //
 
+#include "cclox_util.h"
 #include "chunk.h"
 #include "vm.h"
+#include <error.h>
 #include <memory>
 #include "disassembler.h"
 
@@ -15,7 +17,11 @@ void repl() {
 }
 
 void run_file(const std::string &path) {
-    std::string content = std::move(read_file(path));
+    try {
+        std::string content = read_file(path);
+    } catch (InterpreterError::FileOpenFailureError &err) {
+        std::cerr << err.what() << std::endl;
+    }
 }
 
 void testVM() {

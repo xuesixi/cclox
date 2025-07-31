@@ -22,10 +22,7 @@ inline uint16_t u8_to_u16(uint8_t low, uint8_t high) {
     return (high << 8) | low;
 }
 
-std::string read_file(const std::string &path) {
-    std::ifstream ifs(path);
-    return std::string(std::istreambuf_iterator<char>(ifs),std::istreambuf_iterator<char>());
-}
-
+// 打开指定路径的文件，并将其全部内容返回为一个string。如果文件无法被打开，抛出runtime_err
+std::string read_file(const std::string &path);
 
 #endif //CCLOX_CCLOX_UTIL_H
