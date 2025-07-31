@@ -4,10 +4,12 @@
 
 #include "cclox_util.h"
 #include "chunk.h"
+#include <fmt/core.h>
 #include "vm.h"
 #include <error.h>
 #include <memory>
 #include "disassembler.h"
+#include "scanner.h"
 
 void repl() {
     std::string buffer;
@@ -57,7 +59,15 @@ void testVM() {
     vm.interpret(chunk);
 }
 
-int main(int argc, const char **args) {
+void test_scanner(const std::string &path) {
+    Scanner scanner(read_file(path));
+    while (scanner.has_more()) {
+        Token token = scanner.scan_token();
+        std::cout << token.to_string() << std::endl;
+    }
+}
+
+void go(int argc, const char **args) {
     if (argc == 1) {
         repl();
     } else if (argc == 2) {
@@ -65,4 +75,8 @@ int main(int argc, const char **args) {
     } else {
         std::cerr << "error: expect zero or more arguments\n";
     }
+}
+
+int main(int argc, const char **args) {
+    test_scanner("/Users/yuexue/Codes/try/cclox/build/hello.lox");
 }

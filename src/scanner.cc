@@ -1,15 +1,89 @@
 #include "scanner.h"
-#include <algorithm>
-#include <string>
+#include <unordered_map>
+#include <fmt/core.h>
+
+static std::unordered_map<std::string, TokenType> keyword_map{
+        {"and", TokenType::AND},
+        {"class", TokenType::CLASS},
+        {"else", TokenType::ELSE},
+        {"false", TokenType::FALSE},
+        {"for", TokenType::FOR},
+        {"fun", TokenType::FUN},
+        {"if", TokenType::IF},
+        {"nil", TokenType::NIL},
+        {"or", TokenType::OR},
+        {"print", TokenType::PRINT},
+        {"return", TokenType::RETURN},
+        {"super", TokenType::SUPER},
+        {"this", TokenType::THIS},
+        {"true", TokenType::TRUE},
+        {"var", TokenType::VAR},
+        {"while", TokenType::WHILE}
+};
+
+TokenType Scanner::get_identifier_type() {
+    std::string identifier = text.substr(start_index, next_index - start_index);
+    auto found = keyword_map.find(identifier);
+    if (found != keyword_map.end()) {
+        return found->second;
+    } else {
+        return TokenType::IDENTIFIER;
+    }
+}
+
+Token Scanner::scan_string() {
+    while (!is_at_end() && peek_next() != '"') {
+        if (peek_next() == '\n') {
+            curr_line ++;
+        }
+        advance();
+    }
+    if (is_at_end()) {
+        return error_token("unterminated string");
+    }
+    advance();
+    return make_token(TokenType::STRING);
+}
+
+Token Scanner::scan_number() {
+    while (!is_at_end() && isdigit(peek_next())) {
+        advance();
+    }
+    if (is_at_end() || peek_next() != '.') {
+        return make_token(TokenType::INTEGER);
+    }
+
+    advance(); // 能运行到这里，说明下一个字符是小数点，消费之。
+
+    while (!is_at_end() && isdigit(peek_next())) {
+        advance();
+    }
+    return make_token(TokenType::FLOAT);
+}
+
+Token Scanner::scan_identifier() {
+    while (!is_at_end() && is_alpha_or_underscore(peek_next())) {
+       advance();
+    }
+    return make_token(get_identifier_type());
+}
 
 Token Scanner::scan_token() {
     while (true) {
-        start_index = next_index;
         skip_whitespace();
+        start_index = next_index;
         if (is_at_end()) {
             return make_token(TokenType::FILE_END);
         }
-        switch (advance()) {
+        char c = advance();
+
+        if (isdigit(c)) {
+            return scan_number();
+        } else if (isalpha(c) || c == '_') {
+            return scan_identifier();
+        }
+
+        switch (c) {
             case '(': return make_token(TokenType::LEFT_PAREN);
             case ')': return make_token(TokenType::RIGHT_PAREN);
             case '{': return make_token(TokenType::LEFT_BRACE);
@@ -37,8 +111,14 @@ Token Scanner::scan_token() {
                 if (match('=')) return make_token(TokenType::LESS_EQUAL);
                 else return make_token(TokenType::LESS);
             }
+            case '"':
+                return scan_string();
         }
     }
+}
+
+std::string Token::to_string() {
+    return fmt::format("line: {}, token: {}", line, lexeme);
 }
 
 void Scanner::skip_whitespace() {

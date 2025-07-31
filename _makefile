@@ -1,4 +1,5 @@
-CFLAGS = -Wall -Wextra 
+# 这是clox的手写的makefile，与cclox无关
+CFLAGS = -Wall -Wextra
 LINK_FLAGS = -l readline -l m
 SRC = chunk.c compiler.c debug.c io.c main.c memory.c object.c scanner.c table.c value.c vm.c native.c
 OBJ = $(SRC:.c=.o)
