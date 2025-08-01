@@ -18,11 +18,13 @@ InterpreterResult VM::run() {
     Disassembler disass(chunk);
 
     #ifdef DEBUG_TRACE_EXECUTION
+        // 先把整个chunk反汇编一次，输出其结果
         disass.disassemble("test chunk");
     #endif
 
     while (true) {
         #ifdef DEBUG_TRACE_EXECUTION
+            // 运行一条指令之前，再输出一次栈的样子和指令的信息，方便一步步看到整个运行的过程
             Visual::show_stack(*this);
             disass.disassemble_instruction(pc);
 

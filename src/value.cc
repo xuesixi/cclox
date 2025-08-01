@@ -44,10 +44,14 @@ Value operator+(const Value &left, const Value &right) {
         using B = std::decay_t<decltype(b)>;
 
         if constexpr (std::is_same_v<A, bool> || std::is_same_v<B, bool>) {
+            // 如果双方有一个是bool类型，那么报错。bool不支持加法
             throw LoxError::TypeError(fmt::format("bool does not support addition"));
         } else if constexpr (std::is_same_v<A, B>) {
+            // 如果类型相同，直接进行运算
             return Value {a + b};
         } else if constexpr (std::is_arithmetic_v<A> && std::is_arithmetic_v<B>) {
+            // 如果双方都是可运算类型，（实际上就是long和double的混合），那么先转化为double，再运算
+            // 值得注意的是，这里可能会丢失精度。
             return Value {static_cast<double>(a) + static_cast<double>(b)};
         } else {
             throw LoxTypeError(fmt::format("the values [{} and {}] do not support addition", a, b));

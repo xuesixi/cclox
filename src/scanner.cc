@@ -69,51 +69,53 @@ Token Scanner::scan_identifier() {
 }
 
 Token Scanner::scan_token() {
-    while (true) {
-        skip_whitespace();
-        start_index = next_index;
-        if (is_at_end()) {
-            return make_token(TokenType::FILE_END);
-        }
-        char c = advance();
+    skip_whitespace();
+    start_index = next_index;
+    if (is_at_end()) {
+        return make_token(TokenType::FILE_END);
+    }
+    char c = advance();
 
-        if (isdigit(c)) {
-            return scan_number();
-        } else if (isalpha(c) || c == '_') {
-            return scan_identifier();
-        }
+    if (isdigit(c)) {
+        // 处理数字
+        return scan_number();
+    } else if (isalpha(c) || c == '_') {
+        // 标识符
+        return scan_identifier();
+    }
 
-        switch (c) {
-            case '(': return make_token(TokenType::LEFT_PAREN);
-            case ')': return make_token(TokenType::RIGHT_PAREN);
-            case '{': return make_token(TokenType::LEFT_BRACE);
-            case '}': return make_token(TokenType::RIGHT_BRACE);
-            case ';': return make_token(TokenType::SEMICOLON);
-            case ',': return make_token(TokenType::COMMA);
-            case '.': return make_token(TokenType::DOT);
-            case '-': return make_token(TokenType::MINUS);
-            case '+': return make_token(TokenType::PLUS);
-            case '/': return make_token(TokenType::SLASH);
-            case '*': return make_token(TokenType::STAR);
-            case '!': {
-                if (match('=')) return make_token(TokenType::BANG_EQUAL);
-                else return make_token(TokenType::BANG);
-            }
-            case '=': {
-                if (match('=')) return make_token(TokenType::EQUAL_EQUAL);
-                else return make_token(TokenType::EQUAL);
-            }
-            case '>': {
-                if (match('=')) return make_token(TokenType::GREATER_EQUAL);
-                else return make_token(TokenType::GREATER);
-            }
-            case '<': {
-                if (match('=')) return make_token(TokenType::LESS_EQUAL);
-                else return make_token(TokenType::LESS);
-            }
-            case '"':
-                return scan_string();
+    switch (c) {
+        case '(': return make_token(TokenType::LEFT_PAREN);
+        case ')': return make_token(TokenType::RIGHT_PAREN);
+        case '{': return make_token(TokenType::LEFT_BRACE);
+        case '}': return make_token(TokenType::RIGHT_BRACE);
+        case ';': return make_token(TokenType::SEMICOLON);
+        case ',': return make_token(TokenType::COMMA);
+        case '.': return make_token(TokenType::DOT);
+        case '-': return make_token(TokenType::MINUS);
+        case '+': return make_token(TokenType::PLUS);
+        case '/': return make_token(TokenType::SLASH);
+        case '*': return make_token(TokenType::STAR);
+        case '!': {
+            if (match('=')) return make_token(TokenType::BANG_EQUAL);
+            else return make_token(TokenType::BANG);
         }
+        case '=': {
+            if (match('=')) return make_token(TokenType::EQUAL_EQUAL);
+            else return make_token(TokenType::EQUAL);
+        }
+        case '>': {
+            if (match('=')) return make_token(TokenType::GREATER_EQUAL);
+            else return make_token(TokenType::GREATER);
+        }
+        case '<': {
+            if (match('=')) return make_token(TokenType::LESS_EQUAL);
+            else return make_token(TokenType::LESS);
+        }
+        case '"': // 处理字符串
+            return scan_string();
+        default:
+            return error_token("unknown character");
     }
 }
 
