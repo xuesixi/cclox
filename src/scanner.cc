@@ -72,7 +72,7 @@ Token Scanner::scan_token() {
     skip_whitespace();
     start_index = next_index;
     if (is_at_end()) {
-        return make_token(TokenType::FILE_END);
+        return make_token(TokenType::END_OF_FILE);
     }
     char c = advance();
 
@@ -149,7 +149,7 @@ void Scanner::skip_whitespace() {
                     // 如果遇到了换行符，本循环结束。在下一次的外层循环中，进入换行符的case
                     advance();
                 }
-
+                break;
             } else {
                 return;
             }

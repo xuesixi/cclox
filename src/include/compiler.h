@@ -29,7 +29,7 @@ class Compiler;
 class Compiler {
 public:
 //    explicit Compiler();
-    std::shared_ptr<Chunk> compile(std::string &source);
+    std::shared_ptr<Chunk> compile(std::string &&source);
 
 private:
     /**
@@ -56,10 +56,18 @@ private:
     }
 
     /**
-     * 将目标值置入常数池中，并将其索引作为操作数写入字节码中
+     * 写入LoadConstant指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理uint16及以下的值，如果超出，则终止程序。
      */
-    void emit_constant(Value value) {
+    void emit_load_constant(Value value) {
         size_t index = current_chunk->add_constant(value);
+        if (within<uint8_t>(index)) {
+            emit_opcode(OpCode::LoadConstant8);
+        } else if (within<uint16_t>(index)) {
+            emit_opcode(OpCode::LoadConstant16);
+        } else {
+            error_at(curr, "constant pool overflow: too many constants!");
+            std::abort();
+        }
         emit_operand(index);
     }
 
@@ -118,6 +126,8 @@ private:
      * 在已知curr是一个二元操作符的时候调用。
      */
     void compile_binary();
+
+    void compile_literal();
 
     static ParseFn get_prefix(TokenType type);
     static ParseFn get_infix(TokenType type);

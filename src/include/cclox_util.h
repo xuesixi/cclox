@@ -28,6 +28,16 @@ bool within(size_t num) {
     return num <= std::numeric_limits<T>::max();
 }
 
+template <typename T>
+constexpr bool is_non_bool_arithmetic() {
+    return !std::is_same_v<T, bool> && std::is_arithmetic_v<T>;
+}
+
+template <typename T, typename U>
+constexpr bool are_non_bool_arithmetic() {
+    return is_non_bool_arithmetic<T>() && is_non_bool_arithmetic<U>();
+}
+
 // 打开指定路径的文件，并将其全部内容返回为一个string。如果文件无法被打开，抛出runtime_err
 std::string read_file(const std::string &path);
 

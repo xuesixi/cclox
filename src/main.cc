@@ -4,12 +4,11 @@
 
 #include "cclox_util.h"
 #include "chunk.h"
-#include <fmt/core.h>
 #include "vm.h"
+#include "scanner.h"
+#include <fmt/core.h>
 #include <error.h>
 #include <memory>
-#include "disassembler.h"
-#include "scanner.h"
 
 void repl() {
     std::string buffer;
@@ -19,44 +18,46 @@ void repl() {
 }
 
 void run_file(const std::string &path) {
+    VM vm;
     try {
-        std::string content = read_file(path);
+        std::string source = read_file(path);
+        vm.interpret(std::move(source));
     } catch (FileOpenFailureError &err) {
         std::cerr << err.what() << std::endl;
     }
 }
 
 void testVM() {
-    VM vm;
-    std::shared_ptr<Chunk> chunk = std::make_shared<Chunk>();
-
-    size_t index = chunk->add_constant(1);
-    chunk->write_opcode(OpCode::LoadConstant8, 123);
-    chunk->write_operand(index, 123);
-
-    index = chunk->add_constant(3);
-    chunk->write_opcode(OpCode::LoadConstant8, 123);
-    chunk->write_operand(index, 123);
-
-    chunk->write_opcode(OpCode::Add, 123);
-
-    index = chunk->add_constant(4);
-    chunk->write_opcode(OpCode::LoadConstant8, 124);
-    chunk->write_operand(index, 124);
-
-    index = chunk->add_constant(5);
-    chunk->write_opcode(OpCode::LoadConstant8, 124);
-    chunk->write_operand(index, 124);
-
-    chunk->write_opcode(OpCode::Multipy, 124);
-    chunk->write_opcode(OpCode::Subtract, 124);
-
-    chunk->write_opcode(OpCode::Return, 125);
-
-    // Disassembler disass(chunk);
-    // disass.disassemble("test chunk");
-
-    vm.interpret(chunk);
+//    VM vm;
+//    std::shared_ptr<Chunk> chunk = std::make_shared<Chunk>();
+//
+//    size_t index = chunk->add_constant(1);
+//    chunk->write_opcode(OpCode::LoadConstant8, 123);
+//    chunk->write_operand(index, 123);
+//
+//    index = chunk->add_constant(3);
+//    chunk->write_opcode(OpCode::LoadConstant8, 123);
+//    chunk->write_operand(index, 123);
+//
+//    chunk->write_opcode(OpCode::Add, 123);
+//
+//    index = chunk->add_constant(4);
+//    chunk->write_opcode(OpCode::LoadConstant8, 124);
+//    chunk->write_operand(index, 124);
+//
+//    index = chunk->add_constant(5);
+//    chunk->write_opcode(OpCode::LoadConstant8, 124);
+//    chunk->write_operand(index, 124);
+//
+//    chunk->write_opcode(OpCode::Multipy, 124);
+//    chunk->write_opcode(OpCode::Subtract, 124);
+//
+//    chunk->write_opcode(OpCode::Return, 125);
+//
+//    // Disassembler disass(chunk);
+//    // disass.disassemble("test chunk");
+//
+//    vm.interpret(chunk, <#initializer#>);
 }
 
 void test_scanner(const std::string &path) {
@@ -78,5 +79,5 @@ void go(int argc, const char **args) {
 }
 
 int main(int argc, const char **args) {
-    test_scanner("/Users/yuexue/Codes/try/cclox/build/hello.lox");
+    run_file("/Users/yuexue/Codes/try/cclox/build/hello.lox");
 }

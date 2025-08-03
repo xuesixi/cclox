@@ -24,7 +24,7 @@ enum class TokenType{
   PRINT, RETURN, SUPER, THIS,
   TRUE, VAR, WHILE,
 
-  ERROR, FILE_END // EOF被内置宏占用了
+  ERROR, END_OF_FILE // EOF被内置宏占用了
 };
 
 class Scanner;

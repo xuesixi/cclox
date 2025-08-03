@@ -3,9 +3,10 @@
 //
 
 #include "value.h"
+#include "error.h"
+#include "cclox_util.h"
 #include <iostream>
 #include <string>
-#include "error.h"
 #include <fmt/core.h>
 #include <type_traits>
 #include <variant>
@@ -38,23 +39,57 @@ Value operator-(const Value &value) {
     }
 }
 
+Value operator==(const Value &left, const Value &right) {
+    return std::visit([](auto &&a, auto &&b) -> Value {
+        using A = std::decay_t<decltype(a)>;
+        using B = std::decay_t<decltype(b)>;
+
+        if constexpr (std::is_same_v<A, B>) {
+            // todo: modification is needed when reference is supported
+            return a == b;
+        } else {
+            return false;
+        }
+    }, left, right);
+}
+
+Value operator>(const Value &left, const Value &right) {
+    return std::visit([](auto &&a, auto &&b) -> Value {
+        using A = std::decay_t<decltype(a)>;
+        using B = std::decay_t<decltype(b)>;
+
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            // todo: modification is needed when reference is supported
+            return a > b;
+        } else {
+            throw LoxTypeError("comparison is not supported for the given values");
+        }
+    }, left, right);
+}
+
+Value operator<(const Value &left, const Value &right) {
+    return std::visit([](auto &&a, auto &&b) -> Value {
+        using A = std::decay_t<decltype(a)>;
+        using B = std::decay_t<decltype(b)>;
+
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            // todo: modification is needed when reference is supported
+            return a < b;
+        } else {
+            throw LoxTypeError("comparison is not supported for the given values");
+        }
+    }, left, right);
+}
+
 Value operator+(const Value &left, const Value &right) {
     return std::visit([](auto &&a, auto &&b) -> Value {
         using A = std::decay_t<decltype(a)>;
         using B = std::decay_t<decltype(b)>;
 
-        if constexpr (std::is_same_v<A, bool> || std::is_same_v<B, bool>) {
-            // 如果双方有一个是bool类型，那么报错。bool不支持加法
-            throw LoxTypeError(fmt::format("bool does not support addition"));
-        } else if constexpr (std::is_same_v<A, B>) {
-            // 如果类型相同，直接进行运算
-            return Value {a + b};
-        } else if constexpr (std::is_arithmetic_v<A> && std::is_arithmetic_v<B>) {
-            // 如果双方都是可运算类型，（实际上就是long和double的混合），那么先转化为double，再运算
-            // 值得注意的是，这里可能会丢失精度。
-            return Value {static_cast<double>(a) + static_cast<double>(b)};
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            return a + b;
         } else {
-            throw LoxTypeError(fmt::format("the values [{} and {}] do not support addition", a, b));
+            throw LoxTypeError(fmt::format("the values do not support addition"));
         }
 
     }, left, right);
@@ -65,14 +100,10 @@ Value operator-(const Value &left, const Value &right) {
         using A = std::decay_t<decltype(a)>;
         using B = std::decay_t<decltype(b)>;
 
-        if constexpr (std::is_same_v<A, bool> || std::is_same_v<B, bool>) {
-            throw LoxTypeError(fmt::format("bool does not support substraction"));
-        } else if constexpr (std::is_same_v<A, B>) {
-            return Value {a - b};
-        } else if constexpr (std::is_arithmetic_v<A> && std::is_arithmetic_v<B>) {
-            return Value {static_cast<double>(a) - static_cast<double>(b)};
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            return a - b;
         } else {
-            throw LoxTypeError(fmt::format("the values do not support substraction"));
+            throw LoxTypeError(fmt::format("the values do not support subtraction"));
         }
     }, left, right);
 }
@@ -82,13 +113,9 @@ Value operator*(const Value &left, const Value &right) {
         using A = std::decay_t<decltype(a)>;
         using B = std::decay_t<decltype(b)>;
 
-        if constexpr (std::is_same_v<A, bool> || std::is_same_v<B, bool>) {
-            throw LoxTypeError(fmt::format("bool does not support multiplication"));
-        } else if constexpr (std::is_same_v<A, B>) {
-            return Value {a * b};
-        } else if constexpr (std::is_arithmetic_v<A> && std::is_arithmetic_v<B>) {
-            return Value {static_cast<double>(a) * static_cast<double>(b)};
-        } else {
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            return a * b;
+        }  else {
             throw LoxTypeError(fmt::format("the values do not support multiplication"));
         }
     }, left, right);
@@ -99,12 +126,8 @@ Value operator/(const Value &left, const Value &right) {
         using A = std::decay_t<decltype(a)>;
         using B = std::decay_t<decltype(b)>;
 
-        if constexpr (std::is_same_v<A, bool> || std::is_same_v<B, bool>) {
-            throw LoxTypeError(fmt::format("bool does not support division"));
-        } else if constexpr (std::is_same_v<A, B>) {
-            return Value {a / b};
-        } else if constexpr (std::is_arithmetic_v<A> && std::is_arithmetic_v<B>) {
-            return Value {static_cast<double>(a) / static_cast<double>(b)};
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            return a / b;
         } else {
             throw LoxTypeError(fmt::format("the values do not support division"));
         }

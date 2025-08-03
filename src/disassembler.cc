@@ -12,11 +12,18 @@ const std::unordered_map<OpCode, std::string> opcode_names {
         {OpCode::Return, "Return" },
         {OpCode::LoadConstant8, "LoadConstant8"},
         {OpCode::LoadConstant16, "LoadConstant16"},
-        {OpCode::Negate, "Negate"},
-        {OpCode::Add, "Add"},
-        {OpCode::Subtract, "Subtract"},
-        {OpCode::Multipy, "Multipy"},
-        {OpCode::Divide, "Divide"},
+        {OpCode::Negate,         "Negate"},
+        {OpCode::Add,            "Add"},
+        {OpCode::Subtract,       "Subtract"},
+        {OpCode::Multipy,        "Multipy"},
+        {OpCode::Divide,         "Divide"},
+        {OpCode::LoadNil,        "LoadNil"},
+        {OpCode::LoadTrue,       "LoadTrue"},
+        {OpCode::LoadFalse,      "LoadFalse"},
+        {OpCode::Not,            "Not"},
+        {OpCode::Less,           "Less"},
+        {OpCode::Greater, "Greater"},
+        {OpCode::Equal, "Equal"}
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -51,14 +58,17 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::LoadConstant16:
             return instruction_operand_2(instruction, offset);
         case OpCode::Negate:
-            return instruction_operand_0(instruction, offset);
         case OpCode::Add:
-            return instruction_operand_0(instruction, offset);
         case OpCode::Subtract:
-            return instruction_operand_0(instruction, offset);
         case OpCode::Multipy:
-            return instruction_operand_0(instruction, offset);
         case OpCode::Divide:
+        case OpCode::LoadNil:
+        case OpCode::LoadTrue:
+        case OpCode::LoadFalse:
+        case OpCode::Less:
+        case OpCode::Greater:
+        case OpCode::Equal:
+        case OpCode::Not:
             return instruction_operand_0(instruction, offset);
         default:
             cout << fmt::format("unknown instruction: {}\n", offset);

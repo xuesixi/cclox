@@ -30,7 +30,7 @@ public:
     VM(VM &&other) = delete;
     VM & operator=(const VM &other) = delete;
     VM & operator=(VM &&other) = delete;
-    InterpreterResult interpret(std::shared_ptr<Chunk> chunk);
+    InterpreterResult interpret(std::string &&source);
 
     friend void Visual::show_stack(VM &vm);
 private:

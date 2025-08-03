@@ -10,10 +10,6 @@
 #include <fmt/core.h>
 #include <string>
 
-inline void compile_error(const std::string &message) {
-    std::cerr << message << std::endl;
-}
-
 inline void implementation_error(const std::string &message) {
     std::cerr << fmt::format("there is an implementation: {}", message) << std::endl;
 }

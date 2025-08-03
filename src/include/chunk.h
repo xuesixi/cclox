@@ -24,6 +24,13 @@ enum class OpCode: uint8_t {
     Subtract,
     Multipy,
     Divide,
+    LoadNil,
+    LoadTrue,
+    LoadFalse,
+    Not,
+    Greater,
+    Less,
+    Equal,
 };
 
 class Chunk {
@@ -54,13 +61,12 @@ public:
             lines.push_back(line);
             lines.push_back(line);
         } else {
-            compile_error("constant pool overflow: too many constants!");
             std::abort();
         }
     }
 
     /**
-     * 向常数池中增加一个值，并返回其索引
+     * 向常数池中增加一个值，并返回其索引。该返回值可能大于uint8的极限。
      */
     size_t add_constant(Value value) {
         constants.push_back(value);

@@ -7,11 +7,15 @@
 #include <variant>
 #include <memory>
 
-using Value = std::variant<long, double, bool>;
+using Value = std::variant<long, double, bool, nullptr_t>;
+constexpr int s = sizeof(Value);
 
 namespace LoxValue {
     std::string to_string(const Value &value);
     void print(const Value &value);
+    inline bool to_bool(const Value &value) {
+        return !(std::holds_alternative<nullptr_t>(value) || (std::holds_alternative<bool>(value) && !std::get<bool>(value)));
+    }
 }
 
 
@@ -20,5 +24,8 @@ Value operator-(const Value &a, const Value &b);
 Value operator+(const Value &a, const Value &b);
 Value operator*(const Value &a, const Value &b);
 Value operator/(const Value &a, const Value &b);
+Value operator>(const Value &a, const Value &b);
+Value operator<(const Value &a, const Value &b);
+Value operator==(const Value &a, const Value &b);
 
 #endif //CCLOX_VALUE_H
