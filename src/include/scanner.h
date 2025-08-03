@@ -28,10 +28,18 @@ enum class TokenType{
 };
 
 class Scanner;
+class Compiler;
 
 class Token {
 public:
     friend class Scanner;
+    friend class Compiler;
+
+    /**
+     * 默认初始化，应该不会被用到？
+     */
+    Token(): lexeme(), type(TokenType::ERROR), line(-1) {};
+
     /**
      * token会持有自己的lexeme字符串。在构造时，其string参数需要是临时值，主要是text.substr()
      * */
@@ -101,7 +109,7 @@ private:
     }
 
     /*
-     * 当参数为空或者为0时，返回next_index所指的字符。其他参数值则返回相对于之的字符。
+     * 当参数为空或者为0时，返回next_index所指的字符。其他参数值则返回相对于之的字符。该函数不会进行边界检查。
      */
     char peek_next(size_t n = 0) {
         return text.at(next_index + n);
@@ -113,7 +121,7 @@ private:
     void skip_whitespace();
 
     /*
-     * 下面这个具体scan某个类型token的函数都会将next_index移动到下一个token的开头。
+     * 下面这几个具体scan某个类型token的函数都会将next_index移动到当前token结尾的后一个字符
      */
 
     /**
@@ -137,7 +145,7 @@ private:
     TokenType get_identifier_type();
 
     const std::string text;
-    size_t start_index; // 当前token的起始位置。当读取一个新的token时，会被赋值为curr-index
+    size_t start_index; // 当前token的起始位置。当读取一个新的token时，会被赋值为next_index
     size_t next_index; // 下一个扫描的字符位置。
     int curr_line;
 };

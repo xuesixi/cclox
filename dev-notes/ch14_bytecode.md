@@ -35,9 +35,9 @@ chunk类提供了一些方法来向其中写入数据，主要是
 ```c++
 void write_opcode(OpCode opcode, int line); // 向code中写入一个opcode
 size_t add_constant(Value value); // 向常数池中添加一个新的常数，并返回其索引
-void write_index(size_t index, int line); // 向code中写入一个索引。会自动处理uint8和uint16
+void write_operand(size_t index, int line); // 向code中写入一个索引。会自动处理uint8和uint16
 ```
-原书中`uint8`的索引，也就是说，常数池中最多只能存放256个常数，我觉得太少了，因此允许`uint16`的索引。`write_index()`函数会自动根据传入索引的大小，向`code`中写入一个字节（`uint8`）或者两个字节（`uint16`）来代表索引。如果超出`uint16`则出现编译错误（不太可能发生）。实际上我们还写了一些辅助函数来进行`uint8`和`uint16`之间的互相转化，具体细节可以自己去看。
+原书中`uint8`的索引，也就是说，常数池中最多只能存放256个常数，我觉得太少了，因此允许`uint16`的索引。`write_operand()`函数会自动根据传入索引的大小，向`code`中写入一个字节（`uint8`）或者两个字节（`uint16`）来代表索引。如果超出`uint16`则出现编译错误（不太可能发生）。实际上我们还写了一些辅助函数来进行`uint8`和`uint16`之间的互相转化，具体细节可以自己去看。
 
 ## disassembler
 

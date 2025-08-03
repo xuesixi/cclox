@@ -21,7 +21,7 @@ void repl() {
 void run_file(const std::string &path) {
     try {
         std::string content = read_file(path);
-    } catch (InterpreterError::FileOpenFailureError &err) {
+    } catch (FileOpenFailureError &err) {
         std::cerr << err.what() << std::endl;
     }
 }
@@ -32,21 +32,21 @@ void testVM() {
 
     size_t index = chunk->add_constant(1);
     chunk->write_opcode(OpCode::LoadConstant8, 123);
-    chunk->write_index(index, 123);
+    chunk->write_operand(index, 123);
 
     index = chunk->add_constant(3);
     chunk->write_opcode(OpCode::LoadConstant8, 123);
-    chunk->write_index(index, 123);
+    chunk->write_operand(index, 123);
 
     chunk->write_opcode(OpCode::Add, 123);
 
     index = chunk->add_constant(4);
     chunk->write_opcode(OpCode::LoadConstant8, 124);
-    chunk->write_index(index, 124);
+    chunk->write_operand(index, 124);
 
     index = chunk->add_constant(5);
     chunk->write_opcode(OpCode::LoadConstant8, 124);
-    chunk->write_index(index, 124);
+    chunk->write_operand(index, 124);
 
     chunk->write_opcode(OpCode::Multipy, 124);
     chunk->write_opcode(OpCode::Subtract, 124);

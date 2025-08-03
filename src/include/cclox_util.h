@@ -9,6 +9,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <limits>
 #include <tuple>
 
 inline std::pair<uint8_t, uint8_t> u16_to_u8(uint16_t num) {
@@ -20,6 +21,11 @@ inline std::pair<uint8_t, uint8_t> u16_to_u8(uint16_t num) {
 
 inline uint16_t u8_to_u16(uint8_t low, uint8_t high) {
     return (high << 8) | low;
+}
+
+template <typename T>
+bool within(size_t num) {
+    return num <= std::numeric_limits<T>::max();
 }
 
 // 打开指定路径的文件，并将其全部内容返回为一个string。如果文件无法被打开，抛出runtime_err

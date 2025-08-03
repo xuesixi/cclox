@@ -7,7 +7,6 @@
 
 #include <utility>
 #include <vector>
-#include <limits>
 #include "value.h"
 #include "cclox_util.h"
 #include "error.h"
@@ -32,23 +31,24 @@ public:
     friend class VM;
     friend class Disassembler;
 
+
     /**
      * 向code中写入一个新的指令，并记录其所在的行数
      */
-    void write_opcode(OpCode byte, int line) {
-        code.push_back(static_cast<uint8_t>(byte));
+    void write_opcode(OpCode opcode, int line) {
+        code.push_back(static_cast<uint8_t>(opcode));
         lines.push_back(line);
     }
 
     /**
-     * 向code中写入index所代表的字节。如果在uint8范围内，写入一个字节，如果超出此范围，但处在uint16范围内，写入两个字节。否则编译异常。
+     * 向code中写入operand所代表的字节。如果在uint8范围内，写入一个字节，如果超出此范围，但处在uint16范围内，写入两个字节。否则编译异常。
      */
-    void write_index(size_t index, int line) {
-        if (index <= std::numeric_limits<uint8_t>::max()) {
-            code.push_back(static_cast<uint8_t>(index));
+    void write_operand(size_t operand, int line) {
+        if (within<uint8_t>(operand)) {
+            code.push_back(static_cast<uint8_t>(operand));
             lines.push_back(line);
-        } else if (index <= std::numeric_limits<uint16_t>::max()){
-            auto [low, high] = u16_to_u8(index);
+        } else if (within<uint16_t>(operand)){
+            auto [low, high] = u16_to_u8(operand);
             code.push_back(low);
             code.push_back(high);
             lines.push_back(line);
