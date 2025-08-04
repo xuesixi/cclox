@@ -38,6 +38,8 @@ public:
      */
     size_t instruction_operand_2(OpCode instruction, size_t offset);
 
+    size_t instruction_load_immediate(OpCode instruction, size_t offset);
+
     void set_chunk(std::shared_ptr<Chunk> the_chunk) {
         this->chunk = the_chunk;
     }

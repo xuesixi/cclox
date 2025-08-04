@@ -21,11 +21,11 @@ InterpreterResult VM::interpret(std::string &&source) {
 }
 
 InterpreterResult VM::run() {
-    Disassembler disass(chunk);
+    Disassembler disassembler(chunk);
 
     #ifdef DEBUG_TRACE_EXECUTION
         // 先把整个chunk反汇编一次，输出其结果
-        disass.disassemble("test chunk");
+        disassembler.disassemble("test chunk");
     #endif
 
     try {
@@ -33,7 +33,7 @@ InterpreterResult VM::run() {
 #ifdef DEBUG_TRACE_EXECUTION
             // 运行一条指令之前，再输出一次栈的样子和指令的信息，方便一步步看到整个运行的过程
             Visual::show_stack(*this);
-            disass.disassemble_instruction(pc);
+            disassembler.disassemble_instruction(pc);
 
 #endif
 
@@ -50,12 +50,18 @@ InterpreterResult VM::run() {
                 }
                 case OpCode::LoadConstant8: {
                     Value value = read_constant_1();
-                    push(value);
+                    push(std::move(value));
                     break;
                 }
                 case OpCode::LoadConstant16: {
                     Value value = read_constant_2();
-                    push(value);
+                    push(std::move(value));
+                    break;
+                }
+                case OpCode::LoadImmediate: {
+                    uint8_t index = read_operand_1();
+                    Value value = Chunk::read_immediate(index);
+                    push(std::move(value));
                     break;
                 }
                 case OpCode::Negate: {

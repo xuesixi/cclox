@@ -8,10 +8,11 @@ using std::cout;
 /**
  * 指令和其字符串表达的映射
  */
-const std::unordered_map<OpCode, std::string> opcode_names {
-        {OpCode::Return, "Return" },
-        {OpCode::LoadConstant8, "LoadConstant8"},
+const std::unordered_map<OpCode, std::string> opcode_names{
+        {OpCode::Return,         "Return"},
+        {OpCode::LoadConstant8,  "LoadConstant8"},
         {OpCode::LoadConstant16, "LoadConstant16"},
+        {OpCode::LoadImmediate, "LoadImmediate"},
         {OpCode::Negate,         "Negate"},
         {OpCode::Add,            "Add"},
         {OpCode::Subtract,       "Subtract"},
@@ -55,6 +56,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_operand_0(instruction, offset);
         case OpCode::LoadConstant8:
             return instruction_operand_1(instruction, offset);
+        case OpCode::LoadImmediate:
+            return instruction_load_immediate(instruction, offset);
         case OpCode::LoadConstant16:
             return instruction_operand_2(instruction, offset);
         case OpCode::Negate:
@@ -86,6 +89,14 @@ size_t Disassembler::instruction_operand_1(OpCode instruction, size_t offset) {
     Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_string(value);
     cout << fmt::format("{:12} {}index {}, value {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    return offset + 2;
+}
+
+size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offset) {
+    size_t index = chunk->code.at(offset + 1);
+    Value value = Chunk::read_immediate(index);
+    std::string value_str = LoxValue::to_string(value);
+    cout << fmt::format("{:12} {} value {}\n", opcode_names.at(instruction), spaces_4, value_str);
     return offset + 2;
 }
 

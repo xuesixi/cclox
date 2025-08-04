@@ -15,6 +15,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fmt)
 
 add_executable(cclox
+        src/main.cc
+        src/include/error.h
+        src/include/common.h
         src/include/chunk.h
         src/chunk.cc
         src/include/value.h
@@ -31,9 +34,11 @@ add_executable(cclox
         src/scanner.cc
         src/include/cclox_util.h
         src/cclox_util.cc
-        src/include/error.h
-        src/include/common.h
-        src/main.cc)
+        src/object.cc
+        src/include/object.h
+        src/runtime.cc
+        src/include/runtime.h
+        src/include/objects/loxstring.h)
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 target_link_libraries(cclox m readline fmt)

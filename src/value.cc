@@ -3,6 +3,7 @@
 //
 
 #include "value.h"
+#include "objects/loxstring.h"
 #include "error.h"
 #include "cclox_util.h"
 #include <iostream>
@@ -12,16 +13,15 @@
 #include <variant>
 
 std::string LoxValue::to_string(const Value &value) {
-    return std::visit([](auto &&arg) {
-        return fmt::format("{}", arg);
-//        using T = std::decay_t<decltype(arg)>;
-//        if constexpr (std::is_same_v<long, T>) {
-//            return fmt::format("{}", arg);
-//        } else if constexpr (std::is_same_v<bool, T> ) {
-//            return fmt::format("{}", arg);
-//        } else if constexpr (std::is_same_v<double, T>) {
-//
-//        }
+    return std::visit([](auto &&arg) ->std::string{
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, LoxReference>) {
+            return arg->to_string();
+        } else if constexpr (std::is_same_v<T, nullptr_t>){
+            return "nil";
+        } else {
+            return fmt::format("{}", arg);
+        }
     }, value);
 }
 
@@ -45,8 +45,11 @@ Value operator==(const Value &left, const Value &right) {
         using B = std::decay_t<decltype(b)>;
 
         if constexpr (std::is_same_v<A, B>) {
-            // todo: modification is needed when reference is supported
-            return a == b;
+            if constexpr (std::is_same_v<A, LoxReference>) {
+                return *a == *b;
+            } else {
+                return a == b;
+            }
         } else {
             return false;
         }
@@ -59,7 +62,6 @@ Value operator>(const Value &left, const Value &right) {
         using B = std::decay_t<decltype(b)>;
 
         if constexpr (are_non_bool_arithmetic<A, B>()) {
-            // todo: modification is needed when reference is supported
             return a > b;
         } else {
             throw LoxTypeError("comparison is not supported for the given values");
@@ -73,7 +75,6 @@ Value operator<(const Value &left, const Value &right) {
         using B = std::decay_t<decltype(b)>;
 
         if constexpr (are_non_bool_arithmetic<A, B>()) {
-            // todo: modification is needed when reference is supported
             return a < b;
         } else {
             throw LoxTypeError("comparison is not supported for the given values");
@@ -88,6 +89,15 @@ Value operator+(const Value &left, const Value &right) {
 
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a + b;
+        } else if constexpr (are_same<A, B, LoxReference>()) {
+            // LoxString是唯一支持+的引用类型
+            auto *a_str = LoxValue::to_reference<LoxString>(a);
+            auto *b_str = LoxValue::to_reference<LoxString>(b);
+            if (a_str && b_str) {
+                return LoxObject::allocate<LoxString>(*a_str + *b_str);
+            } else {
+                throw LoxTypeError(fmt::format("the values do not support addition"));
+            }
         } else {
             throw LoxTypeError(fmt::format("the values do not support addition"));
         }

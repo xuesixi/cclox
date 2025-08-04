@@ -19,6 +19,7 @@ enum class OpCode: uint8_t {
     Return,
     LoadConstant8,
     LoadConstant16,
+    LoadImmediate,
     Negate,
     Add,
     Subtract,
@@ -68,10 +69,21 @@ public:
     /**
      * 向常数池中增加一个值，并返回其索引。该返回值可能大于uint8的极限。
      */
-    size_t add_constant(Value value) {
-        constants.push_back(value);
+    size_t add_constant(Value &&value) {
+        constants.push_back(std::move(value));
         return constants.size() - 1;
     }
+
+    /**
+     * 对于一个Value，如果它属于立即数，返回其立即数索引，否则返回255
+     */
+    static uint8_t to_immediate(Value value);
+
+    /**
+     * 给定一个立即数索引，返回其对应的Value
+     */
+    static Value read_immediate(uint8_t index);
+
 
 private:
     // 字节码

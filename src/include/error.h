@@ -12,6 +12,7 @@
 
 inline void implementation_error(const std::string &message) {
     std::cerr << fmt::format("there is an implementation: {}", message) << std::endl;
+    std::abort();
 }
 
 class LoxError: public std::runtime_error {

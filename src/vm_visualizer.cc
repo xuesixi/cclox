@@ -1,12 +1,28 @@
 #include "vm_visualizer.h"
 #include "fmt/core.h"
 #include "value.h"
+#include "objects/loxstring.h"
 #include <iostream>
+
+// 为字符串前后加上引号
+std::string string_wrapper(std::string &&str) {
+    return "\"" + str + "\"";
+}
 
 void Visual::show_stack(VM &vm) {
     std::cout << "   ";
-    for (Value value: vm.stack) {
-        std::cout << fmt::format("[{}]", LoxValue::to_string(value));
+    for (const Value &value: vm.stack) {
+        if (std::holds_alternative<LoxReference>(value)) {
+
+            // 如果是字符串，在打印的时候，在前后加上引号
+            if (LoxValue::to_reference<LoxString>(value)) {
+                std::cout << fmt::format("[{}]", string_wrapper(LoxValue::to_string(value)));
+            } else {
+                std::cout << fmt::format("[{}]", LoxValue::to_string(value));
+            }
+        } else {
+            std::cout << fmt::format("[{}]", LoxValue::to_string(value));
+        }
     }
     std::cout << std::endl;
 }

@@ -1,4 +1,5 @@
 #include "compiler.h"
+#include "objects/loxstring.h"
 #include <string>
 #include <fmt/core.h>
 
@@ -59,18 +60,20 @@ std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
 Compiler::ParseFn Compiler::get_prefix(TokenType type) {
     switch (type) {
         case TokenType::LEFT_PAREN:
-            return &Compiler::compile_grouping;
+            return &Compiler::grouping_expr;
         case TokenType::MINUS:
         case TokenType::BANG:
-            return &Compiler::compile_unary;
+            return &Compiler::unary_expr;
         case TokenType::INTEGER:
-            return &Compiler::compile_integer;
+            return &Compiler::integer_expr;
         case TokenType::FLOAT:
-            return &Compiler::compile_float;
+            return &Compiler::float_expr;
         case TokenType::NIL:
         case TokenType::TRUE:
         case TokenType::FALSE:
-            return &Compiler::compile_literal;
+            return &Compiler::literal_expr;
+        case TokenType::STRING:
+            return &Compiler::string_expr;
         default:
             return nullptr;
     }
@@ -88,7 +91,7 @@ auto Compiler::get_infix(TokenType type) -> Compiler::ParseFn {
         case TokenType::BANG_EQUAL:
         case TokenType::LESS_EQUAL:
         case TokenType::GREATER_EQUAL:
-            return &Compiler::compile_binary;
+            return &Compiler::binary_expr;
         default:
             return nullptr;
     }
@@ -115,6 +118,7 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         case TokenType::FALSE:
         case TokenType::INTEGER:
         case TokenType::FLOAT:
+        case TokenType::STRING:
             return Precedence::PRIMARY;
         default:
             return Precedence::NONE;
@@ -149,26 +153,38 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
     }
 }
 
-void Compiler::compile_integer() {
+void Compiler::integer_expr() {
     long integer = std::stol(curr.lexeme);
-    emit_load_constant(integer);
+    uint8_t index = Chunk::to_immediate(integer);
+    if (index == 255) {
+        emit_load_constant(integer);
+    } else {
+        emit_opcode(OpCode::LoadImmediate);
+        emit_operand(index);
+    }
 }
 
-void Compiler::compile_float() {
+void Compiler::float_expr() {
     double decimal = std::stod(curr.lexeme);
-    emit_load_constant(decimal);
+    uint8_t index = Chunk::to_immediate(decimal);
+    if (index == 255) {
+        emit_load_constant(decimal);
+    } else {
+        emit_opcode(OpCode::LoadImmediate);
+        emit_operand(index);
+    }
 }
 
 void Compiler::compile_expression() {
     compile_precedence_at_least(Precedence::ASSIGNMENT);
 }
 
-void Compiler::compile_grouping() {
+void Compiler::grouping_expr() {
     compile_expression();
     consume(TokenType::RIGHT_PAREN, "expect ) after the expression");
 }
 
-void Compiler::compile_binary() {
+void Compiler::binary_expr() {
     TokenType type = curr.type;
     Precedence precedence = get_precedence(type);
     compile_precedence_at_least(get_higher_precedence(precedence));
@@ -214,7 +230,7 @@ void Compiler::compile_binary() {
     }
 }
 
-void Compiler::compile_literal() {
+void Compiler::literal_expr() {
     TokenType type = curr.type;
     switch (type) {
         case TokenType::NIL:
@@ -226,10 +242,17 @@ void Compiler::compile_literal() {
         case TokenType::FALSE:
             emit_opcode(OpCode::LoadFalse);
             break;
+        default:
+            FMT_ASSERT(false, "this line should be unreachable, but is actually reached");
     }
 }
 
-void Compiler::compile_unary() {
+void Compiler::string_expr() {
+    Value value = LoxObject::allocate<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
+    emit_load_constant(std::move(value));
+}
+
+void Compiler::unary_expr() {
     TokenType type = curr.type;
     compile_precedence_at_least(Precedence::UNARY);
     if (type == TokenType::MINUS) {

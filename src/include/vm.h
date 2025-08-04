@@ -37,8 +37,8 @@ private:
 
     InterpreterResult run();
 
-    void push(Value value) {
-        stack.push_back(value);
+    void push(Value &&value) {
+        stack.push_back(std::move(value));
     }
     Value pop() {
         Value value = stack.back();

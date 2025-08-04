@@ -58,8 +58,8 @@ private:
     /**
      * 写入LoadConstant指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理uint16及以下的值，如果超出，则终止程序。
      */
-    void emit_load_constant(Value value) {
-        size_t index = current_chunk->add_constant(value);
+    void emit_load_constant(Value &&value) {
+        size_t index = current_chunk->add_constant(std::move(value));
         if (within<uint8_t>(index)) {
             emit_opcode(OpCode::LoadConstant8);
         } else if (within<uint16_t>(index)) {
@@ -87,9 +87,8 @@ private:
      */
     void advance();
 
-
     /*
-     * 所有下面这些解析函数，在运行后，curr的token已经被解析，下一个待解析的token是next，因此，一般在调用后，会再调用advance()
+     * 所有下面这些表达式解析函数，在运行后，curr的token已经被解析，下一个待解析的token是next，因此，一般在调用后，会再调用advance()
      */
 
     /**
@@ -105,32 +104,51 @@ private:
     /**
      * 在已知curr是一个integer的时候调用
      */
-    void compile_integer();
+    void integer_expr();
 
     /**
      * 在已知curr是一个float的时候调用，解析之.
      */
-    void compile_float();
+    void float_expr();
 
     /**
      * 在已知curr是左括号的时候调用
      */
-    void compile_grouping();
+    void grouping_expr();
 
     /**
      * 在已知curr是一个单元操作符的时候调用。
      */
-    void compile_unary();
+    void unary_expr();
 
     /**
      * 在已知curr是一个二元操作符的时候调用。
      */
-    void compile_binary();
+    void binary_expr();
 
-    void compile_literal();
+    /**
+     * 在已知curr是nil，true，false的时候调用
+     */
+    void literal_expr();
 
+    /**
+     * 在已知curr是字符串的时候调用
+     */
+    void string_expr();
+
+    /**
+     * 获取一个token的前缀函数（该token作为一个表达式的第一个token时的解析函数）。如果该token不能作为表达式的第一个token，则返回nullptr
+     */
     static ParseFn get_prefix(TokenType type);
+
+    /**
+     * 获取一个token的中缀函数（该token用来连接两个表达式时的解析函数）。如果该token不能作为中缀，返回nullptr
+     */
     static ParseFn get_infix(TokenType type);
+
+    /**
+     * 返回该token作为中缀时的运算优先级。
+     */
     static Precedence get_precedence(TokenType type);
 
     std::unique_ptr<Scanner> scanner;
