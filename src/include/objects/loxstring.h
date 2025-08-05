@@ -7,6 +7,7 @@
 
 #include "object.h"
 
+
 class LoxString : public LoxObject {
 public:
     explicit LoxString(const std::string &content) : LoxObject(), str(content) {};
@@ -40,5 +41,14 @@ public:
 private:
     const std::string str;
 };
+
+namespace std {
+    template <>
+    class hash<LoxString> {
+        size_t operator()(const LoxString &s) {
+            return std::hash<std::string>()(s.to_string());
+        }
+    };
+}
 
 #endif //CCLOX_LOXSTRING_H

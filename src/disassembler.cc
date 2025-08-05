@@ -9,22 +9,26 @@ using std::cout;
  * 指令和其字符串表达的映射
  */
 const std::unordered_map<OpCode, std::string> opcode_names{
-        {OpCode::Return,         "Return"},
-        {OpCode::LoadConstant8,  "LoadConstant8"},
-        {OpCode::LoadConstant16, "LoadConstant16"},
+        {OpCode::Return,        "Return"},
+        {OpCode::LoadConstant,  "LoadConstant"},
+        {OpCode::LoadConstant2, "LoadConstant2"},
         {OpCode::LoadImmediate, "LoadImmediate"},
-        {OpCode::Negate,         "Negate"},
-        {OpCode::Add,            "Add"},
-        {OpCode::Subtract,       "Subtract"},
-        {OpCode::Multipy,        "Multipy"},
-        {OpCode::Divide,         "Divide"},
-        {OpCode::LoadNil,        "LoadNil"},
-        {OpCode::LoadTrue,       "LoadTrue"},
-        {OpCode::LoadFalse,      "LoadFalse"},
-        {OpCode::Not,            "Not"},
-        {OpCode::Less,           "Less"},
-        {OpCode::Greater, "Greater"},
-        {OpCode::Equal, "Equal"}
+        {OpCode::Negate,        "Negate"},
+        {OpCode::Add,           "Add"},
+        {OpCode::Subtract,      "Subtract"},
+        {OpCode::Multipy,       "Multipy"},
+        {OpCode::Divide,        "Divide"},
+        {OpCode::LoadNil,       "LoadNil"},
+        {OpCode::LoadTrue,      "LoadTrue"},
+        {OpCode::LoadFalse,     "LoadFalse"},
+        {OpCode::Not,           "Not"},
+        {OpCode::Less,          "Less"},
+        {OpCode::Greater,       "Greater"},
+        {OpCode::Equal,         "Equal"},
+        {OpCode::Print,         "Print"},
+        {OpCode::Pop,           "Pop"},
+        {OpCode::DefineGlobal,  "DefineGlobal"},
+        {OpCode::LoadGlobal, "LoadGlobal"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -52,14 +56,16 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
     }
 
     switch (instruction) {
-        case OpCode::Return:
-            return instruction_operand_0(instruction, offset);
-        case OpCode::LoadConstant8:
-            return instruction_operand_1(instruction, offset);
+        case OpCode::LoadConstant:
+            return instruction_constant_operand_1(instruction, offset);
+        case OpCode::LoadConstant2:
+            return instruction_constant_operand_2(instruction, offset);
         case OpCode::LoadImmediate:
             return instruction_load_immediate(instruction, offset);
-        case OpCode::LoadConstant16:
-            return instruction_operand_2(instruction, offset);
+        case OpCode::DefineGlobal:
+        case OpCode::LoadGlobal:
+            return instruction_identifier_operand_2(instruction, offset);
+        case OpCode::Return:
         case OpCode::Negate:
         case OpCode::Add:
         case OpCode::Subtract:
@@ -72,10 +78,12 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::Greater:
         case OpCode::Equal:
         case OpCode::Not:
+        case OpCode::Print:
+        case OpCode::Pop:
             return instruction_operand_0(instruction, offset);
-        default:
-            cout << fmt::format("unknown instruction: {}\n", offset);
-            return offset + 1;
+//        default:
+//            cout << fmt::format("unknown instruction: {}\n", offset);
+//            return offset + 1;
     }
 }
 
@@ -84,11 +92,11 @@ size_t Disassembler::instruction_operand_0(OpCode instruction, size_t offset) {
     return offset + 1;
 }
 
-size_t Disassembler::instruction_operand_1(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_string(value);
-    cout << fmt::format("{:12} {}index {}, value {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 2;
 }
 
@@ -96,15 +104,22 @@ size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offse
     size_t index = chunk->code.at(offset + 1);
     Value value = Chunk::read_immediate(index);
     std::string value_str = LoxValue::to_string(value);
-    cout << fmt::format("{:12} {} value {}\n", opcode_names.at(instruction), spaces_4, value_str);
+    cout << fmt::format("{:12} {} value: {}\n", opcode_names.at(instruction), spaces_4, value_str);
     return offset + 2;
 }
 
-size_t Disassembler::instruction_operand_2(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_constant_operand_2(OpCode instruction, size_t offset) {
     uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_string(value);
-    cout << fmt::format("{:12} {}index {}, value {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    return offset + 3;
+}
+
+size_t Disassembler::instruction_identifier_operand_2(OpCode instruction, size_t offset) {
+    uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = chunk->read_identifier(key);
+    cout << fmt::format("{:12} {}identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
 

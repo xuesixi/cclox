@@ -5,6 +5,7 @@
 #include "vm_visualizer.h"
 #include "compiler.h"
 #include <iostream>
+#include "objects/loxstring.h"
 #include <variant>
 
 VM::VM(): pc(0) {}
@@ -43,17 +44,16 @@ InterpreterResult VM::run() {
 
                 case OpCode::Return: {
                     Value v = pop();
-                    // LoxValue::print(v);
                     Visual::print_with_color(LoxValue::to_string(v), Color::YELLOW);
                     std::cout << std::endl;
                     return InterpreterResult::OK;
                 }
-                case OpCode::LoadConstant8: {
+                case OpCode::LoadConstant: {
                     Value value = read_constant_1();
                     push(std::move(value));
                     break;
                 }
-                case OpCode::LoadConstant16: {
+                case OpCode::LoadConstant2: {
                     Value value = read_constant_2();
                     push(std::move(value));
                     break;
@@ -128,7 +128,33 @@ InterpreterResult VM::run() {
                     push(a < b);
                     break;
                 }
-
+                case OpCode::Print: {
+                    Value v = pop();
+                    Visual::print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
+                    break;
+                }
+                case OpCode::Pop: {
+                    pop();
+                    break;
+                }
+                case OpCode::DefineGlobal: {
+                    Value value = pop();
+                    std::string key = read_identifier();
+                    globals[key] = value;
+                    break;
+                }
+                case OpCode::LoadGlobal: {
+                    std::string key = read_identifier();
+                    auto found = globals.find(key);
+                    if (found == globals.end()) {
+                        throw LoxNameError(fmt::format("the variable: {} is not found", key));
+                    } else {
+                        push(found->second);
+                    }
+                    break;
+                }
+                default:
+                    implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}", static_cast<uint8_t>(instruction)));
             }
         }
     } catch (LoxError &error) {

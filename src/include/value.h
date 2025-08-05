@@ -18,7 +18,7 @@ namespace LoxValue {
     }
 
     /**
-     * 将一个LoxReference动态转化为T类型的指针，如果失败，返回nullptr。
+     * 试图将一个LoxReference动态转化为T类型的指针，如果失败，返回nullptr。
      */
     template <typename T>
     T *to_reference(const LoxReference& ref) {
@@ -31,6 +31,15 @@ namespace LoxValue {
     template <typename T>
     T *to_reference(const Value &value) {
         return to_reference<T>(std::get<LoxReference >(value));
+    }
+
+    /**
+     * 将一个Value静态地转化为一个LoxObject的子类的shared_ptr。只有在确认该转化是正确的时候，才可以使用。
+     */
+    template <typename T>
+    std::shared_ptr<T> to_reference_unsafe(Value &value) {
+        static_assert(std::is_base_of_v<LoxObject, T>);
+        return std::static_pointer_cast<T>(std::get<LoxReference>(value));
     }
 }
 

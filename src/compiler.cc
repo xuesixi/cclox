@@ -20,7 +20,7 @@ void Compiler::error_at(const Token &token, const std::string &message) {
     has_error = true;
 }
 
-void Compiler::consume(TokenType type, const std::string &message) {
+void Compiler::consume(TokenType type = TokenType::SEMICOLON, const std::string &message = "expect a ';' to end the statement") {
     if (next.type == type) {
         advance();
     } else {
@@ -43,16 +43,18 @@ void Compiler::advance() {
 }
 
 std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
-    //todo
     scanner = std::make_unique<Scanner>(std::move(source));
-    current_chunk = std::make_shared<Chunk>();
+    chunk = std::make_shared<Chunk>();
     advance();
-    compile_expression();
+//    compile_expression();
+    while (!check(TokenType::END_OF_FILE)) {
+        declaration();
+    }
     end_compiler();
     if (has_error) {
         return nullptr;
     } else {
-        return current_chunk;
+        return chunk;
     }
 }
 
@@ -74,6 +76,8 @@ Compiler::ParseFn Compiler::get_prefix(TokenType type) {
             return &Compiler::literal_expr;
         case TokenType::STRING:
             return &Compiler::string_expr;
+        case TokenType::IDENTIFIER:
+            return &Compiler::variable_expr;
         default:
             return nullptr;
     }
@@ -119,6 +123,7 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         case TokenType::INTEGER:
         case TokenType::FLOAT:
         case TokenType::STRING:
+        case TokenType::IDENTIFIER:
             return Precedence::PRIMARY;
         default:
             return Precedence::NONE;
@@ -259,5 +264,106 @@ void Compiler::unary_expr() {
         emit_opcode(OpCode::Negate);
     } else if (type == TokenType::BANG) {
         emit_opcode(OpCode::Not);
+    }
+}
+
+void Compiler::variable_expr() {
+    OperandSize key = current_chunk()->add_identifier(curr.lexeme);
+    emit_opcode(OpCode::LoadGlobal);
+    emit_operand_2(key);
+}
+
+void Compiler::emit_load_constant(Value &&value) {
+    try {
+        OperandSize index = current_chunk()->add_constant(std::move(value));
+        if (within<uint8_t>(index)) {
+            emit_opcode(OpCode::LoadConstant);
+        } else if (within<uint16_t>(index)) {
+            emit_opcode(OpCode::LoadConstant2);
+        } else {
+            implementation_error("an overflowed index is returned without throwing!");
+        }
+        emit_operand(index);
+    } catch (ConstantPoolOverflowError &err) {
+        error_at(curr, err.what());
+    }
+}
+
+void Compiler::synchronize() {
+    panic_mode = false;
+    if (curr.type == TokenType::END_OF_FILE) {
+        return;
+    }
+    while (true) {
+        if (curr.type == TokenType::SEMICOLON) {
+            return;
+        }
+        switch (next.type) {
+            case TokenType::CLASS:
+            case TokenType::FUN:
+            case TokenType::VAR:
+            case TokenType::FOR:
+            case TokenType::WHILE:
+            case TokenType::IF:
+            case TokenType::PRINT:
+            case TokenType::RETURN:
+            case TokenType::END_OF_FILE:
+                return;
+            default:
+                ; // 不做事情，只是为了消除编译警告
+        }
+        advance();
+    }
+}
+
+void Compiler::print_statement() {
+    compile_expression();
+    emit_opcode(OpCode::Print);
+    consume();
+}
+
+OperandSize Compiler::parse_identifier() {
+    consume(TokenType::IDENTIFIER, "expect an identifier here");
+    return current_chunk()->add_identifier(curr.lexeme);
+}
+
+void Compiler::var_statement() {
+    try {
+        OperandSize key = parse_identifier();
+        if (match(TokenType::EQUAL)) {
+            compile_expression();
+        } else {
+            emit_opcode(OpCode::LoadNil);
+        }
+        consume();
+        emit_opcode(OpCode::DefineGlobal);
+        emit_operand_2(key);
+    } catch (ConstantPoolOverflowError &err) {
+        error_at(curr, err.what());
+    }
+}
+
+void Compiler::expression_statement() {
+    compile_expression();
+    consume();
+    emit_opcode(OpCode::Pop);
+}
+
+void Compiler::statement() {
+    if (match(TokenType::PRINT)) {
+        print_statement();
+    } else {
+        expression_statement();
+    }
+}
+
+void Compiler::declaration() {
+    if (panic_mode) {
+        synchronize();
+    }
+    if (match(TokenType::VAR)) {
+        var_statement();
+    } else {
+        statement();
     }
 }

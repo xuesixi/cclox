@@ -12,6 +12,9 @@
 #include <limits>
 #include <tuple>
 
+/**
+ * 返回值的第一个是high，第二个是low
+ */
 inline std::pair<uint8_t, uint8_t> u16_to_u8(uint16_t num) {
     return {
         (num >> 8) & 0x00FF,

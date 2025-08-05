@@ -41,14 +41,21 @@ private:
      * 将目标opcode写入字节码中
      */
     void emit_opcode(OpCode op_code) {
-        current_chunk->write_opcode(op_code, curr.line);
+        current_chunk()->write_opcode(op_code, curr.line);
     }
 
     /**
-     * 将目标操作数写入字节码中，可以正确地处理单双字节的操作数
+     * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。超出uint16则是实现错误
      */
-    void emit_operand(size_t operand) {
-        current_chunk->write_operand(operand, curr.line);
+    void emit_operand(OperandSize operand) {
+        current_chunk()->write_operand(operand, curr.line);
+    }
+
+    /**
+     * 将目标操作数写入字节码中，无论operand的值，总是写入两个字节。超出uint16则是实现错误
+     */
+    void emit_operand_2(OperandSize operand) {
+        current_chunk()->write_operand_2(operand, curr.line);
     }
 
     void emit_return() {
@@ -56,40 +63,91 @@ private:
     }
 
     /**
-     * 写入LoadConstant指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理uint16及以下的值，如果超出，则终止程序。
+     * 写入LoadConstant指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理uint16及以下的值，如果超出，则error_at(curr)
      */
-    void emit_load_constant(Value &&value) {
-        size_t index = current_chunk->add_constant(std::move(value));
-        if (within<uint8_t>(index)) {
-            emit_opcode(OpCode::LoadConstant8);
-        } else if (within<uint16_t>(index)) {
-            emit_opcode(OpCode::LoadConstant16);
-        } else {
-            error_at(curr, "constant pool overflow: too many constants!");
-            std::abort();
-        }
-        emit_operand(index);
-    }
+    void emit_load_constant(Value &&value);
 
     void end_compiler() {
         emit_return();
     }
 
+    /**
+     * 表明指定的token处出现了编译问题。如果原本不处于panic_mode，则会输出token元数据和错误消息，并设置panic_mode以及hash_error。
+     * 如果原本已经处于panic_mode，则什么都不做，立刻返回（这是为了防止在下一次synchronize之前出现大量的令人疑惑的错误消息）
+     */
     void error_at(const Token &token, const std::string &message);
 
     /**
-     * 如果next是想要的token，则advance()。否则报错
+     * 如果next是想要的token，则advance()。否则报错。
+     * type 的默认参数是semicolon，消息的默认参数是"expect a ';' to end the statement"
      */
     void consume(TokenType type, const std::string &message);
 
     /**
-     * 读取新的token，移动next和curr。如果新的token为error，那么一直读，知道遇到一个非error的token。
+     * 读取新的token，移动next和curr。如果新的token为error，那么一直读，直到遇到一个非error的token。
      */
     void advance();
+
+    /**
+     * 检查next的类型是否为type
+     */
+    bool check(TokenType type) {
+        return next.type == type;
+    }
+
+    /**
+     * 如果next的类型不为type，返回false，否则advance()（这意味着curr的类型为指定的type，而next将会是下一个要解析的token），并返回true
+     */
+    bool match(TokenType type) {
+        if (!check(type)) {
+            return false;
+        }
+        advance();
+        return true;
+    }
+
+    /**
+     * 当遇到编译错误后，调用该函数来到达到下一个语句的开头
+     * 这里的语句是模糊的说法，只需要满足下面两个条件之一：
+     * 1. curr是分号。这意味着一个语句在curr结束。
+     * 2. next是class，fun，var，while之类的token。这意味着下一个语句在next开始。
+     * 无论哪一种情况，在该函数调用后，下一个要解析的token都是next。且退出panic_mode
+     */
+    void synchronize();
+
+    void declaration();
+
+    /**
+     * 解析next开始的下一个语句
+     */
+    void statement();
+
+    /**
+     * 在已知curr为var的时候调用。
+     */
+    void var_statement();
+
+    /**
+     * 将next解析为一个identifier，将其lexeme添加到标识符池中，返回其键.
+     * 如果该函数正常返回，则返回值必然处于uint16范围内，否则会抛出异常.
+     * 调用后，下一个待解析的token为next.
+     */
+    OperandSize parse_identifier();
+
+    /**
+     * 在curr已经被判定为print的时候调用。
+     */
+    void print_statement();
+
+    /**
+     * 解析next开始的下一个表达式语句。
+     */
+    void expression_statement();
 
     /*
      * 所有下面这些表达式解析函数，在运行后，curr的token已经被解析，下一个待解析的token是next，因此，一般在调用后，会再调用advance()
      */
+
 
     /**
      * 解析以next开始的连续的所有优先级大于等于at_least的表达式
@@ -100,6 +158,11 @@ private:
      * 解析从next开始的一个表达式。
      */
     void compile_expression();
+
+    /**
+     * 在已知curr是一个identifier的时候调用
+     */
+    void variable_expr();
 
     /**
      * 在已知curr是一个integer的时候调用
@@ -151,13 +214,16 @@ private:
      */
     static Precedence get_precedence(TokenType type);
 
-    std::unique_ptr<Scanner> scanner;
+    std::shared_ptr<Chunk> current_chunk() {
+        return chunk;
+    }
 
+    std::unique_ptr<Scanner> scanner;
     Token next;  // 刚刚通过scanner得到的那个token，一般情况下，是下一个要检视的token
     Token curr; // next之前的那个token。之所以称之为curr，是因为大部份情况下，这才是我们正在检视的token
     bool has_error = false; // 编译的过程中是否出现过错误
     bool panic_mode = false; // 是否处于panic模式，出现错误时设置true，一路跳过到下一个statement，然后设置为false
-    std::shared_ptr<Chunk> current_chunk;
+    std::shared_ptr<Chunk> chunk;
 };
 
 #endif

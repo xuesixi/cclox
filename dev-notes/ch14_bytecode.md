@@ -66,7 +66,7 @@ size_t Disassembler::instruction_operand_0(OpCode instruction, size_t offset) {
 }
 
 // 对于只有一个常数池索引作为操作数的的指令，disassemble_instruction()实际上会调用该函数
-size_t Disassembler::instruction_operand_1(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_string(value);
