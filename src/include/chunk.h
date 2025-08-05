@@ -34,6 +34,7 @@ enum class OpCode: uint8_t {
     Pop,
     DefineGlobal,
     LoadGlobal,
+    SetGlobal,
 };
 
 using OperandSize = uint16_t;

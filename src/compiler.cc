@@ -144,7 +144,8 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
         error_at(curr, fmt::format("expect an expression but get: {}", curr.lexeme));
         return;
     }
-    (this->*prefix)();
+    bool can_assign = at_least <= Precedence::ASSIGNMENT;
+    (this->*prefix)(can_assign); // 前缀运算符应该是没有用到can_assign这个属性的
 
     /*
      * 运行一个ParseFn之后，下一个要解析的token是next。我们判断next能否作为infix。
@@ -154,11 +155,11 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
     while (get_precedence(next.type) >= at_least) { // 这里clion会给出警告，可以无视它。
         advance();
         ParseFn infix = get_infix(curr.type); // 在经历上一行的advance()之后，这里的curr就是上面条件中的next。
-        (this->*infix)();
+        (this->*infix)(can_assign); // 这里的can_assign参数实际上并没有用，因为暂时没有任何infix真的用到了它
     }
 }
 
-void Compiler::integer_expr() {
+void Compiler::integer_expr([[maybe_unused]] bool) {
     long integer = std::stol(curr.lexeme);
     uint8_t index = Chunk::to_immediate(integer);
     if (index == 255) {
@@ -169,7 +170,7 @@ void Compiler::integer_expr() {
     }
 }
 
-void Compiler::float_expr() {
+void Compiler::float_expr([[maybe_unused]] bool can_assign) {
     double decimal = std::stod(curr.lexeme);
     uint8_t index = Chunk::to_immediate(decimal);
     if (index == 255) {
@@ -184,12 +185,12 @@ void Compiler::compile_expression() {
     compile_precedence_at_least(Precedence::ASSIGNMENT);
 }
 
-void Compiler::grouping_expr() {
+void Compiler::grouping_expr([[maybe_unused]] bool can_assign) {
     compile_expression();
     consume(TokenType::RIGHT_PAREN, "expect ) after the expression");
 }
 
-void Compiler::binary_expr() {
+void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     Precedence precedence = get_precedence(type);
     compile_precedence_at_least(get_higher_precedence(precedence));
@@ -235,7 +236,7 @@ void Compiler::binary_expr() {
     }
 }
 
-void Compiler::literal_expr() {
+void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     switch (type) {
         case TokenType::NIL:
@@ -252,12 +253,12 @@ void Compiler::literal_expr() {
     }
 }
 
-void Compiler::string_expr() {
+void Compiler::string_expr([[maybe_unused]] bool can_assign) {
     Value value = LoxObject::allocate<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
     emit_load_constant(std::move(value));
 }
 
-void Compiler::unary_expr() {
+void Compiler::unary_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     compile_precedence_at_least(Precedence::UNARY);
     if (type == TokenType::MINUS) {
@@ -267,9 +268,19 @@ void Compiler::unary_expr() {
     }
 }
 
-void Compiler::variable_expr() {
-    OperandSize key = current_chunk()->add_identifier(curr.lexeme);
-    emit_opcode(OpCode::LoadGlobal);
+void Compiler::variable_expr(bool can_assign) {
+    std::string name = curr.lexeme;
+    OperandSize key = current_chunk()->add_identifier(name);
+    if (match(TokenType::EQUAL)) {
+        if (can_assign) {
+            compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
+            emit_opcode(OpCode::SetGlobal);
+        } else {
+            error_at(curr, fmt::format("invalid assignment target: {}", name));
+        }
+    } else {
+        emit_opcode(OpCode::LoadGlobal);
+    }
     emit_operand_2(key);
 }
 

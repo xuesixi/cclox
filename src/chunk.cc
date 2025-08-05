@@ -3,11 +3,6 @@
 //
 
 #include "chunk.h"
-#include "value.h"
-#include <cstddef>
-#include <fmt/core.h>
-#include <iostream>
-#include <string>
 #include <unordered_map>
 
 Value Chunk::read_immediate(uint8_t index) {

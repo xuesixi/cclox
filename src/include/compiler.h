@@ -28,14 +28,13 @@ class Compiler;
 
 class Compiler {
 public:
-//    explicit Compiler();
     std::shared_ptr<Chunk> compile(std::string &&source);
 
 private:
     /**
      * 这样的一个函数调用后，curr所在的token已经被解析，而下一个要被解析的token是next，因此，调用后面常常跟着advance()
      */
-    using ParseFn = void (Compiler::*)();
+    using ParseFn = void (Compiler::*)([[maybe_unused]] bool);
 
     /**
      * 将目标opcode写入字节码中
@@ -162,42 +161,42 @@ private:
     /**
      * 在已知curr是一个identifier的时候调用
      */
-    void variable_expr();
+    void variable_expr(bool can_assign);
 
     /**
      * 在已知curr是一个integer的时候调用
      */
-    void integer_expr();
+    void integer_expr(bool can_assign);
 
     /**
      * 在已知curr是一个float的时候调用，解析之.
      */
-    void float_expr();
+    void float_expr(bool can_assign);
 
     /**
      * 在已知curr是左括号的时候调用
      */
-    void grouping_expr();
+    void grouping_expr(bool can_assign);
 
     /**
      * 在已知curr是一个单元操作符的时候调用。
      */
-    void unary_expr();
+    void unary_expr(bool can_assign);
 
     /**
      * 在已知curr是一个二元操作符的时候调用。
      */
-    void binary_expr();
+    void binary_expr(bool can_assign);
 
     /**
      * 在已知curr是nil，true，false的时候调用
      */
-    void literal_expr();
+    void literal_expr(bool can_assign);
 
     /**
      * 在已知curr是字符串的时候调用
      */
-    void string_expr();
+    void string_expr(bool can_assign);
 
     /**
      * 获取一个token的前缀函数（该token作为一个表达式的第一个token时的解析函数）。如果该token不能作为表达式的第一个token，则返回nullptr

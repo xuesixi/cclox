@@ -29,6 +29,7 @@ const std::unordered_map<OpCode, std::string> opcode_names{
         {OpCode::Pop,           "Pop"},
         {OpCode::DefineGlobal,  "DefineGlobal"},
         {OpCode::LoadGlobal, "LoadGlobal"},
+        {OpCode::SetGlobal, "SetGlobal"}
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -64,6 +65,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_load_immediate(instruction, offset);
         case OpCode::DefineGlobal:
         case OpCode::LoadGlobal:
+        case OpCode::SetGlobal:
             return instruction_identifier_operand_2(instruction, offset);
         case OpCode::Return:
         case OpCode::Negate:
@@ -81,9 +83,6 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::Print:
         case OpCode::Pop:
             return instruction_operand_0(instruction, offset);
-//        default:
-//            cout << fmt::format("unknown instruction: {}\n", offset);
-//            return offset + 1;
     }
 }
 

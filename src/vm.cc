@@ -96,7 +96,7 @@ InterpreterResult VM::run() {
                 case OpCode::LoadNil: {
                     push(nullptr);
                     break;
-                };
+                }
                 case OpCode::LoadTrue: {
                     push(true);
                     break;
@@ -150,6 +150,17 @@ InterpreterResult VM::run() {
                         throw LoxNameError(fmt::format("the variable: {} is not found", key));
                     } else {
                         push(found->second);
+                    }
+                    break;
+                }
+                case OpCode::SetGlobal: {
+                    std::string key = read_identifier();
+                    auto found = globals.find(key);
+                    if (found == globals.end()) {
+                        throw LoxNameError(fmt::format("the variable: {} is not found", key));
+                    } else {
+                        Value v = stack.back();
+                        globals[key] = v;
                     }
                     break;
                 }
