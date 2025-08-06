@@ -101,26 +101,10 @@ public:
     /**
      * 获取str在标识符中的键。如果已存在，则直接返回键。否则，向标识符池中增加一个值，如果键在uint16范围内，返回之。否则，抛出IdentifierPoolOverflowError
      */
-    OperandSize add_identifier(const std::string &str) {
-
-        auto found = name_to_key.find(str);
-        if (found != name_to_key.end()) {
-            // 如果存在，则返回键
-            return found->second;
-        }
-
-        // 如果不存在，则新增
-        OperandSize key = key_to_name.size();
-        if (!within<uint16_t>(key)) {
-            throw IdentifierPoolOverFlowError("identifier pool overflow");
-        }
-        key_to_name[key] = str;
-        name_to_key[str] = key;
-        return key;
-    }
+    OperandSize add_identifier(const std::string &str);
 
     std::string read_identifier(OperandSize key) {
-        return key_to_name[key];
+        return identifiers.at(key);
     }
 
     /**
@@ -131,7 +115,33 @@ public:
     /**
      * 给定一个立即数索引，返回其对应的Value
      */
-    static Value read_immediate(uint8_t index);
+    static inline Value read_immediate(uint8_t index) {
+        if (index <= 240) {
+            return static_cast<long>(index);
+        }
+
+        switch (index) {
+            case 241: return 0.0;
+            case 242: return 1.0;
+            case 243: return 0.5;
+            case 244: return 0.25;
+            case 245: return 0.125;
+            case 246: return 0.1;
+            case 247: return 2.0;
+            case 248: return 4.0;
+
+            case 249: return 5.0;
+            case 250: return 10.0;
+            case 251: return 100.0;
+            case 252: return 1000.0;
+            case 253: return 10000.0;
+
+            default:
+                implementation_error("unknown immediate index");
+                return 0L;
+        }
+
+    }
 
 
 private:
@@ -142,8 +152,7 @@ private:
     // 与字节码一一对应的行数记录
     std::vector<int> lines;
     // 标识符池
-    std::unordered_map<OperandSize, std::string> key_to_name;
-    std::unordered_map<std::string, OperandSize> name_to_key;
+    std::vector<std::string> identifiers;
 };
 
 #endif //CCLOX_CHUNK_H

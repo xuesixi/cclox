@@ -1,5 +1,5 @@
-#ifndef CCLOX_VM_VISUALIZER_H
-#define CCLOX_VM_VISUALIZER_H
+#ifndef CCLOX_VISUAL_H
+#define CCLOX_VISUAL_H
 
 #include "vm.h"
 
@@ -12,6 +12,11 @@ enum class Color {
 namespace Visual {
     void show_stack(VM &vm);
     void print_with_color(const std::string &content, Color color);
+
+    /**
+     * 会根据值的具体类型来改变展示时的格式。例如，LoxString会具有前后引号
+     */
+    std::string to_visual_string(Value value);
 }
 
 #endif

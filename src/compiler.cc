@@ -14,7 +14,7 @@ void Compiler::error_at(const Token &token, const std::string &message) {
     } else if (token.type == TokenType::ERROR) {
 
     } else {
-        std::cerr << fmt::format(" at {}", token.lexeme);
+        std::cerr << fmt::format(" at {}. ", token.lexeme);
     }
     std::cerr << message << std::endl;
     has_error = true;
@@ -276,7 +276,7 @@ void Compiler::variable_expr(bool can_assign) {
             compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
             emit_opcode(OpCode::SetGlobal);
         } else {
-            error_at(curr, fmt::format("invalid assignment target: {}", name));
+            error_at(curr, fmt::format("invalid assignment target"));
         }
     } else {
         emit_opcode(OpCode::LoadGlobal);

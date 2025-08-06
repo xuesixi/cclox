@@ -1,4 +1,4 @@
-#include "vm_visualizer.h"
+#include "visual.h"
 #include "fmt/core.h"
 #include "value.h"
 #include "objects/loxstring.h"
@@ -7,6 +7,14 @@
 // 为字符串前后加上引号
 std::string string_wrapper(std::string &&str) {
     return "\"" + str + "\"";
+}
+
+std::string Visual::to_visual_string(Value value) {
+    std::string regular_string = LoxValue::to_string(value);
+    if (std::holds_alternative<LoxReference>(value) && LoxValue::to_reference<LoxString>(value)) {
+        return string_wrapper(std::move(regular_string));
+    }
+    return regular_string;
 }
 
 void Visual::show_stack(VM &vm) {

@@ -34,7 +34,7 @@ namespace LoxValue {
     }
 
     /**
-     * 将一个Value静态地转化为一个LoxObject的子类的shared_ptr。只有在确认该转化是正确的时候，才可以使用。
+     * 将一个value静态地转化为一个LoxObject的子类的shared_ptr。只有在确认该转化是正确的时候，才可以使用。
      */
     template <typename T>
     std::shared_ptr<T> to_reference_unsafe(Value &value) {

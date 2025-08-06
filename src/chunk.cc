@@ -5,33 +5,6 @@
 #include "chunk.h"
 #include <unordered_map>
 
-Value Chunk::read_immediate(uint8_t index) {
-    if (index <= 240) {
-        return static_cast<long>(index);
-    }
-
-    switch (index) {
-        case 241: return 0.0;
-        case 242: return 1.0;
-        case 243: return 0.5;
-        case 244: return 0.25;
-        case 245: return 0.125;
-        case 246: return 0.1;
-        case 247: return 2.0;
-        case 248: return 4.0;
-
-        case 249: return 5.0;
-        case 250: return 10.0;
-        case 251: return 100.0;
-        case 252: return 1000.0;
-        case 253: return 10000.0;
-
-        default:
-            implementation_error("unknown immediate index");
-            return 0L;
-    }
-}
-
 uint8_t Chunk::to_immediate(Value value) {
     if (std::holds_alternative<long>(value)) {
         long l = std::get<long>(value);
@@ -60,4 +33,22 @@ uint8_t Chunk::to_immediate(Value value) {
     }
 
     return 255;
+}
+
+OperandSize Chunk::add_identifier(const std::string &str) {
+
+    auto found = std::find(identifiers.begin(), identifiers.end(), str);
+    if (found != identifiers.end()) {
+        // 如果存在，则返回键
+        size_t index = std::distance(identifiers.begin(), found);
+        return index;
+    }
+
+    // 如果不存在，则新增
+    size_t key = identifiers.size();
+    identifiers.push_back(str);
+    if (!within<uint16_t>(key)) {
+        throw IdentifierPoolOverFlowError("identifier pool overflow");
+    }
+    return key;
 }

@@ -1,6 +1,7 @@
 #include "disassembler.h"
 #include "chunk.h"
 #include <fmt/core.h>
+#include "visual.h"
 #include <unordered_map>
 
 using std::cout;
@@ -94,7 +95,7 @@ size_t Disassembler::instruction_operand_0(OpCode instruction, size_t offset) {
 size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = chunk->constants.at(index);
-    std::string value_str = LoxValue::to_string(value);
+    std::string value_str = Visual::to_visual_string(value);
     cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 2;
 }
@@ -102,7 +103,7 @@ size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t o
 size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = Chunk::read_immediate(index);
-    std::string value_str = LoxValue::to_string(value);
+    std::string value_str = Visual::to_visual_string(value);
     cout << fmt::format("{:12} {} value: {}\n", opcode_names.at(instruction), spaces_4, value_str);
     return offset + 2;
 }
@@ -110,7 +111,7 @@ size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offse
 size_t Disassembler::instruction_constant_operand_2(OpCode instruction, size_t offset) {
     uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     Value value = chunk->constants.at(index);
-    std::string value_str = LoxValue::to_string(value);
+    std::string value_str = Visual::to_visual_string(value);
     cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 3;
 }

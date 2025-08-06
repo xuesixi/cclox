@@ -2,7 +2,7 @@
 #include "chunk.h"
 #include "value.h"
 #include "common.h"
-#include "vm_visualizer.h"
+#include "visual.h"
 #include "compiler.h"
 #include <iostream>
 #include "objects/loxstring.h"
@@ -43,9 +43,9 @@ InterpreterResult VM::run() {
             switch (instruction) {
 
                 case OpCode::Return: {
-                    Value v = pop();
-                    Visual::print_with_color(LoxValue::to_string(v), Color::YELLOW);
-                    std::cout << std::endl;
+//                    Value v = pop();
+//                    Visual::print_with_color(LoxValue::to_string(v), Color::YELLOW);
+//                    std::cout << std::endl;
                     return InterpreterResult::OK;
                 }
                 case OpCode::LoadConstant: {
