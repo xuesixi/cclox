@@ -53,5 +53,21 @@ public:
     using InterpreterError::InterpreterError;
 };
 
+class ScopeLocalOverflowError: InterpreterError {
+public:
+    using InterpreterError::InterpreterError;
+};
+
+class SameNameLocalVariableError: InterpreterError {
+public:
+    using InterpreterError::InterpreterError;
+};
+
+class UsingUninitializedLocalError: InterpreterError {
+public:
+    using InterpreterError::InterpreterError;
+};
+
+
 
 #endif //CCLOX_ERROR_H

@@ -30,7 +30,10 @@ const std::unordered_map<OpCode, std::string> opcode_names{
         {OpCode::Pop,           "Pop"},
         {OpCode::DefineGlobal,  "DefineGlobal"},
         {OpCode::LoadGlobal, "LoadGlobal"},
-        {OpCode::SetGlobal, "SetGlobal"}
+        {OpCode::SetGlobal, "SetGlobal"},
+        {OpCode::LoadLocal, "LoadLocal"},
+        {OpCode::SetLocal, "SetLocal"},
+        {OpCode::PopN, "PopN"}
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -68,6 +71,9 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::LoadGlobal:
         case OpCode::SetGlobal:
             return instruction_identifier_operand_2(instruction, offset);
+        case OpCode::LoadLocal:
+        case OpCode::SetLocal:
+            return instruction_local(instruction, offset);
         case OpCode::Return:
         case OpCode::Negate:
         case OpCode::Add:
@@ -84,6 +90,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::Print:
         case OpCode::Pop:
             return instruction_operand_0(instruction, offset);
+        case OpCode::PopN:
+            return instruction_general(instruction, offset);
     }
 }
 
@@ -97,6 +105,18 @@ size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t o
     Value value = chunk->constants.at(index);
     std::string value_str = Visual::to_visual_string(value);
     cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    return offset + 2;
+}
+
+size_t Disassembler::instruction_local(OpCode instruction, size_t offset) {
+    uint8_t index = chunk->code.at(offset + 1);
+    cout << fmt::format("{:12} {} local index: {}\n", opcode_names.at(instruction), spaces_4, index);
+    return offset + 2;
+}
+
+size_t Disassembler::instruction_general(OpCode instruction, size_t offset) {
+    uint8_t value = chunk->code.at(offset + 1);
+    cout << fmt::format("{:12} {} {}\n", opcode_names.at(instruction), spaces_4, value);
     return offset + 2;
 }
 

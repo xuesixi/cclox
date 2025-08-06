@@ -164,6 +164,21 @@ InterpreterResult VM::run() {
                     }
                     break;
                 }
+                case OpCode::LoadLocal: {
+                    auto index = read_operand_1();
+                    push(stack.at(index));
+                    break;
+                }
+                case OpCode::SetLocal: {
+                    auto index = read_operand_1();
+                    stack.at(index) = stack.back();
+                    break;
+                }
+                case OpCode::PopN: {
+                    auto amount = read_operand_1();
+                    stack.resize(stack.size() - amount);
+                    break;
+                }
                 default:
                     implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}", static_cast<uint8_t>(instruction)));
             }

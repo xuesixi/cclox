@@ -2,6 +2,7 @@
 #define CCLOX_COMPILER_H
 
 #include "chunk.h"
+#include "common.h"
 #include "scanner.h"
 #include <memory>
 #include <string>
@@ -23,6 +24,72 @@ enum class Precedence {
 inline Precedence get_higher_precedence(Precedence precedence) {
     return static_cast<Precedence>(static_cast<int>(precedence) + 1);
 }
+
+
+class Scope {
+public:
+    /**
+     * 进入一个新的层级，自增depth，并返回此时的本地变量的数量
+     */
+    uint8_t step_into() {
+        depth ++;
+        return locals.size();
+    }
+    /**
+     * 离开一个层级。自减depth，并将本地变量的数量从缩减至clear_to。返回缩减的数量
+     */
+    uint8_t step_out(uint8_t clear_to) {
+        DEBUG_ASSERT(clear_to <= locals.size(), "clear_to should not be greater than locals.size()");
+        uint8_t diff = locals.size() - clear_to;
+        locals.resize(clear_to);
+        depth --;
+        return diff;
+    }
+
+    /**
+     * 是否是最全局scope（depth==0）
+     */
+    bool is_global_scope() {
+        return depth == 0;
+    }
+
+    /**
+     * 初始化最新的那个本地变量
+     */
+    void initialize() {
+        DEBUG_ASSERT(locals.size() > 0, "the size should not be 0");
+        locals.back().depth = depth;
+    }
+
+    /**
+     * 将一个token对应的本地变量添加到scope中。如果同层级中存在同名变量，则抛出异常。
+     * 添加后，该本地变量尚未被初始化。
+     */
+    void add_local(const Token &token);
+
+    /**
+     * 在scope中查找对应token对应的同名变量，如果没找到，返回-1。
+     * 如果找到了，但没有被初始化，抛出异常；否则返回其对应的索引
+     */
+    int resolve_local(const Token &token);
+
+private:
+
+    struct Local {
+        Local(): name(), depth(-1) {}
+        Local(const Token &token): name(token.get_lexeme()), depth(-1) {}
+
+        bool isInitialized() {
+            return depth != -1;
+        }
+
+        std::string name;
+        int depth;
+    };
+
+    std::vector<Local> locals;
+    int depth = 0;
+};
 
 class Compiler;
 
@@ -114,10 +181,13 @@ private:
      */
     void synchronize();
 
+    /**
+     * 解析next开始的下一个语句
+     */
     void declaration();
 
     /**
-     * 解析next开始的下一个语句
+     * 解析next开始的下一个非申明语句
      */
     void statement();
 
@@ -131,12 +201,17 @@ private:
      * 如果该函数正常返回，则返回值必然处于uint16范围内，否则会抛出异常.
      * 调用后，下一个待解析的token为next.
      */
-    OperandSize parse_identifier();
+    OperandSize resolve_global_identifier();
 
     /**
      * 在curr已经被判定为print的时候调用。
      */
     void print_statement();
+
+    /**
+     * 在curr已知是左大括号的时候调用。该函数自身没有涉及scope的处理
+     */
+    void block_statement();
 
     /**
      * 解析next开始的下一个表达式语句。
@@ -223,6 +298,7 @@ private:
     bool has_error = false; // 编译的过程中是否出现过错误
     bool panic_mode = false; // 是否处于panic模式，出现错误时设置true，一路跳过到下一个statement，然后设置为false
     std::shared_ptr<Chunk> chunk;
+    std::shared_ptr<Scope> scope;
 };
 
 #endif

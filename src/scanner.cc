@@ -119,7 +119,7 @@ Token Scanner::scan_token() {
     }
 }
 
-std::string Token::to_string() {
+std::string Token::to_string() const {
     return fmt::format("line: {}, token: {}", line, lexeme);
 }
 

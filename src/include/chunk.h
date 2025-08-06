@@ -32,9 +32,12 @@ enum class OpCode: uint8_t {
     Equal,
     Print,
     Pop,
+    PopN,
     DefineGlobal,
     LoadGlobal,
     SetGlobal,
+    LoadLocal,
+    SetLocal,
 };
 
 using OperandSize = uint16_t;

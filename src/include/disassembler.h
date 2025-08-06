@@ -30,9 +30,20 @@ public:
      */
     size_t instruction_operand_0(OpCode instruction, size_t offset);
     /**
-     * 有一个额外的操作数代表索引
+     * 有一个额外的操作数代表常数池索引
      */
     size_t instruction_constant_operand_1(OpCode instruction, size_t offset);
+
+    /**
+     * 有一个用于标识本地变量索引的操作数
+     */
+    size_t instruction_local(OpCode instruction, size_t offset);
+
+    /**
+     * 通用的单操作数指令
+     */
+    size_t instruction_general(OpCode instruction, size_t offset);
+
     /**
      * 有两个额外的操作数代表索引
      */

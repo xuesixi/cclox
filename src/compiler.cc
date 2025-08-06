@@ -45,6 +45,7 @@ void Compiler::advance() {
 std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
     scanner = std::make_unique<Scanner>(std::move(source));
     chunk = std::make_shared<Chunk>();
+    scope = std::make_shared<Scope>();
     advance();
 //    compile_expression();
     while (!check(TokenType::END_OF_FILE)) {
@@ -269,19 +270,37 @@ void Compiler::unary_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::variable_expr(bool can_assign) {
-    std::string name = curr.lexeme;
-    OperandSize key = current_chunk()->add_identifier(name);
-    if (match(TokenType::EQUAL)) {
-        if (can_assign) {
-            compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
-            emit_opcode(OpCode::SetGlobal);
+    int local_index = scope->resolve_local(curr);
+
+    if (local_index != -1) {
+        // 是本地变量
+        if (match(TokenType::EQUAL)) {
+            if (can_assign) {
+                compile_precedence_at_least(Precedence::ASSIGNMENT);
+                emit_opcode(OpCode::SetLocal);
+            } else {
+                error_at(curr, fmt::format("invalid assignment target"));
+            }
         } else {
-            error_at(curr, fmt::format("invalid assignment target"));
+            emit_opcode(OpCode::LoadLocal);
         }
+        emit_operand(local_index);
     } else {
-        emit_opcode(OpCode::LoadGlobal);
+        // 本地没有找到，则认为是全局变量
+        OperandSize key = current_chunk()->add_identifier(curr.lexeme);
+        if (match(TokenType::EQUAL)) {
+            if (can_assign) {
+                compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
+                emit_opcode(OpCode::SetGlobal);
+            } else {
+                error_at(curr, fmt::format("invalid assignment target"));
+            }
+        } else {
+            emit_opcode(OpCode::LoadGlobal);
+        }
+        emit_operand_2(key);
     }
-    emit_operand_2(key);
+
 }
 
 void Compiler::emit_load_constant(Value &&value) {
@@ -333,23 +352,46 @@ void Compiler::print_statement() {
     consume();
 }
 
-OperandSize Compiler::parse_identifier() {
+void Compiler::block_statement() {
+    while (!check(TokenType::RIGHT_BRACE)) {
+        declaration();
+    }
+    consume(TokenType::RIGHT_BRACE, "expect a '}' to end the block");
+}
+
+OperandSize Compiler::resolve_global_identifier() {
     consume(TokenType::IDENTIFIER, "expect an identifier here");
     return current_chunk()->add_identifier(curr.lexeme);
 }
 
 void Compiler::var_statement() {
+
     try {
-        OperandSize key = parse_identifier();
-        if (match(TokenType::EQUAL)) {
-            compile_expression();
+        if (scope->is_global_scope()) {
+            // 全局变量
+            OperandSize key = resolve_global_identifier();
+            if (match(TokenType::EQUAL)) {
+                compile_expression();
+            } else {
+                emit_opcode(OpCode::LoadNil);
+            }
+            consume();
+            emit_opcode(OpCode::DefineGlobal);
+            emit_operand_2(key);
         } else {
-            emit_opcode(OpCode::LoadNil);
+            // 本地变量
+            consume(TokenType::IDENTIFIER, "expect an identifier here");
+            scope->add_local(curr);
+
+            if (match(TokenType::EQUAL)) {
+                compile_expression();
+            } else {
+                emit_opcode(OpCode::LoadNil);
+            }
+            scope->initialize(); // 本地变量不需要专门的DefineLocal指令
+            consume();
         }
-        consume();
-        emit_opcode(OpCode::DefineGlobal);
-        emit_operand_2(key);
-    } catch (ConstantPoolOverflowError &err) {
+    } catch (InterpreterError &err) {
         error_at(curr, err.what());
     }
 }
@@ -363,6 +405,12 @@ void Compiler::expression_statement() {
 void Compiler::statement() {
     if (match(TokenType::PRINT)) {
         print_statement();
+    } else if (match(TokenType::LEFT_BRACE)){
+        auto old_size= scope->step_into();
+        block_statement();
+        auto amount_to_pop = scope->step_out(old_size);
+        emit_opcode(OpCode::PopN);
+        emit_operand(amount_to_pop);
     } else {
         expression_statement();
     }
@@ -377,4 +425,37 @@ void Compiler::declaration() {
     } else {
         statement();
     }
+}
+
+void Scope::add_local(const Token &token) {
+    if (locals.size() == UINT8_MAX) {
+        throw ScopeLocalOverflowError(fmt::format("scope local overflow. You can have up to {} local variables in a scope", UINT8_MAX));
+    }
+
+    // 检查本层级内是否有重名的变量
+    for (int i = locals.size() - 1; i >= 0; i --) {
+        Local &local = locals.at(i);
+        if (local.depth != depth) {
+            // 重名检查只在本层级之内发生，一旦到了上一层级，就不用管了。
+            break;
+        }
+        if (local.name == token.get_lexeme()) {
+            throw SameNameLocalVariableError(fmt::format("local variables with the same name: {}", local.name));
+        }
+    }
+    locals.emplace_back(token);
+}
+
+int Scope::resolve_local(const Token &token) {
+    for (int i = locals.size() - 1; i >= 0; i --) {
+        Local &local = locals.at(i);
+        if (local.name == token.get_lexeme()) {
+            if (local.isInitialized()) {
+                return i;
+            } else {
+                throw UsingUninitializedLocalError("accessing a variable during its own initialization");
+            }
+        }
+    }
+    return -1;
 }
