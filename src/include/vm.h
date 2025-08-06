@@ -60,7 +60,7 @@ private:
     uint8_t read_operand_1() {
         return chunk->code_at(pc++);
     }
-    // 读取后两个操作数，将它们解释为一个uint16
+    // 读取后两个操作数，将它们解释为一个uint16。先读取的是low，后读取的是high
     uint16_t read_operand_2() {
         uint8_t low = chunk->code_at(pc++);
         uint8_t high = chunk->code_at(pc++);

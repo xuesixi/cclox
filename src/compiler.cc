@@ -352,6 +352,46 @@ void Compiler::print_statement() {
     consume();
 }
 
+void Compiler::if_statement() {
+    /**
+     * condition
+     * jump if pop false -> else
+     * then:
+     *      ...
+     *     jump -> end
+     * else:
+     *      ...
+     * end:
+     */
+
+    // condition
+    compile_expression();
+
+    // jump if pop false -> else
+    auto to_else = emit_jump(OpCode::JumpIfPopFalse);
+
+    // then_statement
+    statement();
+
+    if (match(TokenType::ELSE)) {
+
+        // jump -> end
+        auto to_end = emit_jump(OpCode::Jump);
+
+        // else_statement
+        patch_jump(to_else);
+        statement();
+
+        // end
+        patch_jump(to_end);
+
+    } else {
+
+        // end/else
+        patch_jump(to_else);
+    }
+}
+
 void Compiler::block_statement() {
     while (!check(TokenType::RIGHT_BRACE)) {
         declaration();
@@ -411,6 +451,8 @@ void Compiler::statement() {
         auto amount_to_pop = scope->step_out(old_size);
         emit_opcode(OpCode::PopN);
         emit_operand(amount_to_pop);
+    } else if (match(TokenType::IF)){
+        if_statement();
     } else {
         expression_statement();
     }
@@ -425,4 +467,31 @@ void Compiler::declaration() {
     } else {
         statement();
     }
+}
+
+size_t Compiler::emit_jump(OpCode jump_instruction) {
+    emit_opcode(jump_instruction);
+    emit_operand_2(0);
+    return current_chunk()->code_size() - 2;
+}
+
+void Compiler::patch_jump(size_t from_label) {
+
+    /**
+     * jump
+     * op1    <-- 这里是from_label
+     * op2
+     * next instruction  <-- 实际运行的时候，jump指令会读取两个操作符，因此pc会在这里
+     * .
+     * current
+     */
+
+    // from_label的位置是jump指令的第一个操作数。但实际在执行jump语句的时候，pc的位置是jump语句的第二个操作数之后，因此跳转距离-2
+    size_t distance = current_chunk()->code_size() - from_label - 2;
+    if (!within<uint16_t>(distance)) {
+       throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
+    }
+    auto [high, low] = u16_to_u8(distance);
+    current_chunk()->code_at(from_label) = low;
+    current_chunk()->code_at(from_label + 1) = high;
 }

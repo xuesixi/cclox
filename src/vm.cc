@@ -179,6 +179,18 @@ InterpreterResult VM::run() {
                     stack.resize(stack.size() - amount);
                     break;
                 }
+                case OpCode::Jump: {
+                    auto distance = read_operand_2();
+                    pc += distance;
+                    break;
+                }
+                case OpCode::JumpIfPopFalse: {
+                    auto distance = read_operand_2();
+                    if (!LoxValue::to_bool(pop())) {
+                        pc += distance;
+                    }
+                    break;
+                }
                 default:
                     implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}", static_cast<uint8_t>(instruction)));
             }

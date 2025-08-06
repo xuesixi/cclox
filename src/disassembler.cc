@@ -33,7 +33,9 @@ const std::unordered_map<OpCode, std::string> opcode_names{
         {OpCode::SetGlobal, "SetGlobal"},
         {OpCode::LoadLocal, "LoadLocal"},
         {OpCode::SetLocal, "SetLocal"},
-        {OpCode::PopN, "PopN"}
+        {OpCode::PopN, "PopN"},
+        {OpCode::Jump, "Jump"},
+        {OpCode::JumpIfPopFalse, "JumpIfPopFalse"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -92,11 +94,14 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_operand_0(instruction, offset);
         case OpCode::PopN:
             return instruction_general(instruction, offset);
+        case OpCode::JumpIfPopFalse:
+        case OpCode::Jump:
+            return instruction_jump(instruction, offset);
     }
 }
 
 size_t Disassembler::instruction_operand_0(OpCode instruction, size_t offset) {
-    cout << fmt::format("{:12}\n", opcode_names.at(instruction));
+    cout << fmt::format("{:18}\n", opcode_names.at(instruction));
     return offset + 1;
 }
 
@@ -104,27 +109,34 @@ size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t o
     size_t index = chunk->code.at(offset + 1);
     Value value = chunk->constants.at(index);
     std::string value_str = Visual::to_visual_string(value);
-    cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    cout << fmt::format("{:18} {} index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 2;
 }
 
 size_t Disassembler::instruction_local(OpCode instruction, size_t offset) {
     uint8_t index = chunk->code.at(offset + 1);
-    cout << fmt::format("{:12} {} local index: {}\n", opcode_names.at(instruction), spaces_4, index);
+    cout << fmt::format("{:18} {} local index: {}\n", opcode_names.at(instruction), spaces_4, index);
     return offset + 2;
 }
 
 size_t Disassembler::instruction_general(OpCode instruction, size_t offset) {
     uint8_t value = chunk->code.at(offset + 1);
-    cout << fmt::format("{:12} {} {}\n", opcode_names.at(instruction), spaces_4, value);
+    cout << fmt::format("{:18} {} {}\n", opcode_names.at(instruction), spaces_4, value);
     return offset + 2;
+}
+
+size_t Disassembler::instruction_jump(OpCode instruction, size_t offset) {
+    uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    size_t destination = offset + 3 + distance;
+    cout << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
+    return offset + 3;
 }
 
 size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = Chunk::read_immediate(index);
     std::string value_str = Visual::to_visual_string(value);
-    cout << fmt::format("{:12} {} value: {}\n", opcode_names.at(instruction), spaces_4, value_str);
+    cout << fmt::format("{:18} {} value: {}\n", opcode_names.at(instruction), spaces_4, value_str);
     return offset + 2;
 }
 
@@ -132,14 +144,14 @@ size_t Disassembler::instruction_constant_operand_2(OpCode instruction, size_t o
     uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     Value value = chunk->constants.at(index);
     std::string value_str = Visual::to_visual_string(value);
-    cout << fmt::format("{:12} {}index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
+    cout << fmt::format("{:18} {} index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 3;
 }
 
 size_t Disassembler::instruction_identifier_operand_2(OpCode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = chunk->read_identifier(key);
-    cout << fmt::format("{:12} {}identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
+    cout << fmt::format("{:18} {} identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
 

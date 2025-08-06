@@ -68,6 +68,11 @@ public:
     using InterpreterError::InterpreterError;
 };
 
+class JumpDistanceOverflowError: InterpreterError {
+public:
+    using InterpreterError::InterpreterError;
+};
+
 
 
 #endif //CCLOX_ERROR_H

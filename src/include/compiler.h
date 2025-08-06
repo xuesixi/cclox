@@ -110,7 +110,7 @@ private:
     }
 
     /**
-     * 当遇到编译错误后，调用该函数来到达到下一个语句的开头
+     * 当遇到编译错误后，调用该函数来到达到下一个语句的开头。
      * 这里的语句是模糊的说法，只需要满足下面两个条件之一：
      * 1. curr是分号。这意味着一个语句在curr结束。
      * 2. next是class，fun，var，while之类的token。这意味着下一个语句在next开始。
@@ -144,6 +144,11 @@ private:
      * 在curr已经被判定为print的时候调用。
      */
     void print_statement();
+
+    /**
+     * 在curr已知是if的时候使用
+     */
+    void if_statement();
 
     /**
      * 在curr已知是左大括号的时候调用。该函数自身没有涉及scope的处理
@@ -224,6 +229,18 @@ private:
      * 返回该token作为中缀时的运算优先级。
      */
     static Precedence get_precedence(TokenType type);
+
+    /**
+     * 向字节码中写入 [jump, placeholder1, placeholder2]。返回placeholder1的索引。该函数需要配合patch函数使用
+     */
+    size_t emit_jump(OpCode jump_instruction);
+
+    /**
+     * @param from_label 一个由emit_jump返回的标签（偏移值）
+     *
+     * 修改参数所代表的那个jump指令的操作数，使它跳转到这里。
+     */
+    void patch_jump(size_t from_label);
 
     std::shared_ptr<Chunk> current_chunk() {
         return chunk;

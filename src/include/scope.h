@@ -29,7 +29,7 @@ public:
     }
 
     /**
-     * 是否是最全局scope（depth==0）
+     * 是否是全局scope（depth==0）
      */
     bool is_global_scope() {
         return depth == 0;

@@ -38,6 +38,8 @@ enum class OpCode: uint8_t {
     SetGlobal,
     LoadLocal,
     SetLocal,
+    Jump,
+    JumpIfPopFalse,
 };
 
 using OperandSize = uint16_t;
@@ -46,8 +48,11 @@ class Chunk {
 public:
     friend class Disassembler;
 
+    size_t code_size() {
+        return code.size();
+    }
 
-    uint8_t code_at(size_t index) {
+    uint8_t& code_at(size_t index) {
         return code.at(index);
     }
 

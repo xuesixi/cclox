@@ -44,8 +44,10 @@ public:
      */
     size_t instruction_general(OpCode instruction, size_t offset);
 
+    size_t instruction_jump(OpCode instruction, size_t offset);
+
     /**
-     * 有两个额外的操作数代表索引
+     * 有两个额外的操作数代表常数池索引
      */
     size_t instruction_constant_operand_2(OpCode instruction, size_t offset);
 
