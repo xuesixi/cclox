@@ -36,6 +36,7 @@ const std::unordered_map<OpCode, std::string> opcode_names{
         {OpCode::PopN, "PopN"},
         {OpCode::Jump, "Jump"},
         {OpCode::JumpIfPopFalse, "JumpIfPopFalse"},
+    {OpCode::JumpIfFalse, "JumpIfFalse"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -95,6 +96,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::PopN:
             return instruction_general(instruction, offset);
         case OpCode::JumpIfPopFalse:
+        case OpCode::JumpIfFalse:
         case OpCode::Jump:
             return instruction_jump(instruction, offset);
     }

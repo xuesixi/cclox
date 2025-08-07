@@ -81,8 +81,9 @@ private:
     void error_at(const Token &token, const std::string &message);
 
     /**
-     * 如果next是想要的token，则advance()。否则报错。
-     * type 的默认参数是semicolon，消息的默认参数是"expect a ';' to end the statement"
+     * 如果next是想要的token，则advance()。否则error-at。
+     * type 的默认参数是semicolon，消息的默认参数是"expect a ';' to end the statement"。
+     * 在repl模式下不会报错，而是抛出ConsumePending。
      */
     void consume(TokenType type, const std::string &message);
 

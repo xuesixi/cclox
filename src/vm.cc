@@ -21,21 +21,30 @@ InterpreterResult VM::interpret(std::string &&source) {
     }
 }
 
+void VM::show_stack() {
+    std::cout << "   ";
+    for (const Value &value: stack) {
+        std::cout << fmt::format("[{}]", Visual::to_visual_string(value));
+    }
+    std::cout << std::endl;
+}
+
 InterpreterResult VM::run() {
     Disassembler disassembler(chunk);
 
-    #ifdef DEBUG_TRACE_EXECUTION
+    if (Flag::disassembly) {
         // 先把整个chunk反汇编一次，输出其结果
         disassembler.disassemble("test chunk");
-    #endif
+    }
 
     try {
         while (true) {
 #ifdef DEBUG_TRACE_EXECUTION
             // 运行一条指令之前，再输出一次栈的样子和指令的信息，方便一步步看到整个运行的过程
-            Visual::show_stack(*this);
-            disassembler.disassemble_instruction(pc);
-
+            if (Flag::trace) {
+                show_stack();
+                disassembler.disassemble_instruction(pc);
+            }
 #endif
 
             OpCode instruction = read_opcode();
@@ -43,9 +52,6 @@ InterpreterResult VM::run() {
             switch (instruction) {
 
                 case OpCode::Return: {
-//                    Value v = pop();
-//                    Visual::print_with_color(LoxValue::to_string(v), Color::YELLOW);
-//                    std::cout << std::endl;
                     return InterpreterResult::OK;
                 }
                 case OpCode::LoadConstant: {

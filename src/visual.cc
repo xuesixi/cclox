@@ -5,7 +5,7 @@
 #include <iostream>
 
 // 为字符串前后加上引号
-std::string string_wrapper(std::string &&str) {
+std::string Visual::string_wrapper(std::string &&str) {
     return "\"" + str + "\"";
 }
 
@@ -15,24 +15,6 @@ std::string Visual::to_visual_string(Value value) {
         return string_wrapper(std::move(regular_string));
     }
     return regular_string;
-}
-
-void Visual::show_stack(VM &vm) {
-    std::cout << "   ";
-    for (const Value &value: vm.stack) {
-        if (std::holds_alternative<LoxReference>(value)) {
-
-            // 如果是字符串，在打印的时候，在前后加上引号
-            if (LoxValue::to_reference<LoxString>(value)) {
-                std::cout << fmt::format("[{}]", string_wrapper(LoxValue::to_string(value)));
-            } else {
-                std::cout << fmt::format("[{}]", LoxValue::to_string(value));
-            }
-        } else {
-            std::cout << fmt::format("[{}]", LoxValue::to_string(value));
-        }
-    }
-    std::cout << std::endl;
 }
 
 void Visual::print_with_color(const std::string &content, Color color) {

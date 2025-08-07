@@ -57,4 +57,5 @@ constexpr bool are_same() {
 // 打开指定路径的文件，并将其全部内容返回为一个string。如果文件无法被打开，抛出runtime_err
 std::string read_file(const std::string &path);
 
+
 #endif //CCLOX_CCLOX_UTIL_H

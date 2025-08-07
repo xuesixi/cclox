@@ -1,3 +1,11 @@
+#ifndef COMMON_H
+#define COMMON_H
+
+namespace Flag {
+    extern bool trace;
+    extern bool disassembly;
+    extern bool repl;
+}
 
 #define DEBUG_TRACE_EXECUTION
 #define DEBUG_IMPLEMENTATION_CHECK
@@ -15,3 +23,4 @@
 #else
     #define DEBUG_ASSERT(condition, message)
 #endif
+#endif // COMMON_H

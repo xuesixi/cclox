@@ -16,10 +16,6 @@ constexpr int STACK_MAX = 256;
 
 class VM;
 
-namespace Visual {
-    void show_stack(VM &vm);
-}
-
 enum class InterpreterResult {
     OK,
     CompileError,
@@ -34,8 +30,7 @@ public:
     VM & operator=(const VM &other) = delete;
     VM & operator=(VM &&other) = delete;
     InterpreterResult interpret(std::string &&source);
-
-    friend void Visual::show_stack(VM &vm);
+    void show_stack();
 private:
 
     InterpreterResult run();

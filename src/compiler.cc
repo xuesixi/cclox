@@ -24,7 +24,11 @@ void Compiler::consume(TokenType type = TokenType::SEMICOLON, const std::string 
     if (next.type == type) {
         advance();
     } else {
-        error_at(next, message);
+        if (Flag::repl) {
+            throw ConsumePending("pending" + message);
+        } else {
+            error_at(next, message);
+        }
     }
 }
 
@@ -393,7 +397,7 @@ void Compiler::if_statement() {
 }
 
 void Compiler::block_statement() {
-    while (!check(TokenType::RIGHT_BRACE)) {
+    while (!check(TokenType::RIGHT_BRACE ) && !check(TokenType::END_OF_FILE)) {
         declaration();
     }
     consume(TokenType::RIGHT_BRACE, "expect a '}' to end the block");

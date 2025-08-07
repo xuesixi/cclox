@@ -73,6 +73,11 @@ public:
     using InterpreterError::InterpreterError;
 };
 
+class ConsumePending: std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 
 
 #endif //CCLOX_ERROR_H

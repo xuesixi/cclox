@@ -3,17 +3,43 @@
 //
 
 #include "cclox_util.h"
+#include "common.h"
 #include "chunk.h"
 #include "vm.h"
 #include "scanner.h"
 #include <fmt/core.h>
 #include <error.h>
 #include <memory>
+#include "CLI11.hpp"
+
+bool Flag::trace = false;
+bool Flag::disassembly = false;
+bool Flag::repl = false;
 
 void repl() {
     std::string buffer;
+    std::string last_time;
+    VM vm;
+    std::cout << "cclox repl start!\n";
     while (true) {
+        if (!last_time.empty()) {
+            std::cout << "... ";
+        } else {
+            std::cout << "> ";
+        }
         std::getline(std::cin, buffer);
+        if (buffer.empty()) {
+            std::cout << "\n";
+            return;
+        }
+        try {
+            vm.interpret(last_time + buffer);
+            last_time.clear();
+        } catch (ConsumePending &pending) {
+            last_time += buffer;
+        } catch (InterpreterError &error) {
+            last_time.clear();
+        }
     }
 }
 
@@ -25,39 +51,6 @@ void run_file(const std::string &path) {
     } catch (FileOpenFailureError &err) {
         std::cerr << err.what() << std::endl;
     }
-}
-
-void testVM() {
-//    VM vm;
-//    std::shared_ptr<Chunk> chunk = std::make_shared<Chunk>();
-//
-//    size_t index = chunk->add_constant(1);
-//    chunk->write_opcode(OpCode::LoadConstant8, 123);
-//    chunk->write_operand(index, 123);
-//
-//    index = chunk->add_constant(3);
-//    chunk->write_opcode(OpCode::LoadConstant8, 123);
-//    chunk->write_operand(index, 123);
-//
-//    chunk->write_opcode(OpCode::Add, 123);
-//
-//    index = chunk->add_constant(4);
-//    chunk->write_opcode(OpCode::LoadConstant8, 124);
-//    chunk->write_operand(index, 124);
-//
-//    index = chunk->add_constant(5);
-//    chunk->write_opcode(OpCode::LoadConstant8, 124);
-//    chunk->write_operand(index, 124);
-//
-//    chunk->write_opcode(OpCode::Multipy, 124);
-//    chunk->write_opcode(OpCode::Subtract, 124);
-//
-//    chunk->write_opcode(OpCode::Return, 125);
-//
-//    // Disassembler disass(chunk);
-//    // disass.disassemble("test chunk");
-//
-//    vm.interpret(chunk, <#initializer#>);
 }
 
 void test_scanner(const std::string &path) {
@@ -79,5 +72,18 @@ void go(int argc, const char **args) {
 }
 
 int main(int argc, const char **args) {
-    run_file("/Users/yuexue/Codes/try/cclox/build/hello.lox");
+//    run_file("/Users/yuexue/Codes/try/cclox/build/hello.lox");
+    CLI::App app{"cclox description"};
+    std::string filepath;
+
+    app.add_option("-f, --file", filepath, "source file");
+    app.add_flag("-t, --trace", Flag::trace, "trace each step");
+    app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
+    CLI11_PARSE(app, argc, args);
+    if (filepath.empty()) {
+        Flag::repl = true;
+        repl();
+    } else {
+        run_file(filepath);
+    }
 }

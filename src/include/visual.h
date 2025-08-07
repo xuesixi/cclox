@@ -10,7 +10,7 @@ enum class Color {
 };
 
 namespace Visual {
-    void show_stack(VM &vm);
+    std::string string_wrapper(std::string &&input);
     void print_with_color(const std::string &content, Color color);
 
     /**
