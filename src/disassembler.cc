@@ -36,6 +36,7 @@ const std::unordered_map<OpCode, std::string> opcode_names{
         {OpCode::PopN, "PopN"},
         {OpCode::Jump, "Jump"},
         {OpCode::JumpIfPopFalse, "JumpIfPopFalse"},
+        {OpCode::JumpBack, "JumpBack"},
     {OpCode::JumpIfFalse, "JumpIfFalse"},
 };
 
@@ -99,6 +100,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::JumpIfFalse:
         case OpCode::Jump:
             return instruction_jump(instruction, offset);
+        case OpCode::JumpBack:
+            return instruction_jump_back(instruction, offset);
     }
 }
 
@@ -133,6 +136,14 @@ size_t Disassembler::instruction_jump(OpCode instruction, size_t offset) {
     cout << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
     return offset + 3;
 }
+
+size_t Disassembler::instruction_jump_back(OpCode instruction, size_t offset) {
+    uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    size_t destination = offset + 3 - distance;
+    cout << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
+    return offset + 3;
+}
+
 
 size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);

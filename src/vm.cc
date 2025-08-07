@@ -204,6 +204,11 @@ InterpreterResult VM::run() {
                     }
                     break;
                 }
+                case OpCode::JumpBack: {
+                    auto distance = read_operand_2();
+                    pc -= distance;
+                    break;
+                }
                 default:
                     implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}", static_cast<uint8_t>(instruction)));
             }

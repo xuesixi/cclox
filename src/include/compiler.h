@@ -5,6 +5,7 @@
 #include "common.h"
 #include "scanner.h"
 #include "scope.h"
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -149,6 +150,11 @@ private:
      * 在curr已知是if的时候使用
      */
     void if_statement();
+    
+    /**
+     * 在curr已知是while的时候使用
+     */
+    void while_statement();
 
     /**
      * 在curr已知是左大括号的时候调用。该函数自身没有涉及scope的处理
@@ -244,6 +250,8 @@ private:
      * 向字节码中写入 [jump, placeholder1, placeholder2]。返回placeholder1的索引。该函数需要配合patch函数使用
      */
     size_t emit_jump(OpCode jump_instruction);
+    
+    void loop_back(size_t destination);
 
     /**
      * @param from_label 一个由emit_jump返回的标签（偏移值）

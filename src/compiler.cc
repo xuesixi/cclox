@@ -3,6 +3,7 @@
 #include "common.h"
 #include "objects/loxstring.h"
 #include "scanner.h"
+#include <cstddef>
 #include <string>
 #include <fmt/core.h>
 
@@ -429,6 +430,16 @@ void Compiler::if_statement() {
     }
 }
 
+void Compiler::while_statement() {
+    size_t condition_label = current_chunk()->code_size();
+    compile_expression();
+    auto to_end = emit_jump(OpCode::JumpIfPopFalse);
+    
+    statement();
+    loop_back(condition_label);
+    patch_jump(to_end);
+}
+
 void Compiler::block_statement() {
     while (!check(TokenType::RIGHT_BRACE ) && !check(TokenType::END_OF_FILE)) {
         declaration();
@@ -490,6 +501,8 @@ void Compiler::statement() {
         emit_operand(amount_to_pop);
     } else if (match(TokenType::IF)){
         if_statement();
+    } else if (match(TokenType::WHILE)){
+        while_statement();
     } else {
         expression_statement();
     }
@@ -510,6 +523,27 @@ size_t Compiler::emit_jump(OpCode jump_instruction) {
     emit_opcode(jump_instruction);
     emit_operand_2(0);
     return current_chunk()->code_size() - 2;
+}
+
+void Compiler::loop_back(size_t destination) {
+    /**
+     * destination <-- dest
+     * i
+     * i
+     * loop_back   <-- 计算距离的时候，jumpback指令还没有生成，因此是在这里计算的
+     * op1    
+     * op2
+     * next instruction  <-- 实际运行的时候，jump指令会读取两个操作符，因此pc会在这里
+     * .
+     * current
+     */
+     size_t distance = current_chunk()->code_size() - destination + 3;
+
+    if (!within<uint16_t>(distance)) {
+       throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
+    }
+    emit_opcode(OpCode::JumpBack);
+    emit_operand_2(distance);
 }
 
 void Compiler::patch_jump(size_t from_label) {

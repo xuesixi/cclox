@@ -41,6 +41,7 @@ enum class OpCode: uint8_t {
     Jump,
     JumpIfPopFalse,
     JumpIfFalse,
+    JumpBack,
 };
 
 using OperandSize = uint16_t;

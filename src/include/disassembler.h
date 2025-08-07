@@ -46,6 +46,8 @@ public:
 
     size_t instruction_jump(OpCode instruction, size_t offset);
 
+    size_t instruction_jump_back(OpCode instruction, size_t offset);
+
     /**
      * 有两个额外的操作数代表常数池索引
      */

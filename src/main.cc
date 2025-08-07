@@ -72,7 +72,6 @@ void go(int argc, const char **args) {
 }
 
 int main(int argc, const char **args) {
-//    run_file("/Users/yuexue/Codes/try/cclox/build/hello.lox");
     CLI::App app{"cclox description"};
     std::string filepath;
 
@@ -81,6 +80,7 @@ int main(int argc, const char **args) {
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
     CLI11_PARSE(app, argc, args);
     if (filepath == "d") {
+        // 默认的测试用文件, 以 cclox -f d 触发
         filepath = "/Users/yuexue/Codes/try/cclox/build/hello.lox";
     }
     if (filepath.empty()) {
