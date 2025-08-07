@@ -27,7 +27,6 @@ inline Precedence get_higher_precedence(Precedence precedence) {
 }
 
 
-
 class Compiler;
 
 class Compiler {
@@ -205,6 +204,16 @@ private:
      * 在已知curr是一个二元操作符的时候调用。
      */
     void binary_expr(bool can_assign);
+    
+    /**
+     * 在已知curr是and的时候调用。
+     */
+    void and_expr(bool can_assign);
+
+    /**
+     * 在已知curr是or的时候调用。
+     */
+    void or_expr(bool can_assign);
 
     /**
      * 在已知curr是nil，true，false的时候调用

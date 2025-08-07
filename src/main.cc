@@ -80,6 +80,9 @@ int main(int argc, const char **args) {
     app.add_flag("-t, --trace", Flag::trace, "trace each step");
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
     CLI11_PARSE(app, argc, args);
+    if (filepath == "d") {
+        filepath = "/Users/yuexue/Codes/try/cclox/build/hello.lox";
+    }
     if (filepath.empty()) {
         Flag::repl = true;
         repl();

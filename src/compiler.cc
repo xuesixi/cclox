@@ -1,5 +1,8 @@
 #include "compiler.h"
+#include "chunk.h"
+#include "common.h"
 #include "objects/loxstring.h"
+#include "scanner.h"
 #include <string>
 #include <fmt/core.h>
 
@@ -101,6 +104,10 @@ auto Compiler::get_infix(TokenType type) -> Compiler::ParseFn {
         case TokenType::LESS_EQUAL:
         case TokenType::GREATER_EQUAL:
             return &Compiler::binary_expr;
+        case TokenType::AND:
+            return &Compiler::and_expr;
+        case TokenType::OR:
+            return &Compiler::or_expr;
         default:
             return nullptr;
     }
@@ -130,6 +137,10 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         case TokenType::STRING:
         case TokenType::IDENTIFIER:
             return Precedence::PRIMARY;
+        case TokenType::AND:
+            return Precedence::AND;
+        case TokenType::OR:
+            return Precedence::OR;
         default:
             return Precedence::NONE;
     }
@@ -241,6 +252,28 @@ void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
     }
 }
 
+void Compiler::and_expr([[maybe_unused]] bool can_assign) {
+    // a and b and c
+    auto short_circuit = emit_jump(OpCode::JumpIfFalse);
+    emit_opcode(OpCode::Pop);
+
+    compile_precedence_at_least(Precedence::AND);
+    
+    patch_jump(short_circuit);
+}
+
+void Compiler::or_expr([[maybe_unused]] bool can_assign) {
+    // a or b or c
+    auto short_circuit = emit_jump(OpCode::JumpIfFalse);
+    auto end = emit_jump(OpCode::Jump);
+    
+    patch_jump(short_circuit);
+
+    emit_opcode(OpCode::Pop);
+    compile_precedence_at_least(Precedence::OR);
+    patch_jump(end);
+}
+
 void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     switch (type) {
@@ -254,7 +287,7 @@ void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
             emit_opcode(OpCode::LoadFalse);
             break;
         default:
-            FMT_ASSERT(false, "this line should be unreachable, but is actually reached");
+            DEBUG_ASSERT(false, "this is should be unreachable");
     }
 }
 
