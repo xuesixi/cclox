@@ -9,6 +9,7 @@
 
 class LoxObject;
 
+
 class Runtime {
 public:
     void register_object(long id, const std::shared_ptr<LoxObject> &ptr) {

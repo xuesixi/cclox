@@ -16,7 +16,6 @@ void Compiler::error_at(const Token &token, const std::string &message) {
     if (token.type == TokenType::END_OF_FILE) {
         std::cerr << " at end. ";
     } else if (token.type == TokenType::ERROR) {
-
     } else {
         std::cerr << fmt::format(" at {}. ", token.lexeme);
     }
@@ -24,7 +23,8 @@ void Compiler::error_at(const Token &token, const std::string &message) {
     has_error = true;
 }
 
-void Compiler::consume(TokenType type = TokenType::SEMICOLON, const std::string &message = "expect a ';' to end the statement") {
+void Compiler::consume(TokenType type = TokenType::SEMICOLON,
+                       const std::string &message = "expect a ';' to end the statement") {
     if (next.type == type) {
         advance();
     } else {
@@ -47,7 +47,6 @@ void Compiler::advance() {
             error_at(next, next.lexeme);
         }
     }
-
 }
 
 std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
@@ -55,7 +54,7 @@ std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
     chunk = std::make_shared<Chunk>();
     scope = std::make_shared<Scope>();
     advance();
-//    compile_expression();
+    //    compile_expression();
     while (!check(TokenType::END_OF_FILE)) {
         declaration();
     }
@@ -148,7 +147,6 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
 }
 
 void Compiler::compile_precedence_at_least(Precedence at_least) {
-
     /*
      * 取得next的prefix解析函数。
      * 如果为空，说明next不应该作为一个表达式的开头，因此属于编译错误。
@@ -169,7 +167,8 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
      * 如果可以，且其优先级大于等于at_least，我们应该继续解析。
      * 如果不可以，则到此为止。
      */
-    while (get_precedence(next.type) >= at_least) { // 这里clion会给出警告，可以无视它。
+    while (get_precedence(next.type) >= at_least) {
+        // 这里clion会给出警告，可以无视它。
         advance();
         ParseFn infix = get_infix(curr.type); // 在经历上一行的advance()之后，这里的curr就是上面条件中的next。
         (this->*infix)(can_assign); // 这里的can_assign参数实际上并没有用，因为暂时没有任何infix真的用到了它
@@ -259,7 +258,7 @@ void Compiler::and_expr([[maybe_unused]] bool can_assign) {
     emit_opcode(OpCode::Pop);
 
     compile_precedence_at_least(Precedence::AND);
-    
+
     patch_jump(short_circuit);
 }
 
@@ -267,7 +266,7 @@ void Compiler::or_expr([[maybe_unused]] bool can_assign) {
     // a or b or c
     auto short_circuit = emit_jump(OpCode::JumpIfFalse);
     auto end = emit_jump(OpCode::Jump);
-    
+
     patch_jump(short_circuit);
 
     emit_opcode(OpCode::Pop);
@@ -338,7 +337,6 @@ void Compiler::variable_expr(bool can_assign) {
         }
         emit_operand_2(key);
     }
-
 }
 
 void Compiler::emit_load_constant(Value &&value) {
@@ -412,7 +410,6 @@ void Compiler::if_statement() {
     statement();
 
     if (match(TokenType::ELSE)) {
-
         // jump -> end
         auto to_end = emit_jump(OpCode::Jump);
 
@@ -422,9 +419,7 @@ void Compiler::if_statement() {
 
         // end
         patch_jump(to_end);
-
     } else {
-
         // end/else
         patch_jump(to_else);
     }
@@ -432,16 +427,49 @@ void Compiler::if_statement() {
 
 void Compiler::while_statement() {
     size_t condition_label = current_chunk()->code_size();
+
+    auto old_continue_point = save_continue_point();
     compile_expression();
+
+    auto old_breakpoint = save_breakpoint();
     auto to_end = emit_jump(OpCode::JumpIfPopFalse);
-    
+
     statement();
     loop_back(condition_label);
     patch_jump(to_end);
+
+    restore_breakpoint(old_breakpoint);
+    restore_continue_point(old_continue_point);
 }
 
+void Compiler::break_statement() {
+    if (!breakpoint) {
+        error_at(curr, "cannot use break outside of a loop");
+        return;
+    }
+    auto [dest, locals_size] = breakpoint.value();
+    emit_opcode(OpCode::PopN);
+    emit_operand(scope->locals_size() - locals_size);
+    emit_opcode(OpCode::LoadFalse);
+    loop_back(dest);
+    consume();
+}
+
+void Compiler::continue_statement() {
+    if (!continue_point) {
+        error_at(curr, "cannot use continue outside of a loop");
+        return;
+    }
+    auto [dest, locals_size] = continue_point.value();
+    emit_opcode(OpCode::PopN);
+    emit_operand(scope->locals_size() - locals_size);
+    loop_back(dest);
+    consume();
+}
+
+
 void Compiler::block_statement() {
-    while (!check(TokenType::RIGHT_BRACE ) && !check(TokenType::END_OF_FILE)) {
+    while (!check(TokenType::RIGHT_BRACE) && !check(TokenType::END_OF_FILE)) {
         declaration();
     }
     consume(TokenType::RIGHT_BRACE, "expect a '}' to end the block");
@@ -453,7 +481,6 @@ OperandSize Compiler::resolve_global_identifier() {
 }
 
 void Compiler::var_statement() {
-
     try {
         if (scope->is_global_scope()) {
             // 全局变量
@@ -493,16 +520,20 @@ void Compiler::expression_statement() {
 void Compiler::statement() {
     if (match(TokenType::PRINT)) {
         print_statement();
-    } else if (match(TokenType::LEFT_BRACE)){
-        auto old_size= scope->step_into();
+    } else if (match(TokenType::LEFT_BRACE)) {
+        auto old_size = scope->step_into();
         block_statement();
         auto amount_to_pop = scope->step_out(old_size);
         emit_opcode(OpCode::PopN);
         emit_operand(amount_to_pop);
-    } else if (match(TokenType::IF)){
+    } else if (match(TokenType::IF)) {
         if_statement();
-    } else if (match(TokenType::WHILE)){
+    } else if (match(TokenType::WHILE)) {
         while_statement();
+    } else if (match(TokenType::BREAK)) {
+        break_statement();
+    } else if (match(TokenType::CONTINUE)) {
+        continue_statement();
     } else {
         expression_statement();
     }
@@ -537,17 +568,17 @@ void Compiler::loop_back(size_t destination) {
      * .
      * current
      */
-     size_t distance = current_chunk()->code_size() - destination + 3;
+    DEBUG_ASSERT(current_chunk()->code_size() >= destination, "loop back is jumping forward!");
+    size_t distance = current_chunk()->code_size() - destination + 3;
 
     if (!within<uint16_t>(distance)) {
-       throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
+        throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
     }
     emit_opcode(OpCode::JumpBack);
     emit_operand_2(distance);
 }
 
 void Compiler::patch_jump(size_t from_label) {
-
     /**
      * jump
      * op1    <-- 这里是from_label
@@ -560,9 +591,30 @@ void Compiler::patch_jump(size_t from_label) {
     // from_label的位置是jump指令的第一个操作数。但实际在执行jump语句的时候，pc的位置是jump语句的第二个操作数之后，因此跳转距离-2
     size_t distance = current_chunk()->code_size() - from_label - 2;
     if (!within<uint16_t>(distance)) {
-       throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
+        throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
     }
     auto [high, low] = u16_to_u8(distance);
     current_chunk()->code_at(from_label) = low;
     current_chunk()->code_at(from_label + 1) = high;
+}
+
+
+Compiler::BackPoint Compiler::save_continue_point() {
+    auto old = continue_point;
+    continue_point = {current_chunk()->code_size(), scope->locals_size()};
+    return old;
+}
+
+void Compiler::restore_continue_point(BackPoint old) {
+    continue_point = old;
+}
+
+Compiler::BackPoint Compiler::save_breakpoint() {
+    auto old = breakpoint;
+    breakpoint = {current_chunk()->code_size(), scope->locals_size()};
+    return old;
+}
+
+void Compiler::restore_breakpoint(Compiler::BackPoint old) {
+    breakpoint = old;
 }

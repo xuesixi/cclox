@@ -14,9 +14,10 @@ public:
      * 进入一个新的层级，自增depth，并返回此时的本地变量的数量
      */
     uint8_t step_into() {
-        depth ++;
+        depth++;
         return locals.size();
     }
+
     /**
      * 离开一个层级。自减depth，并将本地变量的数量从缩减至clear_to。返回缩减的数量
      */
@@ -24,8 +25,12 @@ public:
         DEBUG_ASSERT(clear_to <= locals.size(), "clear_to should not be greater than locals.size()");
         uint8_t diff = locals.size() - clear_to;
         locals.resize(clear_to);
-        depth --;
+        depth--;
         return diff;
+    }
+
+    size_t locals_size() const {
+        return locals.size();
     }
 
     /**
@@ -56,10 +61,12 @@ public:
     int resolve_local(const Token &token);
 
 private:
-
     struct Local {
-        Local(): name(), depth(-1) {}
-        Local(const Token &token): name(token.get_lexeme()), depth(-1) {}
+        Local(): name(), depth(-1) {
+        }
+
+        Local(const Token &token): name(token.get_lexeme()), depth(-1) {
+        }
 
         bool isInitialized() {
             return depth != -1;

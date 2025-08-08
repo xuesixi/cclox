@@ -18,7 +18,7 @@ inline void implementation_error(const std::string &message) {
     std::abort();
 }
 
-class LoxError: public std::runtime_error {
+class LoxError : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
 };
@@ -33,51 +33,50 @@ public:
     using LoxError::LoxError;
 };
 
-class InterpreterError: public std::runtime_error {
+class InterpreterError : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
 };
 
-class FileOpenFailureError: public InterpreterError {
+class FileOpenFailureError : public InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class ConstantPoolOverflowError: public InterpreterError {
+class ConstantPoolOverflowError : public InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class IdentifierPoolOverFlowError: public InterpreterError {
+class IdentifierPoolOverFlowError : public InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class ScopeLocalOverflowError: InterpreterError {
+class ScopeLocalOverflowError : InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class SameNameLocalVariableError: InterpreterError {
+class SameNameLocalVariableError : InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class UsingUninitializedLocalError: InterpreterError {
+class UsingUninitializedLocalError : InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class JumpDistanceOverflowError: InterpreterError {
+class JumpDistanceOverflowError : InterpreterError {
 public:
     using InterpreterError::InterpreterError;
 };
 
-class ConsumePending: std::runtime_error {
+class ConsumePending : std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
 };
-
 
 
 #endif //CCLOX_ERROR_H

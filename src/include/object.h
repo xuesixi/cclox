@@ -12,7 +12,8 @@ using LoxReference = std::shared_ptr<LoxObject>;
 
 class LoxObject {
 public:
-    LoxObject() : id(next_id++) {}
+    LoxObject() : id(next_id++) {
+    }
 
     virtual ~LoxObject() = default;
 
@@ -22,7 +23,7 @@ public:
 
     [[nodiscard]] virtual std::string to_string() const = 0;
 
-    template<typename T, typename ... Args>
+    template<typename T, typename... Args>
     static LoxReference allocate(Args... args) {
         static_assert(std::is_base_of_v<LoxObject, T>, "The template argument has to be a subclass of LoxObject");
         auto ptr = std::make_shared<T>(std::forward<Args>(args)...);

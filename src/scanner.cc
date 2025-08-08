@@ -3,22 +3,24 @@
 #include <fmt/core.h>
 
 static std::unordered_map<std::string, TokenType> keyword_map{
-        {"and", TokenType::AND},
-        {"class", TokenType::CLASS},
-        {"else", TokenType::ELSE},
-        {"false", TokenType::FALSE},
-        {"for", TokenType::FOR},
-        {"fun", TokenType::FUN},
-        {"if", TokenType::IF},
-        {"nil", TokenType::NIL},
-        {"or", TokenType::OR},
-        {"print", TokenType::PRINT},
-        {"return", TokenType::RETURN},
-        {"super", TokenType::SUPER},
-        {"this", TokenType::THIS},
-        {"true", TokenType::TRUE},
-        {"var", TokenType::VAR},
-        {"while", TokenType::WHILE}
+    {"and", TokenType::AND},
+    {"class", TokenType::CLASS},
+    {"else", TokenType::ELSE},
+    {"false", TokenType::FALSE},
+    {"for", TokenType::FOR},
+    {"fun", TokenType::FUN},
+    {"if", TokenType::IF},
+    {"nil", TokenType::NIL},
+    {"or", TokenType::OR},
+    {"print", TokenType::PRINT},
+    {"return", TokenType::RETURN},
+    {"super", TokenType::SUPER},
+    {"this", TokenType::THIS},
+    {"true", TokenType::TRUE},
+    {"var", TokenType::VAR},
+    {"while", TokenType::WHILE},
+    {"break", TokenType::BREAK},
+    {"continue", TokenType::CONTINUE}
 };
 
 TokenType Scanner::get_identifier_type() {
@@ -34,7 +36,7 @@ TokenType Scanner::get_identifier_type() {
 Token Scanner::scan_string() {
     while (!is_at_end() && peek_next() != '"') {
         if (peek_next() == '\n') {
-            curr_line ++;
+            curr_line++;
         }
         advance();
     }
@@ -63,7 +65,7 @@ Token Scanner::scan_number() {
 
 Token Scanner::scan_identifier() {
     while (!is_at_end() && is_alpha_or_underscore(peek_next())) {
-       advance();
+        advance();
     }
     return make_token(get_identifier_type());
 }
@@ -125,37 +127,36 @@ std::string Token::to_string() const {
 
 void Scanner::skip_whitespace() {
     while (true) {
-
         if (is_at_end()) {
             return;
         }
 
         switch (peek_next()) {
-        case ' ':
-        case '\t':
-        case '\r':
-            advance();
-            break;
-        case '\n':
-            curr_line ++;
-            advance();
-            break;
-        case '/': {
-            if (peek_next(1) == '/') {
-                // 说明遇到了注释，那么一路前进到本行结束
-
-                while (!is_at_end() && peek_next() != '\n') {
-                    // 如果遇到了文本结尾，本循环结束。在下一次的外层循环中因为is_at_end()判断而return
-                    // 如果遇到了换行符，本循环结束。在下一次的外层循环中，进入换行符的case
-                    advance();
-                }
+            case ' ':
+            case '\t':
+            case '\r':
+                advance();
                 break;
-            } else {
-                return;
+            case '\n':
+                curr_line++;
+                advance();
+                break;
+            case '/': {
+                if (peek_next(1) == '/') {
+                    // 说明遇到了注释，那么一路前进到本行结束
+
+                    while (!is_at_end() && peek_next() != '\n') {
+                        // 如果遇到了文本结尾，本循环结束。在下一次的外层循环中因为is_at_end()判断而return
+                        // 如果遇到了换行符，本循环结束。在下一次的外层循环中，进入换行符的case
+                        advance();
+                    }
+                    break;
+                } else {
+                    return;
+                }
             }
-        }
-        default:
-            return;
+            default:
+                return;
         }
     }
 }

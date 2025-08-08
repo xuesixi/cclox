@@ -4,27 +4,28 @@
 
 #include <cstddef>
 #include <string>
-enum class TokenType{
-  // Single-character tokens.
-  LEFT_PAREN, RIGHT_PAREN,
-  LEFT_BRACE, RIGHT_BRACE,
-  COMMA, DOT, MINUS, PLUS,
-  SEMICOLON, SLASH, STAR,
-  // One or two character tokens.
-  BANG, BANG_EQUAL,
-  EQUAL, EQUAL_EQUAL,
-  GREATER, GREATER_EQUAL,
-  LESS, LESS_EQUAL,
-  // Literals.
-  IDENTIFIER, STRING, FLOAT, INTEGER,
-  // Keywords.
 
-  AND, CLASS, ELSE, FALSE,
-  FOR, FUN, IF, NIL, OR,
-  PRINT, RETURN, SUPER, THIS,
-  TRUE, VAR, WHILE,
+enum class TokenType {
+    // Single-character tokens.
+    LEFT_PAREN, RIGHT_PAREN,
+    LEFT_BRACE, RIGHT_BRACE,
+    COMMA, DOT, MINUS, PLUS,
+    SEMICOLON, SLASH, STAR,
+    // One or two character tokens.
+    BANG, BANG_EQUAL,
+    EQUAL, EQUAL_EQUAL,
+    GREATER, GREATER_EQUAL,
+    LESS, LESS_EQUAL,
+    // Literals.
+    IDENTIFIER, STRING, FLOAT, INTEGER,
 
-  ERROR, END_OF_FILE // EOF被内置宏占用了
+    // Keywords.
+    AND, CLASS, ELSE, FALSE,
+    FOR, FUN, IF, NIL, OR,
+    PRINT, RETURN, SUPER, THIS,
+    TRUE, VAR, WHILE, BREAK, CONTINUE,
+
+    ERROR, END_OF_FILE // EOF被内置宏占用了
 };
 
 class Scanner;
@@ -38,18 +39,22 @@ public:
     /**
      * 默认初始化，应该不会被用到？
      */
-    Token(): lexeme(), type(TokenType::ERROR), line(-1) {};
+    Token(): lexeme(), type(TokenType::ERROR), line(-1) {
+    };
 
     /**
      * token会持有自己的lexeme字符串。在构造时，其string参数需要是临时值，主要是text.substr()
      * */
     Token(std::string &&token_content, TokenType token_type, int token_line)
-        : lexeme(std::move(token_content)), type(token_type), line(token_line) {};
+        : lexeme(std::move(token_content)), type(token_type), line(token_line) {
+    };
 
     std::string to_string() const;
+
     const std::string &get_lexeme() const {
         return lexeme;
     }
+
 private:
     std::string lexeme;
     TokenType type;
@@ -58,13 +63,16 @@ private:
 
 class Scanner {
 public:
-    Scanner(std::string &&file_content): text(std::move(file_content)), start_index(0), next_index(0), curr_line(1) {};
+    Scanner(std::string &&file_content): text(std::move(file_content)), start_index(0), next_index(0), curr_line(1) {
+    };
+
     Token scan_token();
+
     bool has_more() {
         return !is_at_end();
     }
-private:
 
+private:
     /* 判断字符是不是字母或者下划线*/
     static bool is_alpha_or_underscore(char c) {
         return isalpha(c) || c == '_';
@@ -74,7 +82,7 @@ private:
      * 以当前的start和next index为范围，创建指定类型的token
      */
     Token make_token(TokenType type) {
-        return { text.substr(start_index, next_index-start_index), type, curr_line };
+        return {text.substr(start_index, next_index - start_index), type, curr_line};
     }
 
     /**
@@ -93,7 +101,7 @@ private:
 
     /* 返回next_index指向的字符，并自增之 */
     char advance() {
-        return text.at(next_index ++);
+        return text.at(next_index++);
     }
 
     /**

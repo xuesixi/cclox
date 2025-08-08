@@ -54,7 +54,7 @@ public:
         return code.size();
     }
 
-    uint8_t& code_at(size_t index) {
+    uint8_t &code_at(size_t index) {
         return code.at(index);
     }
 
@@ -77,7 +77,7 @@ public:
         if (within<uint8_t>(operand)) {
             code.push_back(static_cast<uint8_t>(operand));
             lines.push_back(line);
-        } else if (within<uint16_t>(operand)){
+        } else if (within<uint16_t>(operand)) {
             write_operand_2(operand, line);
         } else {
             implementation_error("not within uint16 limits");
@@ -150,9 +150,7 @@ public:
                 implementation_error("unknown immediate index");
                 return 0L;
         }
-
     }
-
 
 private:
     // 字节码

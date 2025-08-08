@@ -10,9 +10,9 @@
  */
 class Disassembler {
 public:
-
     /* 绑定一个chunk */
-    Disassembler(std::shared_ptr<Chunk> the_chunk): chunk(the_chunk) {}
+    Disassembler(std::shared_ptr<Chunk> the_chunk): chunk(the_chunk) {
+    }
 
     /**
      * 反汇编整个chunk
@@ -29,6 +29,7 @@ public:
      * 单字节指令，没有额外的操作数
      */
     size_t instruction_operand_0(OpCode instruction, size_t offset);
+
     /**
      * 有一个额外的操作数代表常数池索引
      */

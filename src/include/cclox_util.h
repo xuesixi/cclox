@@ -31,25 +31,25 @@ inline bool double_equal(double a, double b) {
 }
 
 // num 是否处于T类型的数值极限之内
-template <typename T>
+template<typename T>
 bool within(size_t num) {
     return num <= std::numeric_limits<T>::max();
 }
 
 // T 是否是非bool的可计算类型
-template <typename T>
+template<typename T>
 constexpr bool is_non_bool_arithmetic() {
     return !std::is_same_v<T, bool> && std::is_arithmetic_v<T>;
 }
 
 // T和U是否都是非bool的可计算类型
-template <typename T, typename U>
+template<typename T, typename U>
 constexpr bool are_non_bool_arithmetic() {
     return is_non_bool_arithmetic<T>() && is_non_bool_arithmetic<U>();
 }
 
 // T, U, V三者是否相同
-template <typename T, typename U, typename V>
+template<typename T, typename U, typename V>
 constexpr bool are_same() {
     return std::is_same_v<T, V> && std::is_same_v<U, V>;
 }

@@ -8,7 +8,9 @@
 #include "objects/loxstring.h"
 #include <variant>
 
-VM::VM(): pc(0) {}
+VM::VM(): pc(0) {
+    globals = std::make_shared<std::unordered_map<std::string, Value> >();
+}
 
 InterpreterResult VM::interpret(std::string &&source) {
     this->pc = 0;
@@ -50,7 +52,6 @@ InterpreterResult VM::run() {
             OpCode instruction = read_opcode();
 
             switch (instruction) {
-
                 case OpCode::Return: {
                     return InterpreterResult::OK;
                 }
@@ -146,13 +147,13 @@ InterpreterResult VM::run() {
                 case OpCode::DefineGlobal: {
                     Value value = pop();
                     std::string key = read_identifier();
-                    globals[key] = value;
+                    (*globals)[key] = value;
                     break;
                 }
                 case OpCode::LoadGlobal: {
                     std::string key = read_identifier();
-                    auto found = globals.find(key);
-                    if (found == globals.end()) {
+                    auto found = globals->find(key);
+                    if (found == globals->end()) {
                         throw LoxNameError(fmt::format("the variable: {} is not found", key));
                     } else {
                         push(found->second);
@@ -161,12 +162,12 @@ InterpreterResult VM::run() {
                 }
                 case OpCode::SetGlobal: {
                     std::string key = read_identifier();
-                    auto found = globals.find(key);
-                    if (found == globals.end()) {
+                    auto found = globals->find(key);
+                    if (found == globals->end()) {
                         throw LoxNameError(fmt::format("the variable: {} is not found", key));
                     } else {
                         Value v = stack.back();
-                        globals[key] = v;
+                        (*globals)[key] = v;
                     }
                     break;
                 }
@@ -210,7 +211,8 @@ InterpreterResult VM::run() {
                     break;
                 }
                 default:
-                    implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}", static_cast<uint8_t>(instruction)));
+                    implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}",
+                                                     static_cast<uint8_t>(instruction)));
             }
         }
     } catch (LoxError &error) {

@@ -6,8 +6,10 @@
 #include "scanner.h"
 #include "scope.h"
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 enum class Precedence {
     NONE,
@@ -32,6 +34,7 @@ class Compiler;
 
 class Compiler {
 public:
+    using BackPoint = std::optional<std::pair<size_t, uint8_t>>; // first：保存的先前的某个字节码偏移值（不可大于当前的字节码偏移值），second：彼处的本地变量的个数
     std::shared_ptr<Chunk> compile(std::string &&source);
 
 private:
@@ -160,6 +163,10 @@ private:
      * 在curr已知是左大括号的时候调用。该函数自身没有涉及scope的处理
      */
     void block_statement();
+    
+    void break_statement();
+
+    void continue_statement();
 
     /**
      * 解析next开始的下一个表达式语句。
@@ -250,7 +257,11 @@ private:
      * 向字节码中写入 [jump, placeholder1, placeholder2]。返回placeholder1的索引。该函数需要配合patch函数使用
      */
     size_t emit_jump(OpCode jump_instruction);
-    
+
+    /**
+     * 生成一个往回跳转至destination的jumpback指令
+     * @param destination 目的地（字节码偏移值）
+     */
     void loop_back(size_t destination);
 
     /**
@@ -259,6 +270,12 @@ private:
      * 修改参数所代表的那个jump指令的操作数，使它跳转到这里。
      */
     void patch_jump(size_t from_label);
+    
+    BackPoint save_breakpoint();
+    void restore_breakpoint(BackPoint old);
+
+    BackPoint save_continue_point();
+    void restore_continue_point(BackPoint old);
 
     std::shared_ptr<Chunk> current_chunk() {
         return chunk;
@@ -269,6 +286,8 @@ private:
     Token curr; // next之前的那个token。之所以称之为curr，是因为大部份情况下，这才是我们正在检视的token
     bool has_error = false; // 编译的过程中是否出现过错误
     bool panic_mode = false; // 是否处于panic模式，出现错误时设置true，一路跳过到下一个statement，然后设置为false
+    BackPoint breakpoint; // 循环语句中的break的目的地
+    BackPoint continue_point; // 循环语句中的continue的目的地
     std::shared_ptr<Chunk> chunk;
     std::shared_ptr<Scope> scope;
 };

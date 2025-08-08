@@ -36,7 +36,6 @@ uint8_t Chunk::to_immediate(Value value) {
 }
 
 OperandSize Chunk::add_identifier(const std::string &str) {
-
     auto found = std::find(identifiers.begin(), identifiers.end(), str);
     if (found != identifiers.end()) {
         // 如果存在，则返回键

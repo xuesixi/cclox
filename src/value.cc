@@ -13,11 +13,11 @@
 #include <variant>
 
 std::string LoxValue::to_string(const Value &value) {
-    return std::visit([](auto &&arg) ->std::string{
+    return std::visit([](auto &&arg) -> std::string {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, LoxReference>) {
             return arg->to_string();
-        } else if constexpr (std::is_same_v<T, nullptr_t>){
+        } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
         } else {
             return fmt::format("{}", arg);
@@ -31,9 +31,9 @@ void LoxValue::print(const Value &value) {
 
 Value operator-(const Value &value) {
     if (std::holds_alternative<long>(value)) {
-        return - std::get<long>(value);
+        return -std::get<long>(value);
     } else if (std::holds_alternative<double>(value)) {
-        return - std::get<double>(value);
+        return -std::get<double>(value);
     } else {
         throw LoxTypeError(fmt::format("the value {} does not support negation", LoxValue::to_string(value)));
     }
@@ -101,7 +101,6 @@ Value operator+(const Value &left, const Value &right) {
         } else {
             throw LoxTypeError(fmt::format("the values do not support addition"));
         }
-
     }, left, right);
 }
 
@@ -125,7 +124,7 @@ Value operator*(const Value &left, const Value &right) {
 
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a * b;
-        }  else {
+        } else {
             throw LoxTypeError(fmt::format("the values do not support multiplication"));
         }
     }, left, right);
