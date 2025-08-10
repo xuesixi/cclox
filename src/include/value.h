@@ -8,15 +8,22 @@
 #include <memory>
 #include "object.h"
 
-using Value = std::variant<long, double, bool, nullptr_t, LoxReference>;
+using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference>;
 
 namespace LoxValue {
     std::string to_string(const Value &value);
+    // std::string to_string(bool v);
+    // std::string to_string(long v);
+    // std::string to_string(double v);
+    // std::string to_string(nullptr_t v);
+    // std::string to_string(LoxReference v);
+
+    Value power(const Value &left, const Value &right);
 
     void print(const Value &value);
 
     inline bool to_bool(const Value &value) {
-        return !(std::holds_alternative<nullptr_t>(value) || (
+        return !(std::holds_alternative<std::nullptr_t>(value) || (
                      std::holds_alternative<bool>(value) && !std::get<bool>(value)));
     }
 

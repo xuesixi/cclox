@@ -1,11 +1,14 @@
 #include "compiler.h"
 #include "chunk.h"
 #include "common.h"
+#include "objects/loxfunction.h"
 #include "objects/loxstring.h"
 #include "scanner.h"
-#include <cstddef>
+#include "value.h"
+#include <algorithm>
 #include <string>
 #include <fmt/core.h>
+#include <utility>
 
 void Compiler::error_at(const Token &token, const std::string &message) {
     if (panic_mode) {
@@ -49,12 +52,10 @@ void Compiler::advance() {
     }
 }
 
-std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
+std::shared_ptr<LoxFunction> Compiler::compile(std::string &&source) {
     scanner = std::make_unique<Scanner>(std::move(source));
-    chunk = std::make_shared<Chunk>();
-    scope = std::make_shared<Scope>();
+    scope = std::make_shared<Scope>(nullptr, FunctionType::Main);
     advance();
-    //    compile_expression();
     while (!check(TokenType::END_OF_FILE)) {
         declaration();
     }
@@ -62,7 +63,11 @@ std::shared_ptr<Chunk> Compiler::compile(std::string &&source) {
     if (has_error) {
         return nullptr;
     } else {
-        return chunk;
+        if (Flag::disassembly) {
+            disasm.set_chunk(&scope->function_->get_chunk());
+            disasm.disassemble("<main>");
+        }
+        return scope->function_;
     }
 }
 
@@ -97,6 +102,7 @@ auto Compiler::get_infix(TokenType type) -> Compiler::ParseFn {
         case TokenType::PLUS:
         case TokenType::SLASH:
         case TokenType::STAR:
+        case TokenType::STAR_STAR:
         case TokenType::EQUAL_EQUAL:
         case TokenType::LESS:
         case TokenType::GREATER:
@@ -108,6 +114,8 @@ auto Compiler::get_infix(TokenType type) -> Compiler::ParseFn {
             return &Compiler::and_expr;
         case TokenType::OR:
             return &Compiler::or_expr;
+        case TokenType::LEFT_PAREN:
+            return &Compiler::call_expr;
         default:
             return nullptr;
     }
@@ -121,6 +129,8 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         case TokenType::SLASH:
         case TokenType::STAR:
             return Precedence::FACTOR;
+        case TokenType::STAR_STAR:
+            return Precedence::POWER;
         case TokenType::EQUAL_EQUAL:
         case TokenType::BANG_EQUAL:
             return Precedence::EQUALITY;
@@ -141,6 +151,8 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
             return Precedence::AND;
         case TokenType::OR:
             return Precedence::OR;
+        case TokenType::LEFT_PAREN:
+            return Precedence::CALL;
         default:
             return Precedence::NONE;
     }
@@ -223,6 +235,9 @@ void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
         case TokenType::STAR:
             emit_opcode(OpCode::Multipy);
             break;
+        case TokenType::STAR_STAR:
+            emit_opcode(OpCode::Power);
+            break;
         case TokenType::BANG:
             emit_opcode(OpCode::Not);
             break;
@@ -296,6 +311,29 @@ void Compiler::string_expr([[maybe_unused]] bool can_assign) {
     emit_load_constant(std::move(value));
 }
 
+void Compiler::call_expr([[maybe_unused]] bool can_assign) {
+    // foo(a + 2, 12, c())
+    int arg_count = argument_list();
+    if (within<uint8_t>(arg_count) == false) {
+        throw LoxArgError("too many arguments!");
+    }
+    emit_opcode(OpCode::Call);
+    emit_operand(arg_count);
+}
+
+int Compiler::argument_list() {
+    int arg_count = 0;
+    if (match(TokenType::RIGHT_PAREN)) {
+        return arg_count;
+    }
+    do {
+        compile_expression();
+        arg_count ++;
+    } while (match(TokenType::COMMA));
+    consume(TokenType::RIGHT_PAREN);
+    return arg_count;
+}
+
 void Compiler::unary_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     compile_precedence_at_least(Precedence::UNARY);
@@ -324,7 +362,7 @@ void Compiler::variable_expr(bool can_assign) {
         emit_operand(local_index);
     } else {
         // 本地没有找到，则认为是全局变量
-        OperandSize key = current_chunk()->add_identifier(curr.lexeme);
+        OperandSize key = current_chunk().add_identifier(curr.lexeme);
         if (match(TokenType::EQUAL)) {
             if (can_assign) {
                 compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
@@ -341,7 +379,7 @@ void Compiler::variable_expr(bool can_assign) {
 
 void Compiler::emit_load_constant(Value &&value) {
     try {
-        OperandSize index = current_chunk()->add_constant(std::move(value));
+        OperandSize index = current_chunk().add_constant(std::move(value));
         if (within<uint8_t>(index)) {
             emit_opcode(OpCode::LoadConstant);
         } else if (within<uint16_t>(index)) {
@@ -388,6 +426,17 @@ void Compiler::print_statement() {
     consume();
 }
 
+void Compiler::return_statement() {
+    if (match(TokenType::SEMICOLON)) {
+        emit_opcode(OpCode::LoadNil);
+        emit_opcode(OpCode::Return);
+    } else {
+        compile_expression();
+        emit_opcode(OpCode::Return);
+        consume();
+    }
+}
+
 void Compiler::if_statement() {
     /**
      * condition
@@ -426,7 +475,7 @@ void Compiler::if_statement() {
 }
 
 void Compiler::while_statement() {
-    size_t condition_label = current_chunk()->code_size();
+    size_t condition_label = current_chunk().code_size();
 
     auto old_continue_point = save_continue_point();
     compile_expression();
@@ -477,8 +526,33 @@ void Compiler::block_statement() {
 
 OperandSize Compiler::resolve_global_identifier() {
     consume(TokenType::IDENTIFIER, "expect an identifier here");
-    return current_chunk()->add_identifier(curr.lexeme);
+    return current_chunk().add_identifier(curr.lexeme);
 }
+
+void Compiler::fun_statement() {
+    if (scope->is_global_scope()) {
+        OperandSize key = resolve_global_identifier();
+
+        std::shared_ptr<LoxFunction> fun = parse_function(FunctionType::Function);
+
+        OperandSize index = current_chunk().add_constant(std::move(fun));
+        emit_opcode(OpCode::LoadConstant);
+        emit_operand(index);
+        emit_opcode(OpCode::DefineGlobal);
+        emit_operand_2(key);
+    } else {
+        consume(TokenType::IDENTIFIER, "expect an identifier for the function");
+
+        scope->add_local(curr);
+        scope->initialize();
+        std::shared_ptr<LoxFunction> fun = parse_function(FunctionType::Function);
+
+        OperandSize index = current_chunk().add_constant(std::move(fun));
+        emit_opcode(OpCode::LoadConstant);
+        emit_operand(index);
+    }
+}
+
 
 void Compiler::var_statement() {
     try {
@@ -506,7 +580,7 @@ void Compiler::var_statement() {
             scope->initialize(); // 本地变量不需要专门的DefineLocal指令
             consume();
         }
-    } catch (InterpreterError &err) {
+    } catch (CompilerError &err) {
         error_at(curr, err.what());
     }
 }
@@ -515,6 +589,52 @@ void Compiler::expression_statement() {
     compile_expression();
     consume();
     emit_opcode(OpCode::Pop);
+}
+
+std::shared_ptr<LoxFunction> Compiler::parse_function(FunctionType type) {
+
+    std::string fun_name = curr.get_lexeme();
+
+    scope = std::make_shared<Scope>(scope, type);
+
+    consume(TokenType::LEFT_PAREN, "expect a '(' after the function name");
+    scope->step_into();
+
+    if (match(TokenType::RIGHT_PAREN)) {
+        goto after_param_list;
+    }
+
+    do {
+        consume(TokenType::IDENTIFIER, "expect a parameter here");
+        scope->add_local(curr);
+        scope->function_->incre_arity();
+        scope->initialize();
+    } while (match(TokenType::COMMA));
+
+    consume(TokenType::RIGHT_PAREN, "expect a ')' to end the parameter list");
+
+    after_param_list:
+    consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");
+    block_statement();
+
+    // 这里不需要退出层级的操作，因为函数调用后，整个栈帧都会被废弃，栈vector会resize至前一个栈帧的尺寸
+    // 所有本栈帧的本地变量自然也就被销毁了
+
+    emit_opcode(OpCode::LoadNil); // 默认返回值为nil
+    emit_opcode(OpCode::Return);
+
+    scope->function_->set_name(fun_name);
+
+    if (!has_error) {
+        disasm.set_chunk(&scope->function_->get_chunk());
+        disasm.disassemble(fun_name);
+    }
+
+    auto function_value = scope->function_;
+
+    scope = scope->outer_;
+
+    return function_value;
 }
 
 void Compiler::statement() {
@@ -534,6 +654,10 @@ void Compiler::statement() {
         break_statement();
     } else if (match(TokenType::CONTINUE)) {
         continue_statement();
+    } else if (match(TokenType::FUN)) {
+        fun_statement();
+    } else if (match(TokenType::RETURN)) {
+        return_statement();
     } else {
         expression_statement();
     }
@@ -553,7 +677,7 @@ void Compiler::declaration() {
 size_t Compiler::emit_jump(OpCode jump_instruction) {
     emit_opcode(jump_instruction);
     emit_operand_2(0);
-    return current_chunk()->code_size() - 2;
+    return current_chunk().code_size() - 2;
 }
 
 void Compiler::loop_back(size_t destination) {
@@ -568,8 +692,8 @@ void Compiler::loop_back(size_t destination) {
      * .
      * current
      */
-    DEBUG_ASSERT(current_chunk()->code_size() >= destination, "loop back is jumping forward!");
-    size_t distance = current_chunk()->code_size() - destination + 3;
+    DEBUG_ASSERT(current_chunk().code_size() >= destination, "loop back is jumping forward!");
+    size_t distance = current_chunk().code_size() - destination + 3;
 
     if (!within<uint16_t>(distance)) {
         throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
@@ -589,19 +713,19 @@ void Compiler::patch_jump(size_t from_label) {
      */
 
     // from_label的位置是jump指令的第一个操作数。但实际在执行jump语句的时候，pc的位置是jump语句的第二个操作数之后，因此跳转距离-2
-    size_t distance = current_chunk()->code_size() - from_label - 2;
+    size_t distance = current_chunk().code_size() - from_label - 2;
     if (!within<uint16_t>(distance)) {
         throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
     }
     auto [high, low] = u16_to_u8(distance);
-    current_chunk()->code_at(from_label) = low;
-    current_chunk()->code_at(from_label + 1) = high;
+    current_chunk().code_at(from_label) = low;
+    current_chunk().code_at(from_label + 1) = high;
 }
 
 
 Compiler::BackPoint Compiler::save_continue_point() {
     auto old = continue_point;
-    continue_point = {current_chunk()->code_size(), scope->locals_size()};
+    continue_point = {current_chunk().code_size(), scope->locals_size()};
     return old;
 }
 
@@ -611,7 +735,7 @@ void Compiler::restore_continue_point(BackPoint old) {
 
 Compiler::BackPoint Compiler::save_breakpoint() {
     auto old = breakpoint;
-    breakpoint = {current_chunk()->code_size(), scope->locals_size()};
+    breakpoint = {current_chunk().code_size(), scope->locals_size()};
     return old;
 }
 

@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 #include "disassembler.h"
+#include "objects/loxfunction.h"
 
 constexpr int STACK_MAX = 256;
 
@@ -20,6 +21,12 @@ enum class InterpreterResult {
     OK,
     CompileError,
     RuntimeError,
+};
+
+struct CallFrame {
+    std::shared_ptr<LoxFunction> function_;
+    size_t pc;
+    size_t fp; // frame pointer, 帧指针，本帧的起始处
 };
 
 class VM {
@@ -49,51 +56,78 @@ private:
         stack.push_back(value);
     }
 
-    Value pop() {
+    [[nodiscard]] Value pop_and_get() {
         Value value = stack.back();
         stack.pop_back();
         return value;
     }
 
+    void pop() {
+        stack.pop_back();
+    }
+
     // 读取下一个指令
     OpCode read_opcode() {
-        return static_cast<OpCode>(chunk->code_at(pc++));
+        return static_cast<OpCode>(next());
     }
 
     // 读取下一个操作数
     uint8_t read_operand_1() {
-        return chunk->code_at(pc++);
+        return next();
     }
 
     // 读取后两个操作数，将它们解释为一个uint16。先读取的是low，后读取的是high
     uint16_t read_operand_2() {
-        uint8_t low = chunk->code_at(pc++);
-        uint8_t high = chunk->code_at(pc++);
+        uint8_t low = next();
+        uint8_t high = next();
         return u8_to_u16(low, high);
     }
 
     // 读取下一个操作数作为索引，从常数池中读取对应的值
     Value read_constant_1() {
         uint8_t index = read_operand_1();
-        return chunk->constant_at(index);
+        return chunk().constant_at(index);
     }
 
     // 读取下两个操作数作为uint16索引，从常数池中读取对应的值
     Value read_constant_2() {
         uint16_t index = read_operand_2();
-        return chunk->constant_at(index);
+        return chunk().constant_at(index);
     }
 
     // 读取下两个操作数作为uint16索引，从标识符池中读取对应的标识符
     std::string read_identifier() {
         uint16_t key = read_operand_2();
-        return chunk->read_identifier(key);
+        return chunk().read_identifier(key);
     }
 
+    Chunk &chunk() {
+        return frames.back().function_->get_chunk();
+    }
+
+    size_t &pc() {
+        return frames.back().pc;
+    }
+
+    uint8_t next() {
+        return chunk().code_at(pc()++);
+    }
+
+    /**
+     * 返回相对于本栈帧底距离为index的值
+     */
+    Value &frame_at(uint8_t index) {
+        return stack.at(frames.back().fp + index);
+    }
+
+    /**
+     * 根据arg_count的值计算被调用者的位置，调用之，产生新的栈帧。
+     */
+    void call_value(size_t arg_count);
+
     std::shared_ptr<std::unordered_map<std::string, Value> > globals; // 多个虚拟机线程共享同一个全局变量池
-    std::shared_ptr<Chunk> chunk;
+    std::vector<CallFrame> frames;
     std::vector<Value> stack; // 栈
-    size_t pc; // 下一个要执行的指令在字节码vector中的索引
 };
 
 #endif

@@ -40,7 +40,8 @@ add_executable(cclox
         src/include/runtime.h
         src/include/objects/loxstring.h
         src/scope.cc
-        src/include/scope.h)
+        src/include/scope.h
+        src/include/objects/loxfunction.h)
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 target_link_libraries(cclox m readline fmt)

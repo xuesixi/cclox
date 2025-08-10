@@ -4,6 +4,8 @@
 #include "visual.h"
 #include <unordered_map>
 
+#include "compiler.h"
+
 using std::cout;
 
 /**
@@ -19,6 +21,7 @@ const std::unordered_map<OpCode, std::string> opcode_names{
     {OpCode::Subtract, "Subtract"},
     {OpCode::Multipy, "Multipy"},
     {OpCode::Divide, "Divide"},
+    {OpCode::Power, "Power"},
     {OpCode::LoadNil, "LoadNil"},
     {OpCode::LoadTrue, "LoadTrue"},
     {OpCode::LoadFalse, "LoadFalse"},
@@ -38,12 +41,13 @@ const std::unordered_map<OpCode, std::string> opcode_names{
     {OpCode::JumpIfPopFalse, "JumpIfPopFalse"},
     {OpCode::JumpBack, "JumpBack"},
     {OpCode::JumpIfFalse, "JumpIfFalse"},
+    {OpCode::Call, "Call"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
 static std::string spaces_4("    ");
 
-void Disassembler::disassemble(const char *name) {
+void Disassembler::disassemble(const std::string &name) {
     cout << fmt::format("--------- start disassembling chunk: {} ---------\n", name);
 
     // offset代表当前指令在chunk的字节码中的索引。有的指令有额外的参数（占用超过一个字节），
@@ -51,10 +55,11 @@ void Disassembler::disassemble(const char *name) {
     for (size_t offset = 0; offset < chunk->code.size();) {
         offset = disassemble_instruction(offset);
     }
-    cout << fmt::format("---------- end disassembling chunk: {} ----------\n", name);
+    cout << fmt::format("---------- end disassembling chunk: {} ----------\n\n", name);
 }
 
 size_t Disassembler::disassemble_instruction(size_t offset) {
+    DEBUG_ASSERT(chunk != nullptr, "chunk is null!");
     auto instruction = static_cast<OpCode>(chunk->code.at(offset));
     int line = chunk->lines.at(offset);
     cout << fmt::format("{:04d}{}", offset, spaces_4); // byte code offset
@@ -84,6 +89,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::Subtract:
         case OpCode::Multipy:
         case OpCode::Divide:
+        case OpCode::Power:
         case OpCode::LoadNil:
         case OpCode::LoadTrue:
         case OpCode::LoadFalse:
@@ -95,6 +101,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case OpCode::Pop:
             return instruction_operand_0(instruction, offset);
         case OpCode::PopN:
+        case OpCode::Call:
             return instruction_general(instruction, offset);
         case OpCode::JumpIfPopFalse:
         case OpCode::JumpIfFalse:

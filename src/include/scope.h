@@ -7,9 +7,22 @@
 #include "common.h"
 #include "error.h"
 #include "scanner.h"
+#include "objects/loxfunction.h"
 
 class Scope {
 public:
+
+    friend class Compiler;
+
+    explicit Scope(std::shared_ptr<Scope> outer, FunctionType function_type):outer_(outer), function_type_(function_type) {
+        function_ = std::static_pointer_cast<LoxFunction>(LoxObject::allocate<LoxFunction>());
+        if (function_type == FunctionType::Main) {
+            function_->set_name("<main>");
+        }
+        locals.push_back({});// 第一个本地变量有特殊用处
+        initialize();
+    }
+
     /**
      * 进入一个新的层级，自增depth，并返回此时的本地变量的数量
      */
@@ -21,7 +34,7 @@ public:
     /**
      * 离开一个层级。自减depth，并将本地变量的数量从缩减至clear_to。返回缩减的数量
      */
-    uint8_t step_out(uint8_t clear_to) {
+    [[nodiscard]] uint8_t step_out(uint8_t clear_to) {
         DEBUG_ASSERT(clear_to <= locals.size(), "clear_to should not be greater than locals.size()");
         uint8_t diff = locals.size() - clear_to;
         locals.resize(clear_to);
@@ -65,7 +78,7 @@ private:
         Local(): name(), depth(-1) {
         }
 
-        Local(const Token &token): name(token.get_lexeme()), depth(-1) {
+        explicit Local(const Token &token): name(token.get_lexeme()), depth(-1) {
         }
 
         bool isInitialized() {
@@ -77,6 +90,9 @@ private:
     };
 
     std::vector<Local> locals;
+    FunctionType function_type_;
     int depth = 0;
+    std::shared_ptr<LoxFunction> function_;
+    std::shared_ptr<Scope> outer_;
 };
 #endif //CCLOX_SCOPE_H

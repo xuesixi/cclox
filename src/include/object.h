@@ -6,13 +6,14 @@
 #define CCLOX_OBJECT_H
 
 #include <string>
+#include <atomic>
 #include "runtime.h"
 
 using LoxReference = std::shared_ptr<LoxObject>;
 
 class LoxObject {
 public:
-    LoxObject() : id(next_id++) {
+    LoxObject() : id(next_id.fetch_add(1)) {
     }
 
     virtual ~LoxObject() = default;

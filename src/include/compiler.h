@@ -5,11 +5,10 @@
 #include "common.h"
 #include "scanner.h"
 #include "scope.h"
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
+#include "disassembler.h"
 
 enum class Precedence {
     NONE,
@@ -20,6 +19,7 @@ enum class Precedence {
     COMPARISON,  // < > <= >=
     TERM,        // + -
     FACTOR,      // * /
+    POWER,
     UNARY,       // ! -
     CALL,        // . ()
     PRIMARY
@@ -35,7 +35,7 @@ class Compiler;
 class Compiler {
 public:
     using BackPoint = std::optional<std::pair<size_t, uint8_t>>; // first：保存的先前的某个字节码偏移值（不可大于当前的字节码偏移值），second：彼处的本地变量的个数
-    std::shared_ptr<Chunk> compile(std::string &&source);
+    std::shared_ptr<LoxFunction> compile(std::string &&source);
 
 private:
     /**
@@ -47,24 +47,25 @@ private:
      * 将目标opcode写入字节码中
      */
     void emit_opcode(OpCode op_code) {
-        current_chunk()->write_opcode(op_code, curr.line);
+        current_chunk().write_opcode(op_code, curr.line);
     }
 
     /**
      * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。超出uint16则是实现错误
      */
     void emit_operand(OperandSize operand) {
-        current_chunk()->write_operand(operand, curr.line);
+        current_chunk().write_operand(operand, curr.line);
     }
 
     /**
      * 将目标操作数写入字节码中，无论operand的值，总是写入两个字节。超出uint16则是实现错误
      */
     void emit_operand_2(OperandSize operand) {
-        current_chunk()->write_operand_2(operand, curr.line);
+        current_chunk().write_operand_2(operand, curr.line);
     }
 
     void emit_return() {
+        emit_opcode(OpCode::LoadNil);
         emit_opcode(OpCode::Return);
     }
 
@@ -74,6 +75,8 @@ private:
     void emit_load_constant(Value &&value);
 
     void end_compiler() {
+        emit_opcode(OpCode::LoadNil);
+        emit_opcode(OpCode::Return);
         emit_return();
     }
 
@@ -84,7 +87,7 @@ private:
     void error_at(const Token &token, const std::string &message);
 
     /**
-     * 如果next是想要的token，则advance()。否则error-at。
+     * 如果next是想要的token，则advance()，也就是说，想要的token将会变成curr，而下一个token则是next。否则error-at。
      * type 的默认参数是semicolon，消息的默认参数是"expect a ';' to end the statement"。
      * 在repl模式下不会报错，而是抛出ConsumePending。
      */
@@ -137,6 +140,8 @@ private:
      */
     void var_statement();
 
+    void fun_statement();
+
     /**
      * 将next解析为一个identifier，将其lexeme添加到标识符池中，返回其键.
      * 如果该函数正常返回，则返回值必然处于uint16范围内，否则会抛出异常.
@@ -148,6 +153,11 @@ private:
      * 在curr已经被判定为print的时候调用。
      */
     void print_statement();
+
+    /**
+     * 已知curr为return时。要么返回一个值，要么返回nil
+     */
+    void return_statement();
 
     /**
      * 在curr已知是if的时候使用
@@ -172,6 +182,15 @@ private:
      * 解析next开始的下一个表达式语句。
      */
     void expression_statement();
+
+    /**
+     * 在已知curr是函数名时调用，期待next是左括号。
+     * 该函数会设置函数名、解析参数列表以及函数体。如果compiler没有错误，那么在返回前还会对其进行反汇编
+     * 其内部涉及了scope的转化，但对于调用者来说是不可见的.
+     * @param type 函数类型
+     * @return 解析到的函数
+     */
+    std::shared_ptr<LoxFunction> parse_function(FunctionType type);
 
     /*
      * 所有下面这些表达式解析函数，在运行后，curr的token已经被解析，下一个待解析的token是next，因此，一般在调用后，会再调用advance()
@@ -239,6 +258,17 @@ private:
     void string_expr(bool can_assign);
 
     /**
+     * 在已知curr是左括号的时候调用
+     */
+    void call_expr(bool can_assign);
+
+    /**
+     * 解析传入的参数（argument），以及又括号
+     * @return 传入的参数的数量。由调用者处理可能的参数过多的问题。
+     */
+    int argument_list();
+
+    /**
      * 获取一个token的前缀函数（该token作为一个表达式的第一个token时的解析函数）。如果该token不能作为表达式的第一个token，则返回nullptr
      */
     static ParseFn get_prefix(TokenType type);
@@ -270,15 +300,15 @@ private:
      * 修改参数所代表的那个jump指令的操作数，使它跳转到这里。
      */
     void patch_jump(size_t from_label);
-    
+
     BackPoint save_breakpoint();
     void restore_breakpoint(BackPoint old);
 
     BackPoint save_continue_point();
     void restore_continue_point(BackPoint old);
 
-    std::shared_ptr<Chunk> current_chunk() {
-        return chunk;
+    Chunk &current_chunk() {
+        return scope->function_->get_chunk();
     }
 
     std::unique_ptr<Scanner> scanner;
@@ -288,8 +318,8 @@ private:
     bool panic_mode = false; // 是否处于panic模式，出现错误时设置true，一路跳过到下一个statement，然后设置为false
     BackPoint breakpoint; // 循环语句中的break的目的地
     BackPoint continue_point; // 循环语句中的continue的目的地
-    std::shared_ptr<Chunk> chunk;
     std::shared_ptr<Scope> scope;
+    Disassembler disasm;
 };
 
 #endif

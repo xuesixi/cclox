@@ -10,14 +10,12 @@
  */
 class Disassembler {
 public:
-    /* 绑定一个chunk */
-    Disassembler(std::shared_ptr<Chunk> the_chunk): chunk(the_chunk) {
-    }
 
     /**
      * 反汇编整个chunk
+     * @param name
      */
-    void disassemble(const char *name);
+    void disassemble(const std::string &name);
 
     /**
      * 格式化输出chunk.code[offset]所代表的指令，并返回下一个指令的索引。
@@ -58,12 +56,12 @@ public:
 
     size_t instruction_load_immediate(OpCode instruction, size_t offset);
 
-    void set_chunk(std::shared_ptr<Chunk> the_chunk) {
+    void set_chunk(const Chunk *the_chunk) {
         this->chunk = the_chunk;
     }
 
 private:
-    std::shared_ptr<Chunk> chunk;
+    const Chunk *chunk = nullptr;
 };
 
 #endif

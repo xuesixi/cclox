@@ -33,6 +33,12 @@ public:
     using LoxError::LoxError;
 };
 
+class LoxArgError : public LoxError {
+public:
+    using LoxError::LoxError;
+};
+
+
 class InterpreterError : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
@@ -43,34 +49,39 @@ public:
     using InterpreterError::InterpreterError;
 };
 
-class ConstantPoolOverflowError : public InterpreterError {
+class CompilerError: public std::runtime_error {
 public:
-    using InterpreterError::InterpreterError;
+    using std::runtime_error::runtime_error;
 };
 
-class IdentifierPoolOverFlowError : public InterpreterError {
+class ConstantPoolOverflowError : public CompilerError {
 public:
-    using InterpreterError::InterpreterError;
+    using CompilerError::CompilerError;
 };
 
-class ScopeLocalOverflowError : InterpreterError {
+class IdentifierPoolOverFlowError : public CompilerError {
 public:
-    using InterpreterError::InterpreterError;
+    using CompilerError::CompilerError;
 };
 
-class SameNameLocalVariableError : InterpreterError {
+class ScopeLocalOverflowError : public CompilerError{
 public:
-    using InterpreterError::InterpreterError;
+    using CompilerError::CompilerError;
 };
 
-class UsingUninitializedLocalError : InterpreterError {
+class SameNameLocalVariableError : public CompilerError {
 public:
-    using InterpreterError::InterpreterError;
+    using CompilerError::CompilerError;
 };
 
-class JumpDistanceOverflowError : InterpreterError {
+class UsingUninitializedLocalError : public CompilerError {
 public:
-    using InterpreterError::InterpreterError;
+    using CompilerError::CompilerError;
+};
+
+class JumpDistanceOverflowError : public CompilerError {
+public:
+    using CompilerError::CompilerError;
 };
 
 class ConsumePending : std::runtime_error {

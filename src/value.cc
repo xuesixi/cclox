@@ -25,6 +25,22 @@ std::string LoxValue::to_string(const Value &value) {
     }, value);
 }
 
+// std::string LoxValue::to_string(bool v) {
+//     return fmt::format("{}", v);
+// }
+// std::string LoxValue::to_string(long v) {
+//     return fmt::format("{}", v);
+// }
+// std::string LoxValue::to_string(double v) {
+//     return fmt::format("{}", v);
+// }
+// std::string LoxValue::to_string(nullptr_t v) {
+//     return "nil";
+// }
+// std::string LoxValue::to_string(LoxReference v) {
+//     return v->to_string();
+// }
+
 void LoxValue::print(const Value &value) {
     std::cout << LoxValue::to_string(value) << std::endl;
 }
@@ -35,7 +51,7 @@ Value operator-(const Value &value) {
     } else if (std::holds_alternative<double>(value)) {
         return -std::get<double>(value);
     } else {
-        throw LoxTypeError(fmt::format("the value {} does not support negation", LoxValue::to_string(value)));
+        throw LoxTypeError(fmt::format("the values {} does not support negation", LoxValue::to_string(value)));
     }
 }
 
@@ -56,6 +72,18 @@ Value operator==(const Value &left, const Value &right) {
     }, left, right);
 }
 
+Value LoxValue::power(const Value &left, const Value &right) {
+    return std::visit([](auto &&a, auto &&b) -> Value {
+        using A = std::decay_t<decltype(a)>;
+        using B = std::decay_t<decltype(b)>;
+        if constexpr (are_non_bool_arithmetic<A, B>()) {
+            return std::pow(a, b);
+        } else {
+            throw LoxTypeError(fmt::format("the values {} and {} do not support power arithmetic", LoxValue::to_string(a), LoxValue::to_string(b)));
+        }
+    }, left, right);
+}
+
 Value operator>(const Value &left, const Value &right) {
     return std::visit([](auto &&a, auto &&b) -> Value {
         using A = std::decay_t<decltype(a)>;
@@ -64,7 +92,7 @@ Value operator>(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a > b;
         } else {
-            throw LoxTypeError("comparison is not supported for the given values");
+            throw LoxTypeError(fmt::format("the values {} and {} do not support comparison", LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -77,7 +105,7 @@ Value operator<(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a < b;
         } else {
-            throw LoxTypeError("comparison is not supported for the given values");
+            throw LoxTypeError(fmt::format("the values {} and {} do not support comparison", LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -96,10 +124,10 @@ Value operator+(const Value &left, const Value &right) {
             if (a_str && b_str) {
                 return LoxObject::allocate<LoxString>(*a_str + *b_str);
             } else {
-                throw LoxTypeError(fmt::format("the values do not support addition"));
+                throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a), LoxValue::to_string(b)));
             }
         } else {
-            throw LoxTypeError(fmt::format("the values do not support addition"));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -112,7 +140,7 @@ Value operator-(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a - b;
         } else {
-            throw LoxTypeError(fmt::format("the values do not support subtraction"));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support subtraction", LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -125,7 +153,7 @@ Value operator*(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a * b;
         } else {
-            throw LoxTypeError(fmt::format("the values do not support multiplication"));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support multiplication", LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -138,7 +166,7 @@ Value operator/(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a / b;
         } else {
-            throw LoxTypeError(fmt::format("the values do not support division"));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support division", LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }

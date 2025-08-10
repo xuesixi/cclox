@@ -97,7 +97,10 @@ Token Scanner::scan_token() {
         case '-': return make_token(TokenType::MINUS);
         case '+': return make_token(TokenType::PLUS);
         case '/': return make_token(TokenType::SLASH);
-        case '*': return make_token(TokenType::STAR);
+        case '*': {
+            if (match('*')) return make_token(TokenType::STAR_STAR);
+            return make_token(TokenType::STAR);
+        }
         case '!': {
             if (match('=')) return make_token(TokenType::BANG_EQUAL);
             else return make_token(TokenType::BANG);

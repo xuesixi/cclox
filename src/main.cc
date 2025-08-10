@@ -37,7 +37,7 @@ void repl() {
             last_time.clear();
         } catch (ConsumePending &pending) {
             last_time += buffer;
-        } catch (InterpreterError &error) {
+        } catch (CompilerError &error) {
             last_time.clear();
         }
     }

@@ -23,6 +23,7 @@ enum class OpCode: uint8_t {
     Subtract,
     Multipy,
     Divide,
+    Power,
     LoadNil,
     LoadTrue,
     LoadFalse,
@@ -42,6 +43,7 @@ enum class OpCode: uint8_t {
     JumpIfPopFalse,
     JumpIfFalse,
     JumpBack,
+    Call,
 };
 
 using OperandSize = uint16_t;
@@ -113,7 +115,7 @@ public:
      */
     OperandSize add_identifier(const std::string &str);
 
-    std::string read_identifier(OperandSize key) {
+    std::string read_identifier(OperandSize key) const {
         return identifiers.at(key);
     }
 

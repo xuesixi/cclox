@@ -8,15 +8,16 @@
 #include "objects/loxstring.h"
 #include <variant>
 
-VM::VM(): pc(0) {
+VM::VM() {
     globals = std::make_shared<std::unordered_map<std::string, Value> >();
 }
 
 InterpreterResult VM::interpret(std::string &&source) {
-    this->pc = 0;
     Compiler compiler;
-    chunk = compiler.compile(std::move(source));
-    if (chunk) {
+    auto f = compiler.compile(std::move(source));
+    if (f) {
+        frames.push_back({f, 0, 0}); // 栈底部的第一个元素是main
+        push(f);
         return run();
     } else {
         return InterpreterResult::CompileError;
@@ -25,35 +26,49 @@ InterpreterResult VM::interpret(std::string &&source) {
 
 void VM::show_stack() {
     std::cout << "   ";
-    for (const Value &value: stack) {
-        std::cout << fmt::format("[{}]", Visual::to_visual_string(value));
+    for (size_t i = 0; i < stack.size(); i ++) {
+        if (i == frames.back().fp) {
+            Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::RED);
+        } else {
+            Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::BLUE);
+        }
     }
     std::cout << std::endl;
 }
 
 InterpreterResult VM::run() {
-    Disassembler disassembler(chunk);
+    Disassembler disassembler;
 
-    if (Flag::disassembly) {
-        // 先把整个chunk反汇编一次，输出其结果
-        disassembler.disassemble("test chunk");
-    }
+    const bool trace = Flag::trace; // 据说保存为本地变量可以帮助编译器优化？
 
     try {
         while (true) {
-#ifdef DEBUG_TRACE_EXECUTION
-            // 运行一条指令之前，再输出一次栈的样子和指令的信息，方便一步步看到整个运行的过程
-            if (Flag::trace) {
+
+            // 运行一条指令之前，输出一次栈和指令的信息，方便一步步看到整个运行的过程
+            if (trace) {
                 show_stack();
-                disassembler.disassemble_instruction(pc);
+                // 如果栈帧发生变化，那么chunk也会变化。这里偷懒，在每次反汇编之前都重新设置一次，避免没有同步
+                disassembler.set_chunk(&chunk());
+                disassembler.disassemble_instruction(pc());
             }
-#endif
 
             OpCode instruction = read_opcode();
 
             switch (instruction) {
                 case OpCode::Return: {
-                    return InterpreterResult::OK;
+                    // 获取栈顶的值作为返回值。
+                    // 弹出最后一个栈帧。如果此时没有任何栈帧，说明main已经执行完毕。则结束
+                    // 否则，缩减栈（清除上一个栈帧中的本地变量），然后将返回值添加在原本栈帧的fp处。
+                    Value return_value = pop_and_get();
+                    auto last_frame = frames.back();
+                    frames.pop_back();
+                    if (frames.empty()) {
+                        stack.pop_back(); // 弹出main
+                        return InterpreterResult::OK;
+                    }
+                    stack.resize(last_frame.fp);
+                    stack.push_back(return_value);
+                    break;
                 }
                 case OpCode::LoadConstant: {
                     Value value = read_constant_1();
@@ -72,32 +87,38 @@ InterpreterResult VM::run() {
                     break;
                 }
                 case OpCode::Negate: {
-                    Value v = pop();
+                    Value v = pop_and_get();
                     push(-v);
                     break;
                 }
                 case OpCode::Add: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a + b);
                     break;
                 }
                 case OpCode::Subtract: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a - b);
                     break;
                 }
                 case OpCode::Multipy: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a * b);
                     break;
                 }
                 case OpCode::Divide: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a / b);
+                    break;
+                }
+                case OpCode::Power: {
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
+                    push(LoxValue::power(a, b));
                     break;
                 }
                 case OpCode::LoadNil: {
@@ -113,30 +134,30 @@ InterpreterResult VM::run() {
                     break;
                 }
                 case OpCode::Not: {
-                    Value v = pop();
+                    Value v = pop_and_get();
                     push(!LoxValue::to_bool(v));
                     break;
                 }
                 case OpCode::Equal: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a == b);
                     break;
                 }
                 case OpCode::Greater: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a > b);
                     break;
                 }
                 case OpCode::Less: {
-                    Value b = pop();
-                    Value a = pop();
+                    Value b = pop_and_get();
+                    Value a = pop_and_get();
                     push(a < b);
                     break;
                 }
                 case OpCode::Print: {
-                    Value v = pop();
+                    Value v = pop_and_get();
                     Visual::print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
                     break;
                 }
@@ -145,7 +166,7 @@ InterpreterResult VM::run() {
                     break;
                 }
                 case OpCode::DefineGlobal: {
-                    Value value = pop();
+                    Value value = pop_and_get();
                     std::string key = read_identifier();
                     (*globals)[key] = value;
                     break;
@@ -173,12 +194,12 @@ InterpreterResult VM::run() {
                 }
                 case OpCode::LoadLocal: {
                     auto index = read_operand_1();
-                    push(stack.at(index));
+                    push(frame_at(index));
                     break;
                 }
                 case OpCode::SetLocal: {
                     auto index = read_operand_1();
-                    stack.at(index) = stack.back();
+                    frame_at(index) = stack.back();
                     break;
                 }
                 case OpCode::PopN: {
@@ -188,26 +209,32 @@ InterpreterResult VM::run() {
                 }
                 case OpCode::Jump: {
                     auto distance = read_operand_2();
-                    pc += distance;
+                    pc() += distance;
                     break;
                 }
                 case OpCode::JumpIfPopFalse: {
                     auto distance = read_operand_2();
-                    if (!LoxValue::to_bool(pop())) {
-                        pc += distance;
+                    if (!LoxValue::to_bool(pop_and_get())) {
+                        pc() += distance;
                     }
                     break;
                 }
                 case OpCode::JumpIfFalse: {
                     auto distance = read_operand_2();
                     if (!LoxValue::to_bool(stack.back())) {
-                        pc += distance;
+                        pc() += distance;
                     }
                     break;
                 }
                 case OpCode::JumpBack: {
                     auto distance = read_operand_2();
-                    pc -= distance;
+                    pc() -= distance;
+                    break;
+                }
+                case OpCode::Call: {
+                    // fn, 1, 2
+                    uint8_t arg_count = read_operand_1();
+                    call_value(arg_count);
                     break;
                 }
                 default:
@@ -218,8 +245,23 @@ InterpreterResult VM::run() {
     } catch (LoxError &error) {
         std::cerr << error.what() << std::endl;
         return InterpreterResult::RuntimeError;
-    } catch (InterpreterError &error) {
+    } catch (CompilerError &error) {
         std::cerr << error.what() << std::endl;
         return InterpreterResult::RuntimeError;
     }
+}
+
+void VM::call_value(size_t arg_count) {
+    size_t fp = stack.size() - 1 - arg_count;
+    Value callable = stack.at(fp);
+    auto test = LoxValue::to_reference<LoxFunction>(callable);
+    if (test == nullptr) {
+        throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
+    }
+    auto f = LoxValue::to_reference_unsafe<LoxFunction>(callable);
+    if (f->arity() != arg_count) {
+        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(f), f->arity(), arg_count));
+    }
+    CallFrame frame {f, 0, fp};
+    frames.push_back(frame);
 }
