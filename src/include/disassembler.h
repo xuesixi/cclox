@@ -2,7 +2,6 @@
 #define CCLOX_DISASSEMBLER_H
 
 #include "chunk.h"
-#include <memory>
 
 /**
  * 反汇编器。非必要组件。

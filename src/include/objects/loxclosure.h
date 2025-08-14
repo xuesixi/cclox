@@ -24,6 +24,9 @@ public:
     }
 
     [[nodiscard]] std::string to_string() const override {
+        if (function_->name_ == "<main>") {
+            return "<main>";
+        }
         return fmt::format("<fn: {}>", function_->name_);
     }
 

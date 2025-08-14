@@ -3,7 +3,6 @@
 //
 
 #include "chunk.h"
-#include <unordered_map>
 
 uint8_t Chunk::to_immediate(Value value) {
     if (std::holds_alternative<long>(value)) {

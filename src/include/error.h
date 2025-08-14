@@ -84,6 +84,16 @@ public:
     using CompilerError::CompilerError;
 };
 
+class FmtStringUnbalancedError : public CompilerError {
+public:
+    using CompilerError::CompilerError;
+};
+
+class Uint8OperandOverflowError: public CompilerError {
+public:
+    using CompilerError::CompilerError;
+};
+
 class JumpDistanceOverflowError : public CompilerError {
 public:
     using CompilerError::CompilerError;

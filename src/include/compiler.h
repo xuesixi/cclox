@@ -272,6 +272,11 @@ private:
     void string_expr(bool can_assign);
 
     /**
+     * 在已知curr是格式化字符串的时候调用
+     */
+    void fmt_string_expr(bool can_assign);
+
+    /**
      * 在已知curr是左括号的时候调用
      */
     void call_expr(bool can_assign);

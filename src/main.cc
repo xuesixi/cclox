@@ -7,7 +7,6 @@
 #include "chunk.h"
 #include "vm.h"
 #include "scanner.h"
-#include <fmt/core.h>
 #include <error.h>
 #include <memory>
 #include "CLI11.hpp"
@@ -35,9 +34,9 @@ void repl() {
         try {
             vm.interpret(last_time + buffer);
             last_time.clear();
-        } catch (ConsumePending &pending) {
+        } catch ([[maybe_unused]] ConsumePending &pending) {
             last_time += buffer;
-        } catch (CompilerError &error) {
+        } catch ([[maybe_unused]] CompilerError &error) {
             last_time.clear();
         }
     }

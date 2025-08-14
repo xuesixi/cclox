@@ -5,10 +5,8 @@
 #ifndef CCLOX_CCLOX_UTIL_H
 #define CCLOX_CCLOX_UTIL_H
 
-#include <cstdint>
 #include <string>
 #include <fstream>
-#include <sstream>
 #include <limits>
 #include <tuple>
 

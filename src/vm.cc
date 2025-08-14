@@ -4,6 +4,7 @@
 #include "common.h"
 #include "visual.h"
 #include "compiler.h"
+#include <sstream>
 #include <iostream>
 #include <string>
 #include "objects/loxstring.h"
@@ -274,6 +275,19 @@ InterpreterResult VM::run() {
                 case OpCode::Recur: {
                     auto arg_count = read_operand_1();
                     recur_call(arg_count);
+                    break;
+                }
+                case OpCode::StringConcat: {
+                    auto count = read_operand_1();
+                    std::stringstream s;
+                    for (uint8_t i = 0; i < count; i ++) {
+                        // a, b, c, x
+                        Value v = stack.at(stack.size() - count + i);
+                        s << LoxValue::to_string(v);
+                    }
+                    stack.resize(stack.size() - count);
+                    Value result = LoxObject::allocate<LoxString>(s.str());
+                    push(result);
                     break;
                 }
                 default:

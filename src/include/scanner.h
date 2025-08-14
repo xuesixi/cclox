@@ -3,6 +3,7 @@
 #define CCLOX_SCANNER_H
 
 #include <cstddef>
+#include <optional>
 #include <string>
 
 enum class TokenType {
@@ -17,7 +18,7 @@ enum class TokenType {
     GREATER, GREATER_EQUAL,
     LESS, LESS_EQUAL,
     // Literals.
-    IDENTIFIER, STRING, FLOAT, INTEGER,
+    IDENTIFIER, STRING, FLOAT, INTEGER, FMT_STRING,
 
     // Keywords.
     AND, CLASS, ELSE, FALSE,
@@ -28,8 +29,6 @@ enum class TokenType {
     ERROR, END_OF_FILE // EOF被内置宏占用了
 };
 
-class Scanner;
-class Compiler;
 
 class Token {
 public:
@@ -63,7 +62,13 @@ private:
 
 class Scanner {
 public:
-    Scanner(std::string &&file_content): text(std::move(file_content)), start_index(0), next_index(0), curr_line(1) {
+    Scanner(std::string &&file_content): Scanner(std::move(file_content), 1) {
+    };
+
+    /**
+     * 可以设置初始行号，会用在格式化字符串中
+     */
+    Scanner(std::string &&file_content, int start_line): text(std::move(file_content)), start_index(0), next_index(0), curr_line(start_line) {
     };
 
     Token scan_token();
@@ -71,6 +76,29 @@ public:
     bool has_more() {
         return !is_at_end();
     }
+
+    /**
+     * Splits a string into alternating regular text and "caught" sections.
+     *
+     * The top level string surrounded by the opening and closing char are "caught",
+     * others are 'regular'. Nested brackets are supported but only top-level pairs
+     * are marked as caught.
+     *
+     * @param src The input string to split
+     * @param open Opening delimiter character (default: '{')
+     * @param close Closing delimiter character (default: '}')
+     * @return Optional vector of tuples containing (is_caught, left_index, right_index)
+     *         Returns nullopt if brackets are unmatched
+     *
+     * Each element in the returned vector is tuple<is_caught, left, right>
+     * where left and right are both inclusive indices.
+     *
+     * Example: split("name{anda}end", '{', '}')
+     * Returns: {{false, 0, 3}, {true, 4, 9}, {false, 10, 12}}
+     *          "name"         "{anda}"       "end"
+     */
+    static std::optional<std::vector<std::tuple<bool, size_t, size_t>>> split
+    (const std::string &src, char open = '{', char close = '}');
 
 private:
     /* 判断字符是不是字母或者下划线*/
@@ -139,6 +167,8 @@ private:
      * 在起初的左引号已经被消费了之后，调用该函数，返回代表该字符串的token。
      * */
     Token scan_string();
+
+    Token scan_fmt_string();
 
     /**
      * 在第一个数字被消费后，调用该函数，返回代表该数字的integer或者float。

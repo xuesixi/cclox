@@ -89,6 +89,8 @@ Compiler::ParseFn Compiler::get_prefix(TokenType type) {
             return &Compiler::literal_expr;
         case TokenType::STRING:
             return &Compiler::string_expr;
+        case TokenType::FMT_STRING:
+            return &Compiler::fmt_string_expr;
         case TokenType::IDENTIFIER:
             return &Compiler::variable_expr;
         default:
@@ -139,14 +141,15 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         case TokenType::LESS_EQUAL:
         case TokenType::GREATER_EQUAL:
             return Precedence::COMPARISON;
-        case TokenType::NIL:
-        case TokenType::TRUE:
-        case TokenType::FALSE:
-        case TokenType::INTEGER:
-        case TokenType::FLOAT:
-        case TokenType::STRING:
-        case TokenType::IDENTIFIER:
-            return Precedence::PRIMARY;
+        // case TokenType::NIL:
+        // case TokenType::TRUE:
+        // case TokenType::FALSE:
+        // case TokenType::INTEGER:
+        // case TokenType::FLOAT:
+        // case TokenType::STRING:
+        // case TokenType::FMT_STRING:
+        // case TokenType::IDENTIFIER:
+        //     return Precedence::PRIMARY;
         case TokenType::AND:
             return Precedence::AND;
         case TokenType::OR:
@@ -158,6 +161,7 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
     }
 }
 
+// ReSharper disable once CppDFAConstantParameter
 void Compiler::compile_precedence_at_least(Precedence at_least) {
     /*
      * 取得next的prefix解析函数。
@@ -179,8 +183,8 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
      * 如果可以，且其优先级大于等于at_least，我们应该继续解析。
      * 如果不可以，则到此为止。
      */
+    // ReSharper disable once CppDFALoopConditionNotUpdated
     while (get_precedence(next.type) >= at_least) {
-        // 这里clion会给出警告，可以无视它。
         advance();
         ParseFn infix = get_infix(curr.type); // 在经历上一行的advance()之后，这里的curr就是上面条件中的next。
         (this->*infix)(can_assign); // 这里的can_assign参数实际上并没有用，因为暂时没有任何infix真的用到了它
@@ -311,8 +315,47 @@ void Compiler::string_expr([[maybe_unused]] bool can_assign) {
     emit_load_constant(std::move(value));
 }
 
+void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
+
+    auto s = curr.lexeme.substr(1, curr.lexeme.size() - 2); // 去除头尾的引号
+    int count = 0;
+    auto ranges = Scanner::split(s);
+    if (!ranges) {
+        throw FmtStringUnbalancedError("the format string is not balanced");
+    }
+    auto saved_scanner = std::move(scanner);
+    Token saved_next = next; // next要被保存。因为切换scanner进行解析的过程中会被修改
+    int curr_line = curr.line;
+    for (auto [caught, left, right] : ranges.value()) {
+        if (!caught) {
+            // 普通字符串
+            emit_load_constant(LoxObject::allocate<LoxString>(s.substr(left, right - left + 1)));
+            count++;
+        } else {
+            // 内嵌表达式。这里去除掉了头尾的{}
+            std::string inner_expr =  s.substr(left + 1, right - left + 1 - 2);
+            scanner = std::make_unique<Scanner>(std::move(inner_expr), curr_line);
+            next = Token{}; // 重设next。防止使用上一个scanner遗留下的next
+            advance(); // 使next是下一个要解析的token（如果不这么做，next最初是空的）
+            if (next.type == TokenType::END_OF_FILE) {
+                continue;
+            }
+            compile_expression();
+            count ++;
+        }
+    }
+    scanner = std::move(saved_scanner);
+    next = saved_next;
+    if (count > 1) {
+        emit_opcode(OpCode::StringConcat);
+        if (!within<uint8_t>(count)) {
+            throw Uint8OperandOverflowError("too many expressions for a format string");
+        }
+        emit_operand_1(count);
+    }
+}
+
 void Compiler::call_expr([[maybe_unused]] bool can_assign) {
-    // foo(a + 2, 12, c())
     int arg_count = argument_list();
     if (within<uint8_t>(arg_count) == false) {
         throw LoxArgError("too many arguments!");
@@ -637,6 +680,7 @@ void Compiler::expression_statement() {
     emit_opcode(OpCode::Pop);
 }
 
+// ReSharper disable once CppDFAConstantParameter
 std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> Compiler::parse_function(FunctionType type) {
 
     std::string fun_name = curr.get_lexeme();

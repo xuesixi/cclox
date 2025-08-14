@@ -15,9 +15,9 @@ class Disassembler;
 
 enum class OpCode: uint8_t {
     Return,
-    LoadConstant,
-    LoadConstant2,
-    LoadImmediate,
+    LoadConstant, // index: operand1
+    LoadConstant2, // index: operand2
+    LoadImmediate, // index: operand1
     Negate,
     Add,
     Subtract,
@@ -33,21 +33,22 @@ enum class OpCode: uint8_t {
     Equal,
     Print,
     Pop,
-    PopN,
-    DefineGlobal,
-    LoadGlobal,
-    SetGlobal,
-    LoadLocal,
-    SetLocal,
-    SetCaptured,
-    LoadCaptured,
-    Jump,
-    JumpIfPopFalse,
-    JumpIfFalse,
-    JumpBack,
-    Call,
-    MakeClosure,
-    Recur,
+    PopN, // num: operand1
+    DefineGlobal, // key: operand2
+    LoadGlobal, // key: operand2
+    SetGlobal, // key: operand2
+    LoadLocal, // index: operand1
+    SetLocal, // index: operand1
+    SetCaptured, // index: operand1
+    LoadCaptured, // index: operand1
+    Jump, // distance: operand2
+    JumpIfPopFalse, // distance: operand2
+    JumpIfFalse, // distance: operand2
+    JumpBack, // distance: operand2
+    Call, // arg_count: operand1
+    MakeClosure, // captured_count: operand1, [is_local: operand1, index: operand1]...
+    Recur, // arg_count: operand1
+    StringConcat, // str_count: operand1
 };
 
 using OperandSize = uint16_t;
