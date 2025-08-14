@@ -20,7 +20,8 @@ static std::unordered_map<std::string, TokenType> keyword_map{
     {"var", TokenType::VAR},
     {"while", TokenType::WHILE},
     {"break", TokenType::BREAK},
-    {"continue", TokenType::CONTINUE}
+    {"continue", TokenType::CONTINUE},
+    {"recur", TokenType::RECUR},
 };
 
 TokenType Scanner::get_identifier_type() {

@@ -5,6 +5,7 @@
 #include "visual.h"
 #include "compiler.h"
 #include <iostream>
+#include <string>
 #include "objects/loxstring.h"
 #include <variant>
 
@@ -18,7 +19,7 @@ InterpreterResult VM::interpret(std::string &&source) {
     auto closure = LoxObject::allocate_as<LoxClosure>(f);
     if (f) {
         frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
-        push(f);
+        push(closure);
         return run();
     } else {
         return InterpreterResult::CompileError;
@@ -27,7 +28,7 @@ InterpreterResult VM::interpret(std::string &&source) {
 
 void VM::show_stack() {
     std::cout << "   ";
-    for (size_t i = 0; i < stack.size(); i ++) {
+    for (size_t i = 0; i < stack.size(); i++) {
         if (i == frames.back().fp) {
             Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::RED);
         } else {
@@ -44,7 +45,6 @@ InterpreterResult VM::run() {
 
     try {
         while (true) {
-
             // 运行一条指令之前，输出一次栈和指令的信息，方便一步步看到整个运行的过程
             if (trace) {
                 show_stack();
@@ -246,7 +246,7 @@ InterpreterResult VM::run() {
                     auto fun = LoxValue::to_reference_unsafe<LoxFunction>(value);
                     auto new_closure = LoxObject::allocate_as<LoxClosure>(fun);
                     uint8_t num_captures = read_operand_1();
-                    for (uint8_t i = 0; i < num_captures; i ++) {
+                    for (uint8_t i = 0; i < num_captures; i++) {
                         auto is_local = read_operand_1();
                         auto index = read_operand_1();
                         if (is_local) {
@@ -271,6 +271,11 @@ InterpreterResult VM::run() {
                     closure()->captureds_.at(index)->value() = stack.back();
                     break;
                 }
+                case OpCode::Recur: {
+                    auto arg_count = read_operand_1();
+                    recur_call(arg_count);
+                    break;
+                }
                 default:
                     implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}",
                                                      static_cast<uint8_t>(instruction)));
@@ -278,6 +283,7 @@ InterpreterResult VM::run() {
         }
     } catch (LoxError &error) {
         std::cerr << error.what() << std::endl;
+        std::cerr << backtrace();
         return InterpreterResult::RuntimeError;
     } catch (CompilerError &error) {
         std::cerr << error.what() << std::endl;
@@ -285,7 +291,19 @@ InterpreterResult VM::run() {
     }
 }
 
+std::string VM::backtrace() {
+    std::stringstream result;
+    for (const auto & call_frame : frames) {
+        auto line = call_frame.closure->function_->get_chunk().get_line_num(call_frame.pc);
+        result << fmt::format("{} at line {}\n", call_frame.closure->to_string(), line);
+    }
+    return result.str();
+}
+
 void VM::call_value(size_t arg_count) {
+    if (frames.size() == CallFrame::FRAME_MAX) {
+       throw LoxStackOverflowError("stack overflow");
+    }
     size_t fp = stack.size() - 1 - arg_count;
     Value callable = stack.at(fp);
     auto test = LoxValue::to_reference<LoxClosure>(callable);
@@ -294,8 +312,21 @@ void VM::call_value(size_t arg_count) {
     }
     auto cl = LoxValue::to_reference_unsafe<LoxClosure>(callable);
     if (cl->function_->arity() != arg_count) {
-        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl), cl->function_->arity(), arg_count));
+        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
+                                      cl->function_->arity(), arg_count));
     }
-    CallFrame frame {cl, 0, fp};
+    CallFrame frame{cl, 0, fp};
     frames.push_back(frame);
+}
+
+void VM::recur_call(size_t arg_count) {
+    if (arg_count != closure()->function_->arity()) {
+        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(closure()),
+                                      closure()->function_->arity(), arg_count));
+    }
+    for (uint8_t i = 0; i < arg_count; i++) {
+        frame_at(1 + i) = stack.at(stack.size() - arg_count + i);
+    }
+    stack.resize(frame().fp + arg_count + 1);
+    pc() = 0;
 }

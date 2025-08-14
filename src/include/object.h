@@ -6,7 +6,6 @@
 #define CCLOX_OBJECT_H
 
 #include <string>
-#include <atomic>
 #include "runtime.h"
 
 using LoxReference = std::shared_ptr<LoxObject>;
@@ -26,9 +25,6 @@ public:
 
     template<typename T, typename... Args>
     static LoxReference allocate(Args... args) {
-        // static_assert(std::is_base_of_v<LoxObject, T>, "The template argument has to be a subclass of LoxObject");
-        // auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
-        // runtime.register_object(ptr->id, ptr); // i.e. runtime.weak_pool[ptr->id] = std::weak_ptr(ptr);
         auto ptr = allocate_as<T>(std::forward<Args>(args)...);
         return std::static_pointer_cast<LoxObject>(ptr);
     }

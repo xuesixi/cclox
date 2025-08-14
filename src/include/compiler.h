@@ -169,6 +169,11 @@ private:
     void return_statement();
 
     /**
+     * 已知curr是recur时使用。
+     */
+    void recur_statement();
+
+    /**
      * 在curr已知是if的时候使用
      */
     void if_statement();
@@ -272,7 +277,7 @@ private:
     void call_expr(bool can_assign);
 
     /**
-     * 解析传入的参数（argument），以及又括号
+     * 此时已知curr是左括号。解析传入的参数（argument），以及右括号
      * @return 传入的参数的数量。由调用者处理可能的参数过多的问题。
      */
     int argument_list();

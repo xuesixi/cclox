@@ -23,7 +23,7 @@ enum class TokenType {
     AND, CLASS, ELSE, FALSE,
     FOR, FUN, IF, NIL, OR,
     PRINT, RETURN, SUPER, THIS,
-    TRUE, VAR, WHILE, BREAK, CONTINUE,
+    TRUE, VAR, WHILE, BREAK, CONTINUE, RECUR,
 
     ERROR, END_OF_FILE // EOF被内置宏占用了
 };

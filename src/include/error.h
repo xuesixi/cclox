@@ -38,6 +38,11 @@ public:
     using LoxError::LoxError;
 };
 
+class LoxStackOverflowError: public LoxError {
+public:
+    using LoxError::LoxError;
+};
+
 
 class InterpreterError : public std::runtime_error {
 public:

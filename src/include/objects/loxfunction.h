@@ -25,7 +25,7 @@ public:
 
     std::string to_string() const override {
         if (name_ == "<main>") {
-            return "<main>";
+            return "<proto: main>";
         }
         return fmt::format("<proto: {}>", name_);
     }

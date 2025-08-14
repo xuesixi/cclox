@@ -47,6 +47,7 @@ enum class OpCode: uint8_t {
     JumpBack,
     Call,
     MakeClosure,
+    Recur,
 };
 
 using OperandSize = uint16_t;
@@ -155,6 +156,10 @@ public:
                 implementation_error("unknown immediate index");
                 return 0L;
         }
+    }
+
+    int get_line_num(size_t offset) {
+        return lines.at(offset);
     }
 
 private:

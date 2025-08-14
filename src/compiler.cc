@@ -456,6 +456,19 @@ void Compiler::return_statement() {
     }
 }
 
+void Compiler::recur_statement() {
+    consume(TokenType::LEFT_PAREN, "expect a '(' after recur");
+
+    auto arg_count = argument_list();
+    if (within<uint8_t>(arg_count) == false) {
+        throw LoxArgError("arg num overflow");
+    }
+    consume();
+    emit_opcode(OpCode::Recur);
+    emit_operand_1(arg_count);
+}
+
+
 void Compiler::if_statement() {
     /**
      * condition
@@ -692,6 +705,8 @@ void Compiler::statement() {
         fun_statement();
     } else if (match(TokenType::RETURN)) {
         return_statement();
+    } else if (match(TokenType::RECUR)) {
+        recur_statement();
     } else {
         expression_statement();
     }

@@ -4,14 +4,10 @@
 
 #include "cclox_util.h"
 #include "captured.h"
-#include "objects/loxstring.h"
 #include "chunk.h"
 #include "value.h"
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <vector>
-#include "disassembler.h"
 #include "objects/loxfunction.h"
 #include "objects/loxclosure.h"
 
@@ -30,6 +26,8 @@ struct CallFrame {
     std::shared_ptr<LoxClosure> closure;
     size_t pc;
     size_t fp; // frame pointer, 帧指针，本帧的起始处
+
+    static constexpr int FRAME_MAX = 128;
 };
 
 class VM {
@@ -158,10 +156,17 @@ private:
         }
     }
 
+    std::string backtrace();
+
     /**
      * 根据arg_count的值计算被调用者的位置，调用之，产生新的栈帧。
      */
     void call_value(size_t arg_count);
+
+    /**
+     * 将当前栈帧末尾的arg_count个参数移动到栈帧的开头，删除除了参数之外的其他本地变量，pc归零。
+     */
+    void recur_call(size_t arg_count);
 
     std::shared_ptr<std::unordered_map<std::string, Value> > globals; // 多个虚拟机线程共享同一个全局变量池
     std::vector<CallFrame> frames;
