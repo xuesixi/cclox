@@ -15,8 +15,9 @@ VM::VM() {
 InterpreterResult VM::interpret(std::string &&source) {
     Compiler compiler;
     auto f = compiler.compile(std::move(source));
+    auto closure = LoxObject::allocate_as<LoxClosure>(f);
     if (f) {
-        frames.push_back({f, 0, 0}); // 栈底部的第一个元素是main
+        frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
         push(f);
         return run();
     } else {
@@ -61,6 +62,9 @@ InterpreterResult VM::run() {
                     // 否则，缩减栈（清除上一个栈帧中的本地变量），然后将返回值添加在原本栈帧的fp处。
                     Value return_value = pop_and_get();
                     auto last_frame = frames.back();
+
+                    escape_above(last_frame.fp); // 逃逸该栈帧中的被捕获值
+
                     frames.pop_back();
                     if (frames.empty()) {
                         stack.pop_back(); // 弹出main
@@ -237,6 +241,36 @@ InterpreterResult VM::run() {
                     call_value(arg_count);
                     break;
                 }
+                case OpCode::MakeClosure: {
+                    Value value = pop_and_get();
+                    auto fun = LoxValue::to_reference_unsafe<LoxFunction>(value);
+                    auto new_closure = LoxObject::allocate_as<LoxClosure>(fun);
+                    uint8_t num_captures = read_operand_1();
+                    for (uint8_t i = 0; i < num_captures; i ++) {
+                        auto is_local = read_operand_1();
+                        auto index = read_operand_1();
+                        if (is_local) {
+                            // 如果是本地变量，那么需要捕获
+                            new_closure->captureds_.push_back(capture_value(index));
+                        } else {
+                            // 如果是本身就是upvalue，说明外层已经捕获过了，直接复制
+                            new_closure->captureds_.push_back(closure()->captureds_.at(index));
+                        }
+                    }
+                    push(new_closure);
+                    break;
+                }
+                case OpCode::LoadCaptured: {
+                    auto index = read_operand_1();
+                    Value v = closure()->captureds_.at(index)->value();
+                    push(v);
+                    break;
+                }
+                case OpCode::SetCaptured: {
+                    auto index = read_operand_1();
+                    closure()->captureds_.at(index)->value() = stack.back();
+                    break;
+                }
                 default:
                     implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}",
                                                      static_cast<uint8_t>(instruction)));
@@ -254,14 +288,14 @@ InterpreterResult VM::run() {
 void VM::call_value(size_t arg_count) {
     size_t fp = stack.size() - 1 - arg_count;
     Value callable = stack.at(fp);
-    auto test = LoxValue::to_reference<LoxFunction>(callable);
+    auto test = LoxValue::to_reference<LoxClosure>(callable);
     if (test == nullptr) {
         throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
     }
-    auto f = LoxValue::to_reference_unsafe<LoxFunction>(callable);
-    if (f->arity() != arg_count) {
-        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(f), f->arity(), arg_count));
+    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(callable);
+    if (cl->function_->arity() != arg_count) {
+        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl), cl->function_->arity(), arg_count));
     }
-    CallFrame frame {f, 0, fp};
+    CallFrame frame {cl, 0, fp};
     frames.push_back(frame);
 }

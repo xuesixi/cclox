@@ -36,12 +36,15 @@ const std::unordered_map<OpCode, std::string> opcode_names{
     {OpCode::SetGlobal, "SetGlobal"},
     {OpCode::LoadLocal, "LoadLocal"},
     {OpCode::SetLocal, "SetLocal"},
+    {OpCode::LoadCaptured, "LoadCaptured"},
+    {OpCode::SetCaptured, "SetCaptured"},
     {OpCode::PopN, "PopN"},
     {OpCode::Jump, "Jump"},
     {OpCode::JumpIfPopFalse, "JumpIfPopFalse"},
     {OpCode::JumpBack, "JumpBack"},
     {OpCode::JumpIfFalse, "JumpIfFalse"},
     {OpCode::Call, "Call"},
+    {OpCode::MakeClosure, "MakeClosure"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -102,6 +105,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_operand_0(instruction, offset);
         case OpCode::PopN:
         case OpCode::Call:
+        case OpCode::SetCaptured:
+        case OpCode::LoadCaptured:
             return instruction_general(instruction, offset);
         case OpCode::JumpIfPopFalse:
         case OpCode::JumpIfFalse:
@@ -109,6 +114,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_jump(instruction, offset);
         case OpCode::JumpBack:
             return instruction_jump_back(instruction, offset);
+        case OpCode::MakeClosure:
+            return instruction_make_closure(instruction, offset);
     }
 }
 
@@ -173,5 +180,11 @@ size_t Disassembler::instruction_identifier_operand_2(OpCode instruction, size_t
     std::string identifier = chunk->read_identifier(key);
     cout << fmt::format("{:18} {} identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
+}
+
+size_t Disassembler::instruction_make_closure(OpCode instruction, size_t offset) {
+    uint8_t len = chunk->code.at(offset + 1);
+    cout << fmt::format("{:18} {} num of captured: {}\n", opcode_names.at(instruction), spaces_4, len);
+    return offset + 2 + 2 * len;
 }
 

@@ -39,11 +39,14 @@ enum class OpCode: uint8_t {
     SetGlobal,
     LoadLocal,
     SetLocal,
+    SetCaptured,
+    LoadCaptured,
     Jump,
     JumpIfPopFalse,
     JumpIfFalse,
     JumpBack,
     Call,
+    MakeClosure,
 };
 
 using OperandSize = uint16_t;

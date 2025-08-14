@@ -9,6 +9,10 @@
 #include "scanner.h"
 #include "objects/loxfunction.h"
 
+
+/**
+ * 一个Scope是一个函数级的作用域。代码块级的作用域体现在scope内部中的depth
+ */
 class Scope {
 public:
 
@@ -49,7 +53,7 @@ public:
     /**
      * 是否是全局scope（depth==0）
      */
-    bool is_global_scope() {
+    bool is_global_scope() const {
         return depth == 0;
     }
 
@@ -68,30 +72,49 @@ public:
     void add_local(const Token &token);
 
     /**
-     * 在scope中查找对应token对应的同名变量，如果没找到，返回-1。
+     * 在scope中查找对应token对应的同名变量，如果没找到，返回nullopt
      * 如果找到了，但没有被初始化，抛出异常；否则返回其对应的索引
      */
-    int resolve_local(const Token &token);
+    std::optional<uint8_t> resolve_local(const Token &token);
+
+    /**
+     * 在已知给定的token不存在于本层的locals中时，调用该函数。
+     * 先检查给定的token是否存在于本层的upvalues中（是否已经被捕获），
+     * 如果不存在，则尝试捕获：检查外层的本地变量，如果不存在，递归地对外层调用该函数。
+     * 如果由此成功捕获，则将其添加到自己的upvalues中，如果没有找到，返回std::nullopt
+     *
+     * 这里的递归会产生这样的效果：假如函数A中定义了B，函数B中定义了C。
+     * 当C捕获A中的本地变量v时，C不会直接捕获A的，而是先让B捕获A的本地变量，添加到B的upvalues中，
+     * 如果C再从B的upvalues中进行捕获。
+     *
+     * @param token 要检察的标识符
+     * @return 索引，或者nullopt
+     */
+    std::optional<uint8_t> resolve_upvalue(const Token &token);
 
 private:
     struct Local {
-        Local(): name(), depth(-1) {
-        }
-
-        explicit Local(const Token &token): name(token.get_lexeme()), depth(-1) {
-        }
-
-        bool isInitialized() {
+        bool is_initialized() const {
             return depth != -1;
         }
 
         std::string name;
-        int depth;
+        int depth = -1;
+    };
+
+    /**
+     * Compile Time Upvalue 编译时upvalue。其运行期对应的结构为Captured
+     */
+    struct Upvalue {
+        bool is_local; // 被捕獲的值是來自於外層的 locals 還是 upvalues
+        uint8_t index; // 根据 is_local，可以是在外层的locals中的索引，或者在外层的upvalues中的索引
+        std::string name;
     };
 
     std::vector<Local> locals;
-    FunctionType function_type_;
+    std::vector<Upvalue> upvalues; // 本层级捕获的外层变量
     int depth = 0;
+    FunctionType function_type_;
     std::shared_ptr<LoxFunction> function_;
     std::shared_ptr<Scope> outer_;
 };

@@ -58,9 +58,18 @@ private:
     }
 
     /**
+     * 将目标操作数写入字节码中，如果操作数的值超出uint8则是实现错误
+     */
+    void emit_operand_1(size_t operand) {
+        DEBUG_ASSERT(within<uint8_t>(operand), "size overflow");
+        emit_operand(operand);
+    }
+
+    /**
      * 将目标操作数写入字节码中，无论operand的值，总是写入两个字节。超出uint16则是实现错误
      */
     void emit_operand_2(OperandSize operand) {
+        DEBUG_ASSERT(within<uint16_t>(operand), "operand is not within uint16");
         current_chunk().write_operand_2(operand, curr.line);
     }
 
@@ -186,11 +195,11 @@ private:
     /**
      * 在已知curr是函数名时调用，期待next是左括号。
      * 该函数会设置函数名、解析参数列表以及函数体。如果compiler没有错误，那么在返回前还会对其进行反汇编
-     * 其内部涉及了scope的转化，但对于调用者来说是不可见的.
+     * 其内部涉及了scope的转化，但调用者不会有感知。函数的scope将会被返回，以供额外操作
      * @param type 函数类型
-     * @return 解析到的函数
+     * @return 解析到的函数, 函数的scope
      */
-    std::shared_ptr<LoxFunction> parse_function(FunctionType type);
+    std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> parse_function(FunctionType type);
 
     /*
      * 所有下面这些表达式解析函数，在运行后，curr的token已经被解析，下一个待解析的token是next，因此，一般在调用后，会再调用advance()
@@ -208,7 +217,7 @@ private:
     void compile_expression();
 
     /**
-     * 在已知curr是一个identifier的时候调用
+     * 在已知curr是一个identifier的时候调用。该函数解析一个标识符作为变量的值
      */
     void variable_expr(bool can_assign);
 

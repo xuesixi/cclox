@@ -13,8 +13,8 @@ using LoxReference = std::shared_ptr<LoxObject>;
 
 class LoxObject {
 public:
-    LoxObject() : id(next_id.fetch_add(1)) {
-    }
+
+    LoxObject() = default;
 
     virtual ~LoxObject() = default;
 
@@ -26,15 +26,21 @@ public:
 
     template<typename T, typename... Args>
     static LoxReference allocate(Args... args) {
-        static_assert(std::is_base_of_v<LoxObject, T>, "The template argument has to be a subclass of LoxObject");
-        auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
-        runtime.register_object(ptr->id, ptr); // i.e. runtime.weak_pool[ptr->id] = std::weak_ptr(ptr);
+        // static_assert(std::is_base_of_v<LoxObject, T>, "The template argument has to be a subclass of LoxObject");
+        // auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
+        // runtime.register_object(ptr->id, ptr); // i.e. runtime.weak_pool[ptr->id] = std::weak_ptr(ptr);
+        auto ptr = allocate_as<T>(std::forward<Args>(args)...);
         return std::static_pointer_cast<LoxObject>(ptr);
     }
 
-private:
-    const long id;
-    static std::atomic<long> next_id;
+    template<typename T, typename... Args>
+    static std::shared_ptr<T> allocate_as(Args... args) {
+        static_assert(std::is_base_of_v<LoxObject, T>, "The template argument has to be a subclass of LoxObject");
+        auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
+        runtime.register_object(ptr);
+        return ptr;
+    }
+
 };
 
 

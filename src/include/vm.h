@@ -3,6 +3,7 @@
 #define CCLOX_VM_H
 
 #include "cclox_util.h"
+#include "captured.h"
 #include "objects/loxstring.h"
 #include "chunk.h"
 #include "value.h"
@@ -12,6 +13,7 @@
 #include <vector>
 #include "disassembler.h"
 #include "objects/loxfunction.h"
+#include "objects/loxclosure.h"
 
 constexpr int STACK_MAX = 256;
 
@@ -24,7 +26,8 @@ enum class InterpreterResult {
 };
 
 struct CallFrame {
-    std::shared_ptr<LoxFunction> function_;
+    // std::shared_ptr<LoxFunction> function_;
+    std::shared_ptr<LoxClosure> closure;
     size_t pc;
     size_t fp; // frame pointer, 帧指针，本帧的起始处
 };
@@ -101,12 +104,20 @@ private:
         return chunk().read_identifier(key);
     }
 
+    std::shared_ptr<LoxClosure> &closure() {
+        return frames.back().closure;
+    }
+
+    CallFrame &frame() {
+        return frames.back();
+    }
+
     Chunk &chunk() {
-        return frames.back().function_->get_chunk();
+        return frame().closure->function_->get_chunk();
     }
 
     size_t &pc() {
-        return frames.back().pc;
+        return frame().pc;
     }
 
     uint8_t next() {
@@ -117,7 +128,34 @@ private:
      * 返回相对于本栈帧底距离为index的值
      */
     Value &frame_at(uint8_t index) {
-        return stack.at(frames.back().fp + index);
+        return stack.at(frame().fp + index);
+    }
+
+    /**
+     * 捕获栈上位于local_index上的那个本地变量，将其添加到open_captured中
+     * @param local_index 被捕获的本地变量的本地索引
+     * @return 新生成的捕获值
+     */
+    std::shared_ptr<Captured> capture_value(uint8_t local_index) {
+        auto new_captured = std::make_shared<Captured>(stack, frame().fp + local_index);
+        open_captured.push_back(new_captured);
+        return new_captured;
+    }
+
+    /**
+     * 将位处于index及以上的所有open的捕获值进行逃逸
+     * @param index 该栈索引以及其上的所有捕获值将会被逃逸
+     */
+    void escape_above(size_t index) {
+        while (open_captured.empty() == false) {
+            auto curr = open_captured.back();
+            if (curr->index() >= index) {
+                open_captured.pop_back();
+                curr->escape();
+            } else {
+                break;
+            }
+        }
     }
 
     /**
@@ -128,6 +166,7 @@ private:
     std::shared_ptr<std::unordered_map<std::string, Value> > globals; // 多个虚拟机线程共享同一个全局变量池
     std::vector<CallFrame> frames;
     std::vector<Value> stack; // 栈
+    std::vector<std::shared_ptr<Captured>> open_captured; // 仍然存在于栈上的捕获值
 };
 
 #endif

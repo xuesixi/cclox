@@ -15,6 +15,7 @@ enum class FunctionType {
 class LoxFunction: public LoxObject {
 
 public:
+    friend class LoxClosure;
     ~LoxFunction() override = default;
     void clear_reference() override {};
 
@@ -26,7 +27,7 @@ public:
         if (name_ == "<main>") {
             return "<main>";
         }
-        return fmt::format("<fn: {}>", name_);
+        return fmt::format("<proto: {}>", name_);
     }
 
     Chunk &get_chunk() {

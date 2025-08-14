@@ -3,5 +3,3 @@
 //
 
 #include "object.h"
-
-std::atomic<long> LoxObject::next_id = 0;

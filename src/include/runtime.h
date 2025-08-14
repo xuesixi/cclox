@@ -5,19 +5,19 @@
 #ifndef CCLOX_RUNTIME_H
 #define CCLOX_RUNTIME_H
 #include <memory>
-#include <unordered_map>
+#include <vector>
 
 class LoxObject;
 
 
 class Runtime {
 public:
-    void register_object(long id, const std::shared_ptr<LoxObject> &ptr) {
-        weak_pool[id] = std::weak_ptr(ptr);
+    void register_object(const std::shared_ptr<LoxObject> &ptr) {
+        weak_pool.push_back(std::weak_ptr{ptr});
     }
 
 private:
-    std::unordered_map<long, std::weak_ptr<LoxObject>> weak_pool;
+    std::vector<std::weak_ptr<LoxObject>> weak_pool;
 };
 
 extern Runtime runtime;

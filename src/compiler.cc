@@ -345,9 +345,9 @@ void Compiler::unary_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::variable_expr(bool can_assign) {
-    int local_index = scope->resolve_local(curr);
+    auto found = scope->resolve_local(curr);
 
-    if (local_index != -1) {
+    if (found.has_value()) {
         // 是本地变量
         if (match(TokenType::EQUAL)) {
             if (can_assign) {
@@ -359,22 +359,41 @@ void Compiler::variable_expr(bool can_assign) {
         } else {
             emit_opcode(OpCode::LoadLocal);
         }
-        emit_operand(local_index);
-    } else {
-        // 本地没有找到，则认为是全局变量
-        OperandSize key = current_chunk().add_identifier(curr.lexeme);
+        emit_operand(found.value());
+        return;
+    }
+
+    found = scope->resolve_upvalue(curr);
+
+    if (found.has_value()) {
+        // 在upvalue中找到了。
         if (match(TokenType::EQUAL)) {
             if (can_assign) {
-                compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
-                emit_opcode(OpCode::SetGlobal);
+                compile_precedence_at_least(Precedence::ASSIGNMENT);
+                emit_opcode(OpCode::SetCaptured);
             } else {
                 error_at(curr, fmt::format("invalid assignment target"));
             }
         } else {
-            emit_opcode(OpCode::LoadGlobal);
+            emit_opcode(OpCode::LoadCaptured);
         }
-        emit_operand_2(key);
+        emit_operand_1(found.value());
+        return;
     }
+
+    // 都没找到，则认为是全局变量
+    OperandSize key = current_chunk().add_identifier(curr.lexeme);
+    if (match(TokenType::EQUAL)) {
+        if (can_assign) {
+            compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
+            emit_opcode(OpCode::SetGlobal);
+        } else {
+            error_at(curr, fmt::format("invalid assignment target"));
+        }
+    } else {
+        emit_opcode(OpCode::LoadGlobal);
+    }
+    emit_operand_2(key);
 }
 
 void Compiler::emit_load_constant(Value &&value) {
@@ -533,23 +552,37 @@ void Compiler::fun_statement() {
     if (scope->is_global_scope()) {
         OperandSize key = resolve_global_identifier();
 
-        std::shared_ptr<LoxFunction> fun = parse_function(FunctionType::Function);
+        auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
-        OperandSize index = current_chunk().add_constant(std::move(fun));
-        emit_opcode(OpCode::LoadConstant);
-        emit_operand(index);
+        emit_load_constant(std::move(fun));
+
+        emit_opcode(OpCode::MakeClosure);
+        emit_operand_1(fun_scope->upvalues.size());
+
+        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i ++) {
+            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
+            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
+        }
+
         emit_opcode(OpCode::DefineGlobal);
         emit_operand_2(key);
+
     } else {
         consume(TokenType::IDENTIFIER, "expect an identifier for the function");
 
         scope->add_local(curr);
         scope->initialize();
-        std::shared_ptr<LoxFunction> fun = parse_function(FunctionType::Function);
+        auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
-        OperandSize index = current_chunk().add_constant(std::move(fun));
-        emit_opcode(OpCode::LoadConstant);
-        emit_operand(index);
+        emit_load_constant(std::move(fun));
+
+        emit_opcode(OpCode::MakeClosure);
+        emit_operand_1(fun_scope->upvalues.size());
+
+        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i ++) {
+            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
+            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
+        }
     }
 }
 
@@ -591,11 +624,13 @@ void Compiler::expression_statement() {
     emit_opcode(OpCode::Pop);
 }
 
-std::shared_ptr<LoxFunction> Compiler::parse_function(FunctionType type) {
+std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> Compiler::parse_function(FunctionType type) {
 
     std::string fun_name = curr.get_lexeme();
 
-    scope = std::make_shared<Scope>(scope, type);
+    auto new_scope = std::make_shared<Scope>(scope, type);
+
+    scope = new_scope;
 
     consume(TokenType::LEFT_PAREN, "expect a '(' after the function name");
     scope->step_into();
@@ -631,10 +666,9 @@ std::shared_ptr<LoxFunction> Compiler::parse_function(FunctionType type) {
     }
 
     auto function_value = scope->function_;
-
     scope = scope->outer_;
 
-    return function_value;
+    return {function_value, new_scope};
 }
 
 void Compiler::statement() {
