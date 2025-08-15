@@ -164,7 +164,11 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::Print: {
                     Value v = pop_and_get();
-                    Visual::print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
+                    if (Flag::print_color) {
+                        Visual::print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
+                    } else {
+                        std::cout << LoxValue::to_string(v) << std::endl;
+                    }
                     break;
                 }
                 case Opcode::Pop: {

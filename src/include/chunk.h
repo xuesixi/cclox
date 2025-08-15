@@ -13,41 +13,41 @@
 class Disassembler;
 
 enum class Opcode: uint8_t {
-    Return,
-    LoadConstant, // index: operand1
-    LoadConstant2, // index: operand2
-    LoadImmediate, // index: operand1
-    Negate,
-    Add,
-    Subtract,
-    Multipy,
-    Divide,
-    Power,
-    LoadNil,
-    LoadTrue,
-    LoadFalse,
-    Not,
-    Greater,
-    Less,
-    Equal,
-    Print,
-    Pop,
-    PopN, // num: operand1
-    DefineGlobal, // key: operand2
-    LoadGlobal, // key: operand2
-    SetGlobal, // key: operand2
-    LoadLocal, // index: operand1
-    SetLocal, // index: operand1
-    SetCaptured, // index: operand1
-    LoadCaptured, // index: operand1
-    Jump, // distance: operand2
-    JumpIfPopFalse, // distance: operand2
-    JumpIfFalse, // distance: operand2
-    JumpBack, // distance: operand2
-    Call, // arg_count: operand1
-    MakeClosure, // captured_count: operand1, [is_local: operand1, index: operand1]...
-    Recur, // arg_count: operand1
-    StringConcat, // str_count: operand1
+    Return, // ; 弹出当前栈帧，将原本栈顶的值作为返回值，置于原本的fp的位置（也就是新的栈顶）
+    LoadConstant, // index: operand1 ；将当前栈帧的function的constants[index]的值置入栈顶
+    LoadConstant2, // index: operand2 ；将当前栈帧的function的constants[index]的值置入栈顶
+    LoadImmediate, // index: operand1 ；将index所代表的立即数置入栈顶
+    Negate, // ；弹出栈顶的值，取其相反数，置入栈顶
+    Add, // ；弹出栈顶的两个值 a, b，将 a + b 的结果置入栈顶。如果两者都是字符串，可以进行字符串拼接
+    Subtract, // ；弹出栈顶的两个值 a, b，将 a - b 的结果置入栈顶
+    Multipy, // ；弹出栈顶的两个值 a, b，将 a * b 的结果置入栈顶
+    Divide, // ；弹出栈顶的两个值 a, b，将 a / b 的结果置入栈顶
+    Power, // ；弹出栈顶的两个值 a, b，将 a ** b 的结果置入栈顶
+    LoadNil, // ；将nil置入栈顶
+    LoadTrue, // ； 将true置入栈顶
+    LoadFalse, // ；将false置入栈顶
+    Not, // ；弹出栈顶的值，取其逻辑not，置入栈顶
+    Greater, // ；弹出栈顶的两个值 a, b，将 a < b 的结果置入栈顶
+    Less, // ；弹出栈顶的两个值 a, b，将 a < b 的结果置入栈顶
+    Equal, // ；弹出栈顶的两个值 a, b，将 a == b 的结果置入栈顶
+    Print, // ；弹出并打印栈顶的值，自带换行符。如果设置了Flag::print_color，则打印绿色
+    Pop, // ； 弹出栈顶的值
+    PopN, // n: operand1 ；弹出栈顶的n个值
+    DefineGlobal, // key: operand2 ；弹出栈顶的值，创建一个名为key所对应的标识符的全局变量，将其值设置为刚才弹出的那个值
+    LoadGlobal, // key: operand2 ；将名为key所对应的标识符的全局变量置入栈顶
+    SetGlobal, // key: operand2 ； 将名为key所对应的标识符的全局变量设置为栈顶的值
+    LoadLocal, // index: operand1 ；将帧栈中本地索引为index的那个本地变量的值置入栈顶
+    SetLocal, // index: operand1 ； 将栈帧中本地索引为index的那个本地变量设置为栈顶的值
+    SetCaptured, // index: operand1 ；将当前栈帧closure的captured[index]的值设置为当前栈顶的值
+    LoadCaptured, // index: operand1 ；将当前栈帧的closure的captureds[index]的值置入栈顶
+    Jump, // distance: operand2 ； pc += distance
+    JumpIfPopFalse, // distance: operand2 ；弹出栈顶的值，如果其为false，则pc += distance
+    JumpIfFalse, // distance: operand2 ；如果栈顶的值为false，则pc += distance
+    JumpBack, // distance: operand2 ；pc -= distance
+    Call, // arg_count: operand1 ；以栈顶的arg_count个值作为参数，以再前的一个值为函数，生成新的栈帧
+    MakeClosure, // captured_count: operand1, [is_local: operand1, index: operand1]... ； captured_count标识后面有多少个捕获值。进行捕获
+    Recur, // arg_count: operand1 ； 将栈顶的arg_count个值移动到当前栈帧的前arg_count个本地参数的位置，弹出此后的其他值。重置pc为0
+    StringConcat, // str_count: operand1 ； 弹出栈顶的str_count个值，将它们合成一个字符串，置于栈顶。
 };
 
 using OperandSize = uint16_t;

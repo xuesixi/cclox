@@ -16,6 +16,7 @@ namespace Flag {
     bool disassembly = false;
     bool repl = false;
     bool show_heap = false;
+    bool print_color = false;
 }
 
 namespace Configuration {
@@ -83,9 +84,12 @@ int main(int argc, const char **args) {
 
     app.add_option("-f, --file", filepath, "source file");
     app.add_option("--frame-max", Configuration::frame_max, "the max amount of stack frames when running the vm");
+
     app.add_flag("-t, --trace", Flag::trace, "trace each step");
     app.add_flag("-H, --heap", Flag::show_heap, "show heap allocation info");
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
+    app.add_flag("-C, --color", Flag::print_color, "the result of print will be colored");
+
     CLI11_PARSE(app, argc, args);
     if (filepath == "d") {
         // 默认的测试用文件, 以 cclox -f d 触发
