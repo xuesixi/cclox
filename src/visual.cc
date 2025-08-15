@@ -4,7 +4,6 @@
 #include "objects/loxstring.h"
 #include <iostream>
 
-// 为字符串前后加上引号
 std::string Visual::string_wrapper(std::string &&str) {
     return "\"" + str + "\"";
 }

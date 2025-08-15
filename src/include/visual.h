@@ -10,6 +10,7 @@ enum class Color {
 };
 
 namespace Visual {
+    // 为字符串前后加上引号
     std::string string_wrapper(std::string &&input);
 
     void print_with_color(const std::string &content, Color color);

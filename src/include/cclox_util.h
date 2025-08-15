@@ -20,10 +20,18 @@ inline std::pair<uint8_t, uint8_t> u16_to_u8(uint16_t num) {
     };
 }
 
+/**
+ * 将两个uint8转化为一个uint16
+ * @param low 低位
+ * @param high 高位
+ */
 inline uint16_t u8_to_u16(uint8_t low, uint8_t high) {
     return (high << 8) | low;
 }
 
+/**
+ * 以1e-8为门槛判断两个double是否相同
+ */
 inline bool double_equal(double a, double b) {
     return abs(a - b) < 1e-8;
 }
@@ -52,7 +60,13 @@ constexpr bool are_same() {
     return std::is_same_v<T, V> && std::is_same_v<U, V>;
 }
 
-// 打开指定路径的文件，并将其全部内容返回为一个string。如果文件无法被打开，抛出runtime_err
+//
+/**
+ * 打开指定路径的文件，并将其全部内容返回为一个string。
+ * @param path 路径
+ * @return 文件内容
+ * @throws FileOpenFailureError 文件打开异常
+ */
 std::string read_file(const std::string &path);
 
 

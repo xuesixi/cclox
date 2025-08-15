@@ -7,6 +7,9 @@
 
 #include "value.h"
 
+/**
+ * 被捕获值。有两种状态：在栈上，或者已逃逸
+ */
 class Captured {
 public:
     Captured() = default;
@@ -16,19 +19,23 @@ public:
 
     /**
      * @return 该值在栈上的索引
+     * @pre 尚未逃逸（仍在栈上）
      */
-    size_t index() {
+    size_t index() const {
         return std::get<OpenRef>(data).second;
     }
 
     /**
-     * 将捕获的值从栈上转移到该对象内部。只能调用一次。
+     * 逃逸，也就是将捕获的值从栈上转移到该对象内部。只能调用一次。
      */
     void escape() {
         auto [stack, index] = std::get<OpenRef>(data);
         data = stack->at(index);
     }
 
+    /**
+     * @return 该捕获值的Value。会根据是否逃逸返回合适的结果。调用者无需关心是否已经逃逸
+     */
     Value &value() {
         if (std::holds_alternative<OpenRef>(data)) {
             auto [stack, index] = std::get<OpenRef>(data);

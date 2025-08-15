@@ -25,26 +25,6 @@ std::string LoxValue::to_string(const Value &value) {
     }, value);
 }
 
-// std::string LoxValue::to_string(bool v) {
-//     return fmt::format("{}", v);
-// }
-// std::string LoxValue::to_string(long v) {
-//     return fmt::format("{}", v);
-// }
-// std::string LoxValue::to_string(double v) {
-//     return fmt::format("{}", v);
-// }
-// std::string LoxValue::to_string(nullptr_t v) {
-//     return "nil";
-// }
-// std::string LoxValue::to_string(LoxReference v) {
-//     return v->to_string();
-// }
-
-void LoxValue::print(const Value &value) {
-    std::cout << LoxValue::to_string(value) << std::endl;
-}
-
 Value operator-(const Value &value) {
     if (std::holds_alternative<long>(value)) {
         return -std::get<long>(value);

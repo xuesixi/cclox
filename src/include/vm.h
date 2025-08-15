@@ -39,11 +39,24 @@ public:
 
     VM &operator=(VM &&other) = delete;
 
+    /**
+     * 用传入的源代码编译出一个closure对象，将其的对应栈帧置入栈中。然后开始运行。
+     * 全局变量是一个vm的成员，因此多次interpret时全局变量的信息会继承。
+     * @param source 要运行的源代码
+     * @return 运行结果
+     */
     InterpreterResult interpret(std::string &&source);
 
+    /**
+     * 打印展示当前的栈状态
+     */
     void show_stack();
 
 private:
+    /**
+     * 根据栈来执行指令。运行直到帧栈为空
+     * @return 运行结果
+     */
     InterpreterResult run();
 
     void push(Value &&value) {
@@ -153,15 +166,20 @@ private:
         }
     }
 
+    /**
+     * @return 一个代表帧栈的字符串。新的栈帧会出现在字符串的前面。
+     */
     std::string backtrace();
 
     /**
      * 根据arg_count的值计算被调用者的位置，调用之，产生新的栈帧。
+     * @throws LoxArgError 如果传入参数的数量与栈帧对应的closure不匹配
      */
     void call_value(size_t arg_count);
 
     /**
      * 将当前栈帧末尾的arg_count个参数移动到栈帧的开头，删除除了参数之外的其他本地变量，pc归零。
+     * @throws LoxArgError 如果传入参数的数量与栈帧对应的closure不匹配
      */
     void recur_call(size_t arg_count);
 

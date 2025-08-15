@@ -29,7 +29,6 @@ InterpreterResult VM::interpret(std::string &&source) {
 }
 
 void VM::show_stack() {
-    // std::cout << "   ";
     Visual::print_with_color(fmt::format(" heap: {}  ", runtime.allocated_size.load()), Color::MAGENTA);
     for (size_t i = 0; i < stack.size(); i++) {
         if (i == frames.back().fp) {
@@ -316,10 +315,6 @@ std::string VM::backtrace() {
         auto line = call_frame.closure->function->get_chunk().get_line_num(call_frame.pc);
         result << fmt::format("{} at line {}\n", call_frame.closure->to_string(), line);
     }
-    // for (const auto & call_frame : frames) {
-    //     auto line = call_frame.closure->function->get_chunk().get_line_num(call_frame.pc);
-    //     result << fmt::format("{} at line {}\n", call_frame.closure->to_string(), line);
-    // }
     return result.str();
 }
 

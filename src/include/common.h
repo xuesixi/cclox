@@ -12,7 +12,6 @@ namespace Configuration {
     extern int frame_max; // 栈帧的数量上限
 }
 
-#define DEBUG_TRACE_EXECUTION
 #define DEBUG_IMPLEMENTATION_CHECK
 
 #define STRINGIFY_DETAIL(x) #x

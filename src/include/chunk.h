@@ -5,7 +5,6 @@
 #ifndef CCLOX_CHUNK_H
 #define CCLOX_CHUNK_H
 
-#include <utility>
 #include <vector>
 #include "value.h"
 #include "cclox_util.h"
@@ -73,56 +72,35 @@ public:
     /**
      * 向code中写入一个新的指令，并记录其所在的行数
      */
-    void write_opcode(Opcode opcode, int line) {
-        code.push_back(static_cast<uint8_t>(opcode));
-        lines.push_back(line);
-    }
+    void write_opcode(Opcode opcode, int line);
 
     /**
-     * 向code中写入operand所代表的字节。如果在uint8范围内，写入一个字节，如果超出此范围，但处在uint16范围内，写入两个字节。否则abort.
-     * 调用者需要确保参数是在uint16范围内
+     * 向code中写入operand所代表的字节。如果在uint8范围内，写入一个字节，如果超出此范围，但处在uint16范围内，写入两个字节。
+     * @pre operand 处在uint16范围内
      */
-    void write_operand(size_t operand, int line) {
-        if (within<uint8_t>(operand)) {
-            code.push_back(static_cast<uint8_t>(operand));
-            lines.push_back(line);
-        } else if (within<uint16_t>(operand)) {
-            write_operand_2(operand, line);
-        } else {
-            implementation_error("not within uint16 limits");
-        }
-    }
+    void write_operand(size_t operand, int line);
 
     /**
      * 向code中写入operand。无论operand的值是否超出uint8的范围，都会写入两个字节。
-     * 调用者需要确保参数在uint16范围内，否则未定义
+     * @pre operand 在uint16范围内
      */
-    void write_operand_2(OperandSize operand, int line) {
-        auto [high, low] = u16_to_u8(operand);
-        code.push_back(low);
-        code.push_back(high);
-        lines.push_back(line);
-        lines.push_back(line);
-    }
+    void write_operand_2(size_t operand, int line);
 
     /**
-     * 向常数池中增加一个值，并返回其索引。如果索引在uint16范围内，返回之。否则，抛出ConstantPoolOverflowError
+     * 向常数池中增加一个值，并返回其索引。如果索引在uint16范围内，返回之。
+     * @throws ConstantPoolOverflowError 如果常数池的元素数量超出uint16
      */
-    OperandSize add_constant(Value &&value) {
-        constants.push_back(std::move(value));
-        size_t index = constants.size() - 1;
-        if (!within<OperandSize>(index)) {
-            throw ConstantPoolOverflowError("constant pool overflow");
-        } else {
-            return index;
-        }
-    }
+    OperandSize add_constant(Value &&value);
 
     /**
-     * 获取str在标识符中的键。如果已存在，则直接返回键。否则，向标识符池中增加一个值，如果键在uint16范围内，返回之。否则，抛出IdentifierPoolOverflowError
+     * 获取str在标识符中的键。如果已存在，则直接返回键。否则，向标识符池中增加一个值
+     * @throws IdentifierPoolOverFlowError 如果标识符池的元素数量无法用uint16表示
      */
     OperandSize add_identifier(const std::string &str);
 
+    /**
+     * 读取key所代表的标识符字符串
+     */
     std::string read_identifier(OperandSize key) const {
         return identifiers.at(key);
     }
@@ -155,6 +133,8 @@ public:
             case 251: return 100.0;
             case 252: return 1000.0;
             case 253: return 10000.0;
+            case 254: return 8.0;
+            case 255: return 16.0;
 
             default:
                 implementation_error("unknown immediate index");

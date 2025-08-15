@@ -35,9 +35,6 @@ public:
     friend class Scanner;
     friend class Compiler;
 
-    /**
-     * 默认初始化，应该不会被用到？
-     */
     Token(): lexeme(), type(TokenType::ERROR), line(-1) {
     };
 

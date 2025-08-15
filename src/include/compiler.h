@@ -35,6 +35,12 @@ class Compiler;
 class Compiler {
 public:
     using BackPoint = std::optional<std::pair<size_t, uint8_t>>; // first：保存的先前的某个字节码偏移值（不可大于当前的字节码偏移值），second：彼处的本地变量的个数
+
+    /**
+     * 用给定的源代码生成一个LoxFunction对象。
+     * @param source 源代码
+     * @return LoxFunction指针
+     */
     std::shared_ptr<LoxFunction> compile(std::string &&source);
 
 private:
@@ -51,7 +57,8 @@ private:
     }
 
     /**
-     * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。调用者需要确保参数是uint16以内。超出uint16则是实现错误
+     * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。
+     * @pre operand处在uint16范围内
      */
     void emit_operand_flexible(size_t operand) {
         DEBUG_ASSERT(within<uint16_t>(operand), "size overflow");
@@ -59,7 +66,8 @@ private:
     }
 
     /**
-     * 将目标操作数写入字节码中，只写入一个字节。调用者需要保证参数是uint8。如果操作数的值超出uint8则是实现错误
+     * 将目标操作数写入字节码中，只写入一个字节。调用者需要保证参数是uint8。
+     * @pre operand处在uint8范围内
      */
     void emit_operand_1(size_t operand) {
         DEBUG_ASSERT(within<uint8_t>(operand), "size overflow");
@@ -68,6 +76,7 @@ private:
 
     /**
      * 将目标操作数写入字节码中，无论operand的值，总是写入两个字节。超出uint16则是实现错误
+     * @pre operand 处在uint16范围内
      */
     void emit_operand_2(size_t operand) {
         DEBUG_ASSERT(within<uint16_t>(operand), "operand is not within uint16");
@@ -264,6 +273,7 @@ private:
 
     /**
      * 在已知curr是格式化字符串的时候调用
+     * @throws Uint8OperandOverflowError 如果内嵌表达式数量大于uint8
      */
     void fmt_string_expr(bool can_assign);
 
@@ -274,7 +284,8 @@ private:
 
     /**
      * 此时已知curr是左括号。解析传入的参数（argument），以及右括号
-     * @return 传入的参数的数量。如果超出uint8，则抛出异常，因此调用者可以认为该函数返回值是uint8
+     * @return 传入的参数的数量
+     * @throws Uint8OperandOverflowError 如果参数数量大于uint8
      */
     uint8_t argument_list();
 
@@ -289,7 +300,7 @@ private:
     static ParseFn get_infix(TokenType type);
 
     /**
-     * 返回该token作为中缀时的运算优先级。
+     * 返回该token作为中缀时的运算优先级。注意，不是前缀时的优先级。
      */
     static Precedence get_precedence(TokenType type);
 
