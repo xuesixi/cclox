@@ -56,6 +56,7 @@ using OperandSize = uint16_t;
 class Chunk {
 public:
     friend class Disassembler;
+    friend class LoxFunction;
 
     size_t code_size() {
         return code.size();
@@ -161,6 +162,23 @@ public:
 
     int get_line_num(size_t offset) {
         return lines.at(offset);
+    }
+
+    /**
+     * 尝试将chunk的各个vector的capacity缩减为size。然后估测本chunk的容器的所占用的内存。但不包括chunk自身的内存。
+     * @return 估算的内存占用
+     */
+    size_t estimate_memory_size() {
+        code.shrink_to_fit();
+        constants.shrink_to_fit();
+        lines.shrink_to_fit();
+        identifiers.shrink_to_fit();
+        size_t sum = sizeof(uint8_t) * code.capacity() + sizeof(Value) * constants.capacity()
+        + sizeof(int) * lines.capacity() + sizeof(std::string) * identifiers.capacity();
+        for (auto & identifier : identifiers) {
+            sum += identifier.capacity();
+        }
+        return sum;
     }
 
 private:

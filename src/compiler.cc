@@ -59,7 +59,9 @@ std::shared_ptr<LoxFunction> Compiler::compile(std::string &&source) {
     while (!check(TokenType::END_OF_FILE)) {
         declaration();
     }
-    end_compiler();
+    emit_opcode(OpCode::LoadNil);
+    emit_opcode(OpCode::Return);
+    scope->function_->fix_size();
     if (has_error) {
         return nullptr;
     } else {
@@ -311,7 +313,8 @@ void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::string_expr([[maybe_unused]] bool can_assign) {
-    Value value = LoxObject::allocate<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
+    LoxReference value = LoxObject::allocate_as_ref<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
+    value->fix_size();
     emit_load_constant(std::move(value));
 }
 
@@ -329,7 +332,9 @@ void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
     for (auto [caught, left, right] : ranges.value()) {
         if (!caught) {
             // 普通字符串
-            emit_load_constant(LoxObject::allocate<LoxString>(s.substr(left, right - left + 1)));
+            LoxReference str = LoxObject::allocate_as_ref<LoxString>(s.substr(left, right - left + 1));
+            str->fix_size();
+            emit_load_constant(str);
             count++;
         } else {
             // 内嵌表达式。这里去除掉了头尾的{}
@@ -716,6 +721,8 @@ std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> Compiler::parse_
     emit_opcode(OpCode::Return);
 
     scope->function_->set_name(fun_name);
+
+    scope->function_->fix_size();
 
     if (!has_error) {
         disasm.set_chunk(&scope->function_->get_chunk());

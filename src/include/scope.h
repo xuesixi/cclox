@@ -18,8 +18,11 @@ public:
 
     friend class Compiler;
 
+    /**
+     * 创建一个新的scope，分配一个新的loxfunction（但还没有调用fix_size），添加第一个本地变量为占地符。
+     */
     explicit Scope(std::shared_ptr<Scope> outer, FunctionType function_type):outer_(outer), function_type_(function_type) {
-        function_ = std::static_pointer_cast<LoxFunction>(LoxObject::allocate<LoxFunction>());
+        function_ = std::static_pointer_cast<LoxFunction>(LoxObject::allocate_as_ref<LoxFunction>());
         if (function_type == FunctionType::Main) {
             function_->set_name("<main>");
         }

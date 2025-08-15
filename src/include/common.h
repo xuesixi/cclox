@@ -5,6 +5,7 @@ namespace Flag {
     extern bool trace;
     extern bool disassembly;
     extern bool repl;
+    extern bool show_heap;
 }
 
 #define DEBUG_TRACE_EXECUTION

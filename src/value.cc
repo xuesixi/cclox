@@ -122,7 +122,9 @@ Value operator+(const Value &left, const Value &right) {
             auto *a_str = LoxValue::to_reference<LoxString>(a);
             auto *b_str = LoxValue::to_reference<LoxString>(b);
             if (a_str && b_str) {
-                return LoxObject::allocate<LoxString>(*a_str + *b_str);
+                LoxReference str = LoxObject::allocate_as_ref<LoxString>(*a_str + *b_str);
+                str->fix_size();
+                return str;
             } else {
                 throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a), LoxValue::to_string(b)));
             }

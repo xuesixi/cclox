@@ -73,21 +73,11 @@ private:
         current_chunk().write_operand_2(operand, curr.line);
     }
 
-    void emit_return() {
-        emit_opcode(OpCode::LoadNil);
-        emit_opcode(OpCode::Return);
-    }
 
     /**
      * 写入LoadConstant指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理uint16及以下的值，如果超出，则error_at(curr)
      */
     void emit_load_constant(Value &&value);
-
-    void end_compiler() {
-        emit_opcode(OpCode::LoadNil);
-        emit_opcode(OpCode::Return);
-        emit_return();
-    }
 
     /**
      * 表明指定的token处出现了编译问题。如果原本不处于panic_mode，则会输出token元数据和错误消息，并设置panic_mode以及hash_error。

@@ -9,12 +9,13 @@
 
 class LoxObject;
 
-
 class Runtime {
 public:
     void register_object(const std::shared_ptr<LoxObject> &ptr) {
         weak_pool.push_back(std::weak_ptr{ptr});
     }
+
+    std::atomic<size_t> allocated_size = 0;
 
 private:
     std::vector<std::weak_ptr<LoxObject>> weak_pool;

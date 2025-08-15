@@ -18,6 +18,7 @@ InterpreterResult VM::interpret(std::string &&source) {
     Compiler compiler;
     auto f = compiler.compile(std::move(source));
     auto closure = LoxObject::allocate_as<LoxClosure>(f);
+    closure->fix_size();
     if (f) {
         frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
         push(closure);
@@ -28,7 +29,8 @@ InterpreterResult VM::interpret(std::string &&source) {
 }
 
 void VM::show_stack() {
-    std::cout << "   ";
+    // std::cout << "   ";
+    Visual::print_with_color(fmt::format(" heap: {}  ", runtime.allocated_size.load()), Color::MAGENTA);
     for (size_t i = 0; i < stack.size(); i++) {
         if (i == frames.back().fp) {
             Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::RED);
@@ -258,6 +260,7 @@ InterpreterResult VM::run() {
                             new_closure->captureds_.push_back(closure()->captureds_.at(index));
                         }
                     }
+                    new_closure->fix_size();
                     push(new_closure);
                     break;
                 }
@@ -286,7 +289,8 @@ InterpreterResult VM::run() {
                         s << LoxValue::to_string(v);
                     }
                     stack.resize(stack.size() - count);
-                    Value result = LoxObject::allocate<LoxString>(s.str());
+                    LoxReference result = LoxObject::allocate_as_ref<LoxString>(s.str());
+                    result->fix_size();
                     push(result);
                     break;
                 }

@@ -14,6 +14,7 @@
 bool Flag::trace = false;
 bool Flag::disassembly = false;
 bool Flag::repl = false;
+bool Flag::show_heap = false;
 
 void repl() {
     std::string buffer;
@@ -76,6 +77,7 @@ int main(int argc, const char **args) {
 
     app.add_option("-f, --file", filepath, "source file");
     app.add_flag("-t, --trace", Flag::trace, "trace each step");
+    app.add_flag("-H, --heap", Flag::show_heap, "show heap allocation info");
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
     CLI11_PARSE(app, argc, args);
     if (filepath == "d") {
