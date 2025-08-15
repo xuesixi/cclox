@@ -13,7 +13,7 @@
 
 class Disassembler;
 
-enum class OpCode: uint8_t {
+enum class Opcode: uint8_t {
     Return,
     LoadConstant, // index: operand1
     LoadConstant2, // index: operand2
@@ -73,15 +73,16 @@ public:
     /**
      * 向code中写入一个新的指令，并记录其所在的行数
      */
-    void write_opcode(OpCode opcode, int line) {
+    void write_opcode(Opcode opcode, int line) {
         code.push_back(static_cast<uint8_t>(opcode));
         lines.push_back(line);
     }
 
     /**
-     * 向code中写入operand所代表的字节。如果在uint8范围内，写入一个字节，如果超出此范围，但处在uint16范围内，写入两个字节。否则abort
+     * 向code中写入operand所代表的字节。如果在uint8范围内，写入一个字节，如果超出此范围，但处在uint16范围内，写入两个字节。否则abort.
+     * 调用者需要确保参数是在uint16范围内
      */
-    void write_operand(OperandSize operand, int line) {
+    void write_operand(size_t operand, int line) {
         if (within<uint8_t>(operand)) {
             code.push_back(static_cast<uint8_t>(operand));
             lines.push_back(line);
@@ -93,7 +94,8 @@ public:
     }
 
     /**
-     * 向code中写入operand。无论operand的值是否超出uint8的范围，都会写入两个字节
+     * 向code中写入operand。无论operand的值是否超出uint8的范围，都会写入两个字节。
+     * 调用者需要确保参数在uint16范围内，否则未定义
      */
     void write_operand_2(OperandSize operand, int line) {
         auto [high, low] = u16_to_u8(operand);
@@ -126,9 +128,9 @@ public:
     }
 
     /**
-     * 对于一个Value，如果它属于立即数，返回其立即数索引，否则返回255
+     * 对于一个Value，如果它属于立即数，返回其立即数索引，否则返回nullopt
      */
-    static uint8_t to_immediate(Value value);
+    static std::optional<uint8_t> to_immediate(Value value);
 
     /**
      * 给定一个立即数索引，返回其对应的Value

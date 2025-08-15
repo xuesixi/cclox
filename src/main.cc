@@ -11,10 +11,16 @@
 #include <memory>
 #include "CLI11.hpp"
 
-bool Flag::trace = false;
-bool Flag::disassembly = false;
-bool Flag::repl = false;
-bool Flag::show_heap = false;
+namespace Flag {
+    bool trace = false;
+    bool disassembly = false;
+    bool repl = false;
+    bool show_heap = false;
+}
+
+namespace Configuration {
+    int frame_max = 64;
+}
 
 void repl() {
     std::string buffer;
@@ -76,6 +82,7 @@ int main(int argc, const char **args) {
     std::string filepath;
 
     app.add_option("-f, --file", filepath, "source file");
+    app.add_option("--frame-max", Configuration::frame_max, "the max amount of stack frames when running the vm");
     app.add_flag("-t, --trace", Flag::trace, "trace each step");
     app.add_flag("-H, --heap", Flag::show_heap, "show heap allocation info");
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");

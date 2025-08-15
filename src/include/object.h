@@ -25,18 +25,18 @@ public:
     virtual ~LoxObject() = default;
 
     /**
-     * 估算本对象的内存占用（包括本对象的本体，但不包括其他LoxObject本体），使gc的内存分配记录增加合适的值。
-     * 该函数应该在本对象的内存占用被固定之后才使用，且仅能使用一次。如果有vector成员，那么应该尽可能将其capacity先缩减为size。
+     * 估算本对象的内存占用（包括本对象的本体，但不包括其他loxobject本体），使gc的内存分配记录增加合适的值。
+     * 该函数应该在本对象的内存占用被固定之后才使用，且仅能使用一次。如果有container成员，那么应该尽可能将其capacity先缩减为size，减少冗余
      */
     void fix_size() {
-        auto old = runtime.allocated_size.fetch_add(get_size());
+        auto old = runtime.allocated_size.fetch_add(compute_size());
         if (Flag::show_heap) {
-            std::cout << fmt::format("[+] heap: {:^6} -> {:^6}; {}\n", old, old + get_size(), to_string());
+            std::cout << fmt::format("[+] heap: {:^6} -> {:^6}; {}\n", old, old + compute_size(), to_string());
         }
     }
 
     /**
-     * 在week_pool中储存的是弱指针，如果我们判断存在循环引用孤岛，因此我们需要该函数来将引用置空，这将起到打破循环的作用。
+     * 在weak_pool中储存的是弱指针，如果我们判断存在循环引用孤岛，因此我们需要该函数来将引用置空，这将起到打破循环的作用。
      */
     virtual void clear_reference() = 0;
 
@@ -67,7 +67,10 @@ public:
 
 private:
 
-    virtual size_t get_size() = 0;
+    /**
+     * 估算本对象的内存占用（包括本对象的本体，但不包括其他loxobject本体
+     */
+    virtual size_t compute_size() = 0;
 };
 
 

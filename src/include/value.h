@@ -12,11 +12,6 @@ using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference>;
 
 namespace LoxValue {
     std::string to_string(const Value &value);
-    // std::string to_string(bool v);
-    // std::string to_string(long v);
-    // std::string to_string(double v);
-    // std::string to_string(nullptr_t v);
-    // std::string to_string(LoxReference v);
 
     Value power(const Value &left, const Value &right);
 
@@ -31,7 +26,7 @@ namespace LoxValue {
      * 试图将一个LoxReference动态转化为T类型的指针，如果失败，返回nullptr。
      */
     template<typename T>
-    T *to_reference(const LoxReference &ref) {
+    T *try_cast(const LoxReference &ref) {
         return dynamic_cast<T *>(ref.get());
     }
 
@@ -39,8 +34,8 @@ namespace LoxValue {
      * 将一个value动态地转化为T类型的指针。使用者必须在使用前自行确认该Value真的是一个LoxReference
      */
     template<typename T>
-    T *to_reference(const Value &value) {
-        return to_reference<T>(std::get<LoxReference>(value));
+    T *try_cast(const Value &value) {
+        return try_cast<T>(std::get<LoxReference>(value));
     }
 
     /**

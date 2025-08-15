@@ -11,7 +11,7 @@ std::string Visual::string_wrapper(std::string &&str) {
 
 std::string Visual::to_visual_string(Value value) {
     std::string regular_string = LoxValue::to_string(value);
-    if (std::holds_alternative<LoxReference>(value) && LoxValue::to_reference<LoxString>(value)) {
+    if (std::holds_alternative<LoxReference>(value) && LoxValue::try_cast<LoxString>(value)) {
         return string_wrapper(std::move(regular_string));
     }
     return regular_string;

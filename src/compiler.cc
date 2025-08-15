@@ -59,8 +59,8 @@ std::shared_ptr<LoxFunction> Compiler::compile(std::string &&source) {
     while (!check(TokenType::END_OF_FILE)) {
         declaration();
     }
-    emit_opcode(OpCode::LoadNil);
-    emit_opcode(OpCode::Return);
+    emit_opcode(Opcode::LoadNil);
+    emit_opcode(Opcode::Return);
     scope->function_->fix_size();
     if (has_error) {
         return nullptr;
@@ -195,23 +195,23 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
 
 void Compiler::integer_expr([[maybe_unused]] bool) {
     long integer = std::stol(curr.lexeme);
-    uint8_t index = Chunk::to_immediate(integer);
-    if (index == 255) {
-        emit_load_constant(integer);
+    auto opt_index = Chunk::to_immediate(integer);
+    if (!opt_index) {
+        emit_load_constant_flexible(integer);
     } else {
-        emit_opcode(OpCode::LoadImmediate);
-        emit_operand(index);
+        emit_opcode(Opcode::LoadImmediate);
+        emit_operand_1(opt_index.value());
     }
 }
 
 void Compiler::float_expr([[maybe_unused]] bool can_assign) {
     double decimal = std::stod(curr.lexeme);
-    uint8_t index = Chunk::to_immediate(decimal);
-    if (index == 255) {
-        emit_load_constant(decimal);
+    auto opt_index = Chunk::to_immediate(decimal);
+    if (!opt_index) {
+        emit_load_constant_flexible(decimal);
     } else {
-        emit_opcode(OpCode::LoadImmediate);
-        emit_operand(index);
+        emit_opcode(Opcode::LoadImmediate);
+        emit_operand_1(opt_index.value());
     }
 }
 
@@ -230,43 +230,43 @@ void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
     compile_precedence_at_least(get_higher_precedence(precedence));
     switch (type) {
         case TokenType::MINUS:
-            emit_opcode(OpCode::Subtract);
+            emit_opcode(Opcode::Subtract);
             break;
         case TokenType::PLUS:
-            emit_opcode(OpCode::Add);
+            emit_opcode(Opcode::Add);
             break;
         case TokenType::SLASH:
-            emit_opcode(OpCode::Divide);
+            emit_opcode(Opcode::Divide);
             break;
         case TokenType::STAR:
-            emit_opcode(OpCode::Multipy);
+            emit_opcode(Opcode::Multipy);
             break;
         case TokenType::STAR_STAR:
-            emit_opcode(OpCode::Power);
+            emit_opcode(Opcode::Power);
             break;
         case TokenType::BANG:
-            emit_opcode(OpCode::Not);
+            emit_opcode(Opcode::Not);
             break;
         case TokenType::GREATER:
-            emit_opcode(OpCode::Greater);
+            emit_opcode(Opcode::Greater);
             break;
         case TokenType::LESS:
-            emit_opcode(OpCode::Less);
+            emit_opcode(Opcode::Less);
             break;
         case TokenType::EQUAL_EQUAL:
-            emit_opcode(OpCode::Equal);
+            emit_opcode(Opcode::Equal);
             break;
         case TokenType::BANG_EQUAL:
-            emit_opcode(OpCode::Equal);
-            emit_opcode(OpCode::Not);
+            emit_opcode(Opcode::Equal);
+            emit_opcode(Opcode::Not);
             break;
         case TokenType::GREATER_EQUAL:
-            emit_opcode(OpCode::Less);
-            emit_opcode(OpCode::Not);
+            emit_opcode(Opcode::Less);
+            emit_opcode(Opcode::Not);
             break;
         case TokenType::LESS_EQUAL:
-            emit_opcode(OpCode::Greater);
-            emit_opcode(OpCode::Not);
+            emit_opcode(Opcode::Greater);
+            emit_opcode(Opcode::Not);
             break;
         default:
             return;
@@ -275,8 +275,8 @@ void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
 
 void Compiler::and_expr([[maybe_unused]] bool can_assign) {
     // a and b and c
-    auto short_circuit = emit_jump(OpCode::JumpIfFalse);
-    emit_opcode(OpCode::Pop);
+    auto short_circuit = emit_jump(Opcode::JumpIfFalse);
+    emit_opcode(Opcode::Pop);
 
     compile_precedence_at_least(Precedence::AND);
 
@@ -285,12 +285,12 @@ void Compiler::and_expr([[maybe_unused]] bool can_assign) {
 
 void Compiler::or_expr([[maybe_unused]] bool can_assign) {
     // a or b or c
-    auto short_circuit = emit_jump(OpCode::JumpIfFalse);
-    auto end = emit_jump(OpCode::Jump);
+    auto short_circuit = emit_jump(Opcode::JumpIfFalse);
+    auto end = emit_jump(Opcode::Jump);
 
     patch_jump(short_circuit);
 
-    emit_opcode(OpCode::Pop);
+    emit_opcode(Opcode::Pop);
     compile_precedence_at_least(Precedence::OR);
     patch_jump(end);
 }
@@ -299,13 +299,13 @@ void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     switch (type) {
         case TokenType::NIL:
-            emit_opcode(OpCode::LoadNil);
+            emit_opcode(Opcode::LoadNil);
             break;
         case TokenType::TRUE:
-            emit_opcode(OpCode::LoadTrue);
+            emit_opcode(Opcode::LoadTrue);
             break;
         case TokenType::FALSE:
-            emit_opcode(OpCode::LoadFalse);
+            emit_opcode(Opcode::LoadFalse);
             break;
         default:
             DEBUG_ASSERT(false, "this is should be unreachable");
@@ -315,11 +315,10 @@ void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
 void Compiler::string_expr([[maybe_unused]] bool can_assign) {
     LoxReference value = LoxObject::allocate_as_ref<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
     value->fix_size();
-    emit_load_constant(std::move(value));
+    emit_load_constant_flexible(std::move(value));
 }
 
 void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
-
     auto s = curr.lexeme.substr(1, curr.lexeme.size() - 2); // 去除头尾的引号
     int count = 0;
     auto ranges = Scanner::split(s);
@@ -329,16 +328,16 @@ void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
     auto saved_scanner = std::move(scanner);
     Token saved_next = next; // next要被保存。因为切换scanner进行解析的过程中会被修改
     int curr_line = curr.line;
-    for (auto [caught, left, right] : ranges.value()) {
+    for (auto [caught, left, right]: ranges.value()) {
         if (!caught) {
             // 普通字符串
             LoxReference str = LoxObject::allocate_as_ref<LoxString>(s.substr(left, right - left + 1));
             str->fix_size();
-            emit_load_constant(str);
+            emit_load_constant_flexible(str);
             count++;
         } else {
             // 内嵌表达式。这里去除掉了头尾的{}
-            std::string inner_expr =  s.substr(left + 1, right - left + 1 - 2);
+            std::string inner_expr = s.substr(left + 1, right - left + 1 - 2);
             scanner = std::make_unique<Scanner>(std::move(inner_expr), curr_line);
             next = Token{}; // 重设next。防止使用上一个scanner遗留下的next
             advance(); // 使next是下一个要解析的token（如果不这么做，next最初是空的）
@@ -346,13 +345,13 @@ void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
                 continue;
             }
             compile_expression();
-            count ++;
+            count++;
         }
     }
     scanner = std::move(saved_scanner);
     next = saved_next;
     if (count > 1) {
-        emit_opcode(OpCode::StringConcat);
+        emit_opcode(Opcode::StringConcat);
         if (!within<uint8_t>(count)) {
             throw Uint8OperandOverflowError("too many expressions for a format string");
         }
@@ -361,24 +360,24 @@ void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::call_expr([[maybe_unused]] bool can_assign) {
-    int arg_count = argument_list();
-    if (within<uint8_t>(arg_count) == false) {
-        throw LoxArgError("too many arguments!");
-    }
-    emit_opcode(OpCode::Call);
-    emit_operand(arg_count);
+    uint8_t arg_count = argument_list();
+    emit_opcode(Opcode::Call);
+    emit_operand_1(arg_count);
 }
 
-int Compiler::argument_list() {
-    int arg_count = 0;
+uint8_t Compiler::argument_list() {
+    size_t arg_count = 0;
     if (match(TokenType::RIGHT_PAREN)) {
         return arg_count;
     }
     do {
         compile_expression();
-        arg_count ++;
+        arg_count++;
     } while (match(TokenType::COMMA));
     consume(TokenType::RIGHT_PAREN);
+    if (within<uint8_t>(arg_count) == false) {
+        throw Uint8OperandOverflowError("too many arguments");
+    }
     return arg_count;
 }
 
@@ -386,9 +385,9 @@ void Compiler::unary_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     compile_precedence_at_least(Precedence::UNARY);
     if (type == TokenType::MINUS) {
-        emit_opcode(OpCode::Negate);
+        emit_opcode(Opcode::Negate);
     } else if (type == TokenType::BANG) {
-        emit_opcode(OpCode::Not);
+        emit_opcode(Opcode::Not);
     }
 }
 
@@ -400,14 +399,14 @@ void Compiler::variable_expr(bool can_assign) {
         if (match(TokenType::EQUAL)) {
             if (can_assign) {
                 compile_precedence_at_least(Precedence::ASSIGNMENT);
-                emit_opcode(OpCode::SetLocal);
+                emit_opcode(Opcode::SetLocal);
             } else {
                 error_at(curr, fmt::format("invalid assignment target"));
             }
         } else {
-            emit_opcode(OpCode::LoadLocal);
+            emit_opcode(Opcode::LoadLocal);
         }
-        emit_operand(found.value());
+        emit_operand_1(found.value());
         return;
     }
 
@@ -418,12 +417,12 @@ void Compiler::variable_expr(bool can_assign) {
         if (match(TokenType::EQUAL)) {
             if (can_assign) {
                 compile_precedence_at_least(Precedence::ASSIGNMENT);
-                emit_opcode(OpCode::SetCaptured);
+                emit_opcode(Opcode::SetCaptured);
             } else {
                 error_at(curr, fmt::format("invalid assignment target"));
             }
         } else {
-            emit_opcode(OpCode::LoadCaptured);
+            emit_opcode(Opcode::LoadCaptured);
         }
         emit_operand_1(found.value());
         return;
@@ -434,27 +433,25 @@ void Compiler::variable_expr(bool can_assign) {
     if (match(TokenType::EQUAL)) {
         if (can_assign) {
             compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
-            emit_opcode(OpCode::SetGlobal);
+            emit_opcode(Opcode::SetGlobal);
         } else {
             error_at(curr, fmt::format("invalid assignment target"));
         }
     } else {
-        emit_opcode(OpCode::LoadGlobal);
+        emit_opcode(Opcode::LoadGlobal);
     }
     emit_operand_2(key);
 }
 
-void Compiler::emit_load_constant(Value &&value) {
+void Compiler::emit_load_constant_flexible(Value &&value) {
     try {
         OperandSize index = current_chunk().add_constant(std::move(value));
         if (within<uint8_t>(index)) {
-            emit_opcode(OpCode::LoadConstant);
-        } else if (within<uint16_t>(index)) {
-            emit_opcode(OpCode::LoadConstant2);
+            emit_opcode(Opcode::LoadConstant);
         } else {
-            implementation_error("an overflowed index is returned without throwing!");
+            emit_opcode(Opcode::LoadConstant2);
         }
-        emit_operand(index);
+        emit_operand_flexible(index);
     } catch (ConstantPoolOverflowError &err) {
         error_at(curr, err.what());
     }
@@ -489,17 +486,17 @@ void Compiler::synchronize() {
 
 void Compiler::print_statement() {
     compile_expression();
-    emit_opcode(OpCode::Print);
+    emit_opcode(Opcode::Print);
     consume();
 }
 
 void Compiler::return_statement() {
     if (match(TokenType::SEMICOLON)) {
-        emit_opcode(OpCode::LoadNil);
-        emit_opcode(OpCode::Return);
+        emit_opcode(Opcode::LoadNil);
+        emit_opcode(Opcode::Return);
     } else {
         compile_expression();
-        emit_opcode(OpCode::Return);
+        emit_opcode(Opcode::Return);
         consume();
     }
 }
@@ -508,11 +505,8 @@ void Compiler::recur_statement() {
     consume(TokenType::LEFT_PAREN, "expect a '(' after recur");
 
     auto arg_count = argument_list();
-    if (within<uint8_t>(arg_count) == false) {
-        throw LoxArgError("arg num overflow");
-    }
     consume();
-    emit_opcode(OpCode::Recur);
+    emit_opcode(Opcode::Recur);
     emit_operand_1(arg_count);
 }
 
@@ -533,14 +527,14 @@ void Compiler::if_statement() {
     compile_expression();
 
     // jump if pop false -> else
-    auto to_else = emit_jump(OpCode::JumpIfPopFalse);
+    auto to_else = emit_jump(Opcode::JumpIfPopFalse);
 
     // then_statement
     statement();
 
     if (match(TokenType::ELSE)) {
         // jump -> end
-        auto to_end = emit_jump(OpCode::Jump);
+        auto to_end = emit_jump(Opcode::Jump);
 
         // else_statement
         patch_jump(to_else);
@@ -561,7 +555,7 @@ void Compiler::while_statement() {
     compile_expression();
 
     auto old_breakpoint = save_breakpoint();
-    auto to_end = emit_jump(OpCode::JumpIfPopFalse);
+    auto to_end = emit_jump(Opcode::JumpIfPopFalse);
 
     statement();
     loop_back(condition_label);
@@ -577,9 +571,9 @@ void Compiler::break_statement() {
         return;
     }
     auto [dest, locals_size] = breakpoint.value();
-    emit_opcode(OpCode::PopN);
-    emit_operand(scope->locals_size() - locals_size);
-    emit_opcode(OpCode::LoadFalse);
+    emit_opcode(Opcode::PopN);
+    emit_operand_1(scope->locals_size() - locals_size);
+    emit_opcode(Opcode::LoadFalse);
     loop_back(dest);
     consume();
 }
@@ -590,8 +584,8 @@ void Compiler::continue_statement() {
         return;
     }
     auto [dest, locals_size] = continue_point.value();
-    emit_opcode(OpCode::PopN);
-    emit_operand(scope->locals_size() - locals_size);
+    emit_opcode(Opcode::PopN);
+    emit_operand_1(scope->locals_size() - locals_size);
     loop_back(dest);
     consume();
 }
@@ -615,19 +609,18 @@ void Compiler::fun_statement() {
 
         auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
-        emit_load_constant(std::move(fun));
+        emit_load_constant_flexible(std::move(fun));
 
-        emit_opcode(OpCode::MakeClosure);
+        emit_opcode(Opcode::MakeClosure);
         emit_operand_1(fun_scope->upvalues.size());
 
-        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i ++) {
-            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
-            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
+        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i++) {
+            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
+            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
         }
 
-        emit_opcode(OpCode::DefineGlobal);
+        emit_opcode(Opcode::DefineGlobal);
         emit_operand_2(key);
-
     } else {
         consume(TokenType::IDENTIFIER, "expect an identifier for the function");
 
@@ -635,14 +628,14 @@ void Compiler::fun_statement() {
         scope->initialize();
         auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
-        emit_load_constant(std::move(fun));
+        emit_load_constant_flexible(std::move(fun));
 
-        emit_opcode(OpCode::MakeClosure);
+        emit_opcode(Opcode::MakeClosure);
         emit_operand_1(fun_scope->upvalues.size());
 
-        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i ++) {
-            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
-            emit_operand(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
+        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i++) {
+            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
+            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
         }
     }
 }
@@ -656,10 +649,10 @@ void Compiler::var_statement() {
             if (match(TokenType::EQUAL)) {
                 compile_expression();
             } else {
-                emit_opcode(OpCode::LoadNil);
+                emit_opcode(Opcode::LoadNil);
             }
             consume();
-            emit_opcode(OpCode::DefineGlobal);
+            emit_opcode(Opcode::DefineGlobal);
             emit_operand_2(key);
         } else {
             // 本地变量
@@ -669,7 +662,7 @@ void Compiler::var_statement() {
             if (match(TokenType::EQUAL)) {
                 compile_expression();
             } else {
-                emit_opcode(OpCode::LoadNil);
+                emit_opcode(Opcode::LoadNil);
             }
             scope->initialize(); // 本地变量不需要专门的DefineLocal指令
             consume();
@@ -682,12 +675,11 @@ void Compiler::var_statement() {
 void Compiler::expression_statement() {
     compile_expression();
     consume();
-    emit_opcode(OpCode::Pop);
+    emit_opcode(Opcode::Pop);
 }
 
 // ReSharper disable once CppDFAConstantParameter
-std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> Compiler::parse_function(FunctionType type) {
-
+std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope> > Compiler::parse_function(FunctionType type) {
     std::string fun_name = curr.get_lexeme();
 
     auto new_scope = std::make_shared<Scope>(scope, type);
@@ -710,15 +702,15 @@ std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> Compiler::parse_
 
     consume(TokenType::RIGHT_PAREN, "expect a ')' to end the parameter list");
 
-    after_param_list:
+after_param_list:
     consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");
     block_statement();
 
     // 这里不需要退出层级的操作，因为函数调用后，整个栈帧都会被废弃，栈vector会resize至前一个栈帧的尺寸
     // 所有本栈帧的本地变量自然也就被销毁了
 
-    emit_opcode(OpCode::LoadNil); // 默认返回值为nil
-    emit_opcode(OpCode::Return);
+    emit_opcode(Opcode::LoadNil); // 默认返回值为nil
+    emit_opcode(Opcode::Return);
 
     scope->function_->set_name(fun_name);
 
@@ -742,8 +734,8 @@ void Compiler::statement() {
         auto old_size = scope->step_into();
         block_statement();
         auto amount_to_pop = scope->step_out(old_size);
-        emit_opcode(OpCode::PopN);
-        emit_operand(amount_to_pop);
+        emit_opcode(Opcode::PopN);
+        emit_operand_1(amount_to_pop);
     } else if (match(TokenType::IF)) {
         if_statement();
     } else if (match(TokenType::WHILE)) {
@@ -752,8 +744,6 @@ void Compiler::statement() {
         break_statement();
     } else if (match(TokenType::CONTINUE)) {
         continue_statement();
-    } else if (match(TokenType::FUN)) {
-        fun_statement();
     } else if (match(TokenType::RETURN)) {
         return_statement();
     } else if (match(TokenType::RECUR)) {
@@ -767,14 +757,20 @@ void Compiler::declaration() {
     if (panic_mode) {
         synchronize();
     }
-    if (match(TokenType::VAR)) {
-        var_statement();
-    } else {
-        statement();
+    try {
+        if (match(TokenType::VAR)) {
+            var_statement();
+        } else if (match(TokenType::FUN)) {
+            fun_statement();
+        } else {
+            statement();
+        }
+    } catch (CompilerError &error) {
+        error_at(curr, error.what());
     }
 }
 
-size_t Compiler::emit_jump(OpCode jump_instruction) {
+size_t Compiler::emit_jump(Opcode jump_instruction) {
     emit_opcode(jump_instruction);
     emit_operand_2(0);
     return current_chunk().code_size() - 2;
@@ -798,7 +794,7 @@ void Compiler::loop_back(size_t destination) {
     if (!within<uint16_t>(distance)) {
         throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
     }
-    emit_opcode(OpCode::JumpBack);
+    emit_opcode(Opcode::JumpBack);
     emit_operand_2(distance);
 }
 

@@ -71,6 +71,7 @@ public:
     /**
      * 将一个token对应的本地变量添加到scope中。如果同层级中存在同名变量，则抛出异常。
      * 添加后，该本地变量尚未被初始化。
+     * 如果locals的元素个数超出了uint8，则抛出异常
      */
     void add_local(const Token &token);
 

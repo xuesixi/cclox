@@ -25,37 +25,37 @@ public:
     /**
      * 单字节指令，没有额外的操作数
      */
-    size_t instruction_operand_0(OpCode instruction, size_t offset);
+    size_t instruction_operand_0(Opcode instruction, size_t offset);
 
     /**
      * 有一个额外的操作数代表常数池索引
      */
-    size_t instruction_constant_operand_1(OpCode instruction, size_t offset);
+    size_t instruction_constant_operand_1(Opcode instruction, size_t offset);
 
     /**
      * 有一个用于标识本地变量索引的操作数
      */
-    size_t instruction_local(OpCode instruction, size_t offset);
+    size_t instruction_local(Opcode instruction, size_t offset);
 
     /**
      * 通用的单操作数指令
      */
-    size_t instruction_general(OpCode instruction, size_t offset);
+    size_t instruction_general(Opcode instruction, size_t offset);
 
-    size_t instruction_jump(OpCode instruction, size_t offset);
+    size_t instruction_jump(Opcode instruction, size_t offset);
 
-    size_t instruction_jump_back(OpCode instruction, size_t offset);
+    size_t instruction_jump_back(Opcode instruction, size_t offset);
 
     /**
      * 有两个额外的操作数代表常数池索引
      */
-    size_t instruction_constant_operand_2(OpCode instruction, size_t offset);
+    size_t instruction_constant_operand_2(Opcode instruction, size_t offset);
 
-    size_t instruction_identifier_operand_2(OpCode instruction, size_t offset);
+    size_t instruction_identifier_operand_2(Opcode instruction, size_t offset);
 
-    size_t instruction_load_immediate(OpCode instruction, size_t offset);
+    size_t instruction_load_immediate(Opcode instruction, size_t offset);
 
-    size_t instruction_make_closure(OpCode instruction, size_t offset);
+    size_t instruction_make_closure(Opcode instruction, size_t offset);
 
     void set_chunk(const Chunk *the_chunk) {
         this->chunk = the_chunk;

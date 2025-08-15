@@ -46,38 +46,39 @@ private:
     /**
      * 将目标opcode写入字节码中
      */
-    void emit_opcode(OpCode op_code) {
+    void emit_opcode(Opcode op_code) {
         current_chunk().write_opcode(op_code, curr.line);
     }
 
     /**
-     * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。超出uint16则是实现错误
+     * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。调用者需要确保参数是uint16以内。超出uint16则是实现错误
      */
-    void emit_operand(OperandSize operand) {
+    void emit_operand_flexible(size_t operand) {
+        DEBUG_ASSERT(within<uint16_t>(operand), "size overflow");
         current_chunk().write_operand(operand, curr.line);
     }
 
     /**
-     * 将目标操作数写入字节码中，如果操作数的值超出uint8则是实现错误
+     * 将目标操作数写入字节码中，只写入一个字节。调用者需要保证参数是uint8。如果操作数的值超出uint8则是实现错误
      */
     void emit_operand_1(size_t operand) {
         DEBUG_ASSERT(within<uint8_t>(operand), "size overflow");
-        emit_operand(operand);
+        emit_operand_flexible(operand);
     }
 
     /**
      * 将目标操作数写入字节码中，无论operand的值，总是写入两个字节。超出uint16则是实现错误
      */
-    void emit_operand_2(OperandSize operand) {
+    void emit_operand_2(size_t operand) {
         DEBUG_ASSERT(within<uint16_t>(operand), "operand is not within uint16");
         current_chunk().write_operand_2(operand, curr.line);
     }
 
 
     /**
-     * 写入LoadConstant指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理uint16及以下的值，如果超出，则error_at(curr)
+     * 写入LoadConstant1/2指令，将目标值置入常数池中，并将其索引作为操作数写入字节码中。该函数可以正确地处理常数池的溢出：如果溢出，则error_at(curr)
      */
-    void emit_load_constant(Value &&value);
+    void emit_load_constant_flexible(Value &&value);
 
     /**
      * 表明指定的token处出现了编译问题。如果原本不处于panic_mode，则会输出token元数据和错误消息，并设置panic_mode以及hash_error。
@@ -273,9 +274,9 @@ private:
 
     /**
      * 此时已知curr是左括号。解析传入的参数（argument），以及右括号
-     * @return 传入的参数的数量。由调用者处理可能的参数过多的问题。
+     * @return 传入的参数的数量。如果超出uint8，则抛出异常，因此调用者可以认为该函数返回值是uint8
      */
-    int argument_list();
+    uint8_t argument_list();
 
     /**
      * 获取一个token的前缀函数（该token作为一个表达式的第一个token时的解析函数）。如果该token不能作为表达式的第一个token，则返回nullptr
@@ -295,7 +296,7 @@ private:
     /**
      * 向字节码中写入 [jump, placeholder1, placeholder2]。返回placeholder1的索引。该函数需要配合patch函数使用
      */
-    size_t emit_jump(OpCode jump_instruction);
+    size_t emit_jump(Opcode jump_instruction);
 
     /**
      * 生成一个往回跳转至destination的jumpback指令

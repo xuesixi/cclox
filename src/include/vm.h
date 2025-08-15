@@ -22,12 +22,9 @@ enum class InterpreterResult {
 };
 
 struct CallFrame {
-    // std::shared_ptr<LoxFunction> function_;
     std::shared_ptr<LoxClosure> closure;
     size_t pc;
     size_t fp; // frame pointer, 帧指针，本帧的起始处
-
-    static constexpr int FRAME_MAX = 128;
 };
 
 class VM {
@@ -68,8 +65,8 @@ private:
     }
 
     // 读取下一个指令
-    OpCode read_opcode() {
-        return static_cast<OpCode>(next());
+    Opcode read_opcode() {
+        return static_cast<Opcode>(next());
     }
 
     // 读取下一个操作数
@@ -111,7 +108,7 @@ private:
     }
 
     Chunk &chunk() {
-        return frame().closure->function_->get_chunk();
+        return frame().closure->function->get_chunk();
     }
 
     size_t &pc() {

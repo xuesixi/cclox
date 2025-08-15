@@ -6,7 +6,7 @@
 
 void Scope::add_local(const Token &token) {
     if (locals.size() == UINT8_MAX) {
-        throw ScopeLocalOverflowError(
+        throw Uint8OperandOverflowError(
             fmt::format("scope local overflow. You can have up to {} local variables in a scope", UINT8_MAX));
     }
 
@@ -42,7 +42,6 @@ std::optional<uint8_t> Scope::resolve_local(const Token &token) {
 }
 
 std::optional<uint8_t> Scope::resolve_upvalue(const Token &token) {
-
     // 先判断是否已经被捕获，如果已经被捕获，那么直接返回对应索引即可
     for (uint8_t i = 0; i < upvalues.size(); i++) {
         if (upvalues.at(i).name == token.get_lexeme()) {
@@ -58,7 +57,7 @@ std::optional<uint8_t> Scope::resolve_upvalue(const Token &token) {
     // 尝试寻找外层的本地变量
     auto found = outer_->resolve_local(token);
     if (found.has_value()) {
-        Upvalue new_upvalue {true, found.value(),  token.get_lexeme()};
+        Upvalue new_upvalue{true, found.value(), token.get_lexeme()};
         upvalues.push_back(std::move(new_upvalue));
         return upvalues.size() - 1;
     }
@@ -67,7 +66,7 @@ std::optional<uint8_t> Scope::resolve_upvalue(const Token &token) {
 
     found = outer_->resolve_upvalue(token);
     if (found.has_value()) {
-        Upvalue new_upvalue {false, found.value(),  token.get_lexeme()};
+        Upvalue new_upvalue{false, found.value(), token.get_lexeme()};
         upvalues.push_back(std::move(new_upvalue));
         return upvalues.size() - 1;
     }

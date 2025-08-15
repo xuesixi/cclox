@@ -12,13 +12,13 @@
 class LoxClosure: public LoxObject {
 public:
 
-    explicit LoxClosure(const std::shared_ptr<LoxFunction> &function): function_(function) {
+    explicit LoxClosure(const std::shared_ptr<LoxFunction> &the_function): function(the_function) {
     }
 
     ~LoxClosure() override {
-        auto old = runtime.allocated_size.fetch_sub( LoxClosure::get_size());
+        auto old = runtime.allocated_size.fetch_sub( LoxClosure::compute_size());
         if (Flag::show_heap) {
-            std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - LoxClosure::get_size(), LoxClosure::to_string());
+            std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - LoxClosure::compute_size(), LoxClosure::to_string());
         }
     }
 
@@ -29,18 +29,18 @@ public:
     }
 
     [[nodiscard]] std::string to_string() const override {
-        if (function_->name == "<main>") {
+        if (function->name == "<main>") {
             return "<main>";
         }
-        return fmt::format("<fn: {}>", function_->name);
+        return fmt::format("<fn: {}>", function->name);
     }
 
-    std::vector<std::shared_ptr<Captured>> captureds_;
-    std::shared_ptr<LoxFunction> function_;
+    std::vector<std::shared_ptr<Captured>> captureds;
+    std::shared_ptr<LoxFunction> function;
 
 private:
-    size_t get_size() override {
-        return sizeof(LoxClosure) + sizeof(std::shared_ptr<Captured>) * captureds_.capacity();
+    size_t compute_size() override {
+        return sizeof(LoxClosure) + sizeof(std::shared_ptr<Captured>) * captureds.capacity();
     }
 };
 

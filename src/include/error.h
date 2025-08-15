@@ -69,11 +69,6 @@ public:
     using CompilerError::CompilerError;
 };
 
-class ScopeLocalOverflowError : public CompilerError{
-public:
-    using CompilerError::CompilerError;
-};
-
 class SameNameLocalVariableError : public CompilerError {
 public:
     using CompilerError::CompilerError;

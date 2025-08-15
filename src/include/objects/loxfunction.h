@@ -57,7 +57,7 @@ private:
     int arity_ = 0 ;
     size_t memory_size = 0;
 
-    size_t get_size() override {
+    size_t compute_size() override {
         if (memory_size == 0) {
             memory_size = sizeof(LoxFunction) + chunk.estimate_memory_size() + name.capacity();
             return memory_size;

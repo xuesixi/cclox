@@ -4,7 +4,7 @@
 
 #include "chunk.h"
 
-uint8_t Chunk::to_immediate(Value value) {
+std::optional<uint8_t> Chunk::to_immediate(Value value) {
     if (std::holds_alternative<long>(value)) {
         long l = std::get<long>(value);
         if (l <= 240) {
@@ -27,11 +27,11 @@ uint8_t Chunk::to_immediate(Value value) {
         if (double_equal(d, 100.0)) return 251;
         if (double_equal(d, 1000.0)) return 252;
         if (double_equal(d, 10000.0)) return 253;
-
-        return 255;
+        if (double_equal(d, 8.0)) return 254;
+        if (double_equal(d, 16.0)) return 255;
     }
+    return std::nullopt;
 
-    return 255;
 }
 
 OperandSize Chunk::add_identifier(const std::string &str) {

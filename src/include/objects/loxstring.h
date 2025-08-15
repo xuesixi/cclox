@@ -15,9 +15,9 @@ public:
     explicit LoxString(std::string &&content) : LoxObject(), str(std::move(content)) {};
 
     ~LoxString() override {
-        auto old = runtime.allocated_size.fetch_sub( LoxString::get_size());
+        auto old = runtime.allocated_size.fetch_sub( LoxString::compute_size());
         if (Flag::show_heap) {
-            std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - LoxString::get_size(), LoxString::to_string());
+            std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - LoxString::compute_size(), LoxString::to_string());
         }
     }
 
@@ -45,7 +45,7 @@ public:
 
 private:
     const std::string str;
-    size_t get_size() override {
+    size_t compute_size() override {
         return sizeof(LoxString) + str.capacity();
     }
 };

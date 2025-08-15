@@ -11,42 +11,42 @@ using std::cout;
 /**
  * 指令和其字符串表达的映射
  */
-const std::unordered_map<OpCode, std::string> opcode_names{
-    {OpCode::Return, "Return"},
-    {OpCode::LoadConstant, "LoadConstant"},
-    {OpCode::LoadConstant2, "LoadConstant2"},
-    {OpCode::LoadImmediate, "LoadImmediate"},
-    {OpCode::Negate, "Negate"},
-    {OpCode::Add, "Add"},
-    {OpCode::Subtract, "Subtract"},
-    {OpCode::Multipy, "Multipy"},
-    {OpCode::Divide, "Divide"},
-    {OpCode::Power, "Power"},
-    {OpCode::LoadNil, "LoadNil"},
-    {OpCode::LoadTrue, "LoadTrue"},
-    {OpCode::LoadFalse, "LoadFalse"},
-    {OpCode::Not, "Not"},
-    {OpCode::Less, "Less"},
-    {OpCode::Greater, "Greater"},
-    {OpCode::Equal, "Equal"},
-    {OpCode::Print, "Print"},
-    {OpCode::Pop, "Pop"},
-    {OpCode::DefineGlobal, "DefineGlobal"},
-    {OpCode::LoadGlobal, "LoadGlobal"},
-    {OpCode::SetGlobal, "SetGlobal"},
-    {OpCode::LoadLocal, "LoadLocal"},
-    {OpCode::SetLocal, "SetLocal"},
-    {OpCode::LoadCaptured, "LoadCaptured"},
-    {OpCode::SetCaptured, "SetCaptured"},
-    {OpCode::PopN, "PopN"},
-    {OpCode::Jump, "Jump"},
-    {OpCode::JumpIfPopFalse, "JumpIfPopFalse"},
-    {OpCode::JumpBack, "JumpBack"},
-    {OpCode::JumpIfFalse, "JumpIfFalse"},
-    {OpCode::Call, "Call"},
-    {OpCode::MakeClosure, "MakeClosure"},
-    {OpCode::Recur, "Recur"},
-    {OpCode::StringConcat, "StringConcat"},
+const std::unordered_map<Opcode, std::string> opcode_names{
+    {Opcode::Return, "Return"},
+    {Opcode::LoadConstant, "LoadConstant"},
+    {Opcode::LoadConstant2, "LoadConstant2"},
+    {Opcode::LoadImmediate, "LoadImmediate"},
+    {Opcode::Negate, "Negate"},
+    {Opcode::Add, "Add"},
+    {Opcode::Subtract, "Subtract"},
+    {Opcode::Multipy, "Multipy"},
+    {Opcode::Divide, "Divide"},
+    {Opcode::Power, "Power"},
+    {Opcode::LoadNil, "LoadNil"},
+    {Opcode::LoadTrue, "LoadTrue"},
+    {Opcode::LoadFalse, "LoadFalse"},
+    {Opcode::Not, "Not"},
+    {Opcode::Less, "Less"},
+    {Opcode::Greater, "Greater"},
+    {Opcode::Equal, "Equal"},
+    {Opcode::Print, "Print"},
+    {Opcode::Pop, "Pop"},
+    {Opcode::DefineGlobal, "DefineGlobal"},
+    {Opcode::LoadGlobal, "LoadGlobal"},
+    {Opcode::SetGlobal, "SetGlobal"},
+    {Opcode::LoadLocal, "LoadLocal"},
+    {Opcode::SetLocal, "SetLocal"},
+    {Opcode::LoadCaptured, "LoadCaptured"},
+    {Opcode::SetCaptured, "SetCaptured"},
+    {Opcode::PopN, "PopN"},
+    {Opcode::Jump, "Jump"},
+    {Opcode::JumpIfPopFalse, "JumpIfPopFalse"},
+    {Opcode::JumpBack, "JumpBack"},
+    {Opcode::JumpIfFalse, "JumpIfFalse"},
+    {Opcode::Call, "Call"},
+    {Opcode::MakeClosure, "MakeClosure"},
+    {Opcode::Recur, "Recur"},
+    {Opcode::StringConcat, "StringConcat"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -65,7 +65,7 @@ void Disassembler::disassemble(const std::string &name) {
 
 size_t Disassembler::disassemble_instruction(size_t offset) {
     DEBUG_ASSERT(chunk != nullptr, "chunk is null!");
-    auto instruction = static_cast<OpCode>(chunk->code.at(offset));
+    auto instruction = static_cast<Opcode>(chunk->code.at(offset));
     int line = chunk->lines.at(offset);
     cout << fmt::format("{:04d}{}", offset, spaces_4); // byte code offset
     if (offset > 0 && chunk->lines.at(offset - 1) == line) {
@@ -75,60 +75,60 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
     }
 
     switch (instruction) {
-        case OpCode::LoadConstant:
+        case Opcode::LoadConstant:
             return instruction_constant_operand_1(instruction, offset);
-        case OpCode::LoadConstant2:
+        case Opcode::LoadConstant2:
             return instruction_constant_operand_2(instruction, offset);
-        case OpCode::LoadImmediate:
+        case Opcode::LoadImmediate:
             return instruction_load_immediate(instruction, offset);
-        case OpCode::DefineGlobal:
-        case OpCode::LoadGlobal:
-        case OpCode::SetGlobal:
+        case Opcode::DefineGlobal:
+        case Opcode::LoadGlobal:
+        case Opcode::SetGlobal:
             return instruction_identifier_operand_2(instruction, offset);
-        case OpCode::LoadLocal:
-        case OpCode::SetLocal:
+        case Opcode::LoadLocal:
+        case Opcode::SetLocal:
             return instruction_local(instruction, offset);
-        case OpCode::Return:
-        case OpCode::Negate:
-        case OpCode::Add:
-        case OpCode::Subtract:
-        case OpCode::Multipy:
-        case OpCode::Divide:
-        case OpCode::Power:
-        case OpCode::LoadNil:
-        case OpCode::LoadTrue:
-        case OpCode::LoadFalse:
-        case OpCode::Less:
-        case OpCode::Greater:
-        case OpCode::Equal:
-        case OpCode::Not:
-        case OpCode::Print:
-        case OpCode::Pop:
+        case Opcode::Return:
+        case Opcode::Negate:
+        case Opcode::Add:
+        case Opcode::Subtract:
+        case Opcode::Multipy:
+        case Opcode::Divide:
+        case Opcode::Power:
+        case Opcode::LoadNil:
+        case Opcode::LoadTrue:
+        case Opcode::LoadFalse:
+        case Opcode::Less:
+        case Opcode::Greater:
+        case Opcode::Equal:
+        case Opcode::Not:
+        case Opcode::Print:
+        case Opcode::Pop:
             return instruction_operand_0(instruction, offset);
-        case OpCode::PopN:
-        case OpCode::Call:
-        case OpCode::SetCaptured:
-        case OpCode::LoadCaptured:
-        case OpCode::Recur:
-        case OpCode::StringConcat:
+        case Opcode::PopN:
+        case Opcode::Call:
+        case Opcode::SetCaptured:
+        case Opcode::LoadCaptured:
+        case Opcode::Recur:
+        case Opcode::StringConcat:
             return instruction_general(instruction, offset);
-        case OpCode::JumpIfPopFalse:
-        case OpCode::JumpIfFalse:
-        case OpCode::Jump:
+        case Opcode::JumpIfPopFalse:
+        case Opcode::JumpIfFalse:
+        case Opcode::Jump:
             return instruction_jump(instruction, offset);
-        case OpCode::JumpBack:
+        case Opcode::JumpBack:
             return instruction_jump_back(instruction, offset);
-        case OpCode::MakeClosure:
+        case Opcode::MakeClosure:
             return instruction_make_closure(instruction, offset);
     }
 }
 
-size_t Disassembler::instruction_operand_0(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_operand_0(Opcode instruction, size_t offset) {
     cout << fmt::format("{:18}\n", opcode_names.at(instruction));
     return offset + 1;
 }
 
-size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_constant_operand_1(Opcode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = chunk->constants.at(index);
     std::string value_str = Visual::to_visual_string(value);
@@ -136,26 +136,26 @@ size_t Disassembler::instruction_constant_operand_1(OpCode instruction, size_t o
     return offset + 2;
 }
 
-size_t Disassembler::instruction_local(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_local(Opcode instruction, size_t offset) {
     uint8_t index = chunk->code.at(offset + 1);
     cout << fmt::format("{:18} {} local index: {}\n", opcode_names.at(instruction), spaces_4, index);
     return offset + 2;
 }
 
-size_t Disassembler::instruction_general(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_general(Opcode instruction, size_t offset) {
     uint8_t value = chunk->code.at(offset + 1);
     cout << fmt::format("{:18} {} {}\n", opcode_names.at(instruction), spaces_4, value);
     return offset + 2;
 }
 
-size_t Disassembler::instruction_jump(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_jump(Opcode instruction, size_t offset) {
     uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     size_t destination = offset + 3 + distance;
     cout << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
     return offset + 3;
 }
 
-size_t Disassembler::instruction_jump_back(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_jump_back(Opcode instruction, size_t offset) {
     uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     size_t destination = offset + 3 - distance;
     cout << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
@@ -163,7 +163,7 @@ size_t Disassembler::instruction_jump_back(OpCode instruction, size_t offset) {
 }
 
 
-size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_load_immediate(Opcode instruction, size_t offset) {
     size_t index = chunk->code.at(offset + 1);
     Value value = Chunk::read_immediate(index);
     std::string value_str = Visual::to_visual_string(value);
@@ -171,7 +171,7 @@ size_t Disassembler::instruction_load_immediate(OpCode instruction, size_t offse
     return offset + 2;
 }
 
-size_t Disassembler::instruction_constant_operand_2(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_constant_operand_2(Opcode instruction, size_t offset) {
     uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     Value value = chunk->constants.at(index);
     std::string value_str = Visual::to_visual_string(value);
@@ -179,14 +179,14 @@ size_t Disassembler::instruction_constant_operand_2(OpCode instruction, size_t o
     return offset + 3;
 }
 
-size_t Disassembler::instruction_identifier_operand_2(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_identifier_operand_2(Opcode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = chunk->read_identifier(key);
     cout << fmt::format("{:18} {} identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
 
-size_t Disassembler::instruction_make_closure(OpCode instruction, size_t offset) {
+size_t Disassembler::instruction_make_closure(Opcode instruction, size_t offset) {
     uint8_t len = chunk->code.at(offset + 1);
     cout << fmt::format("{:18} {} num of captured: {}\n", opcode_names.at(instruction), spaces_4, len);
     return offset + 2 + 2 * len;
