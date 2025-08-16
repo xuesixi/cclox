@@ -10,6 +10,7 @@
 
 enum class FunctionType {
     Function,
+    Method,
     Main,
 };
 

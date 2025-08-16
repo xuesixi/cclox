@@ -69,7 +69,7 @@ public:
     using CompilerError::CompilerError;
 };
 
-class SameNameLocalVariableError : public CompilerError {
+class DuplicateNameVariableError : public CompilerError {
 public:
     using CompilerError::CompilerError;
 };

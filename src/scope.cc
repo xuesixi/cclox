@@ -18,7 +18,7 @@ void Scope::add_local(const Token &token) {
             break;
         }
         if (local.name == token.get_lexeme()) {
-            throw SameNameLocalVariableError(fmt::format("local variables with the same name: {}", local.name));
+            throw DuplicateNameVariableError(fmt::format("local variables with the same name: {}", local.name));
         }
     }
     locals.push_back({token.get_lexeme(), -1});

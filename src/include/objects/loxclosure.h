@@ -31,6 +31,10 @@ public:
         return fmt::format("<fn: {}>", function->name);
     }
 
+    std::string name() const {
+        return function->name;
+    }
+
     std::vector<std::shared_ptr<Captured>> captureds;
     std::shared_ptr<LoxFunction> function;
 

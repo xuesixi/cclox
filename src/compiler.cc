@@ -28,8 +28,7 @@ void Compiler::error_at(const Token &token, const std::string &message) {
     has_error = true;
 }
 
-void Compiler::consume(TokenType type = TokenType::SEMICOLON,
-                       const std::string &message = "expect a ';' to end the statement") {
+void Compiler::consume(TokenType type, const std::string &message) {
     if (next.type == type) {
         advance();
     } else {
@@ -611,15 +610,7 @@ void Compiler::fun_statement() {
 
         auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
-        emit_load_constant_flexible(std::move(fun));
-
-        emit_opcode(Opcode::MakeClosure);
-        emit_operand_1(fun_scope->upvalues.size());
-
-        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i++) {
-            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
-            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
-        }
+        emit_make_closure(fun, fun_scope);
 
         emit_opcode(Opcode::DefineGlobal);
         emit_operand_2(key);
@@ -630,15 +621,21 @@ void Compiler::fun_statement() {
         scope->initialize();
         auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
-        emit_load_constant_flexible(std::move(fun));
+        emit_make_closure(fun, fun_scope);
+    }
+}
 
-        emit_opcode(Opcode::MakeClosure);
-        emit_operand_1(fun_scope->upvalues.size());
-
-        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i++) {
-            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
-            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
-        }
+void Compiler::class_statement() {
+    if (scope->is_global_scope()) {
+        OperandSize key = resolve_global_identifier();
+        parse_class();
+        emit_opcode(Opcode::DefineGlobal);
+        emit_operand_2(key);
+    } else {
+        consume(TokenType::IDENTIFIER, "expect an identifier as the class name");
+        scope->add_local(curr);
+        scope->initialize();
+        parse_class();
     }
 }
 
@@ -672,6 +669,69 @@ void Compiler::var_statement() {
     } catch (CompilerError &err) {
         error_at(curr, err.what());
     }
+}
+
+void Compiler::field_statement(bool is_static) {
+    consume(TokenType::IDENTIFIER, "expect the field name here");
+    class_scope->add_field(curr.get_lexeme());
+    if (check(TokenType::EQUAL)) {
+        error_at(next, "a field can only be initialized in the init method");
+        return;
+    }
+    consume();
+}
+
+void Compiler::method_statement(bool is_static) {
+    consume(TokenType::IDENTIFIER, "expect the method name here");
+    auto [fun, fun_scope] = parse_function(FunctionType::Method);
+    emit_make_closure(fun, fun_scope);
+}
+
+void Compiler::parse_class() {
+    std::string class_name = curr.get_lexeme();
+    auto key = current_chunk().add_identifier(class_name);
+    consume(TokenType::LEFT_BRACE, "expect a '{' after the class name");
+    class_scope = ClassScope{};
+    bool field_finished = false; // 方法都必须写在所有的field后面
+    while (match(TokenType::RIGHT_BRACE) == false) {
+        if (match(TokenType::Static)) {
+            if (match(TokenType::Field)) {
+                if (field_finished) {
+                    error_at(curr, "cannot declare fields after any methods");
+                }
+                field_statement(true);
+            } else if (match(TokenType::Method)) {
+                field_finished = true;
+                method_statement(true);
+                class_scope->incre_method_count();
+            } else {
+                error_at(next, "expect field or method definition after static");
+                return;
+            }
+        } else {
+            if (match(TokenType::Field)) {
+                if (field_finished) {
+                    error_at(curr, "cannot declare fields after any methods");
+                }
+                field_statement(true);
+            } else if (match(TokenType::Method)) {
+                field_finished = true;
+                method_statement(true);
+                class_scope->incre_method_count();
+            } else {
+                error_at(next, "expect field or method definition inside a class");
+                return;
+            }
+        }
+    }
+    // consume(TokenType::RIGHT_BRACE, "expect a '}' to end the class definition");
+    emit_opcode(Opcode::MakeClass);
+    emit_operand_2(key);
+    emit_operand_1(class_scope->member_fields.size());
+    emit_operand_1(class_scope->method_count);
+
+    class_scope = std::nullopt;
+
 }
 
 void Compiler::expression_statement() {
@@ -764,6 +824,8 @@ void Compiler::declaration() {
             var_statement();
         } else if (match(TokenType::FUN)) {
             fun_statement();
+        } else if (match(TokenType::CLASS)) {
+            class_statement();
         } else {
             statement();
         }

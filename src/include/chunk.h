@@ -11,6 +11,8 @@
 #include "error.h"
 
 class Disassembler;
+class LoxClass;
+class LoxClosure;
 
 enum class Opcode: uint8_t {
     Return, // ; 弹出当前栈帧，将原本栈顶的值作为返回值，置于原本的fp的位置（也就是新的栈顶）
@@ -48,6 +50,7 @@ enum class Opcode: uint8_t {
     MakeClosure, // captured_count: operand1, [is_local: operand1, index: operand1]... ； captured_count标识后面有多少个捕获值。进行捕获
     Recur, // arg_count: operand1 ； 将栈顶的arg_count个值移动到当前栈帧的前arg_count个本地参数的位置，弹出此后的其他值。重置pc为0
     StringConcat, // str_count: operand1 ； 弹出栈顶的str_count个值，将它们合成一个字符串，置于栈顶。
+    MakeClass, // key: operand2, num_field: operand1, num_method: operand1 ; 此时栈顶的num_method个值都是该类的method，将它们全部弹出，生成一个class，置于栈顶
 };
 
 using OperandSize = uint16_t;
@@ -155,8 +158,10 @@ public:
         constants.shrink_to_fit();
         lines.shrink_to_fit();
         identifiers.shrink_to_fit();
+        method_caches.shrink_to_fit();
         size_t sum = sizeof(uint8_t) * code.capacity() + sizeof(Value) * constants.capacity()
-        + sizeof(int) * lines.capacity() + sizeof(std::string) * identifiers.capacity();
+        + sizeof(int) * lines.capacity() + sizeof(std::string) * identifiers.capacity()
+        + sizeof(MethodCache) * method_caches.size();
         for (auto & identifier : identifiers) {
             sum += identifier.capacity();
         }
@@ -164,6 +169,12 @@ public:
     }
 
 private:
+
+    struct MethodCache {
+        std::shared_ptr<LoxClass> cached_class;
+        std::shared_ptr<LoxClosure> cached_closure;
+    };
+
     // 字节码
     std::vector<uint8_t> code;
     // 常数池
@@ -172,6 +183,8 @@ private:
     std::vector<int> lines;
     // 标识符池
     std::vector<std::string> identifiers;
+
+    std::vector<MethodCache> method_caches;
 };
 
 #endif //CCLOX_CHUNK_H

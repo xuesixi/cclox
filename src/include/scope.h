@@ -11,6 +11,40 @@
 #include "objects/loxfunction.h"
 
 
+class ClassScope {
+public:
+    friend class Compiler;
+
+    void add_field(const std::string &name) {
+        if (member_fields.size() == UINT8_MAX) {
+            throw Uint8OperandOverflowError("cannot have more than 256 fields");
+        }
+        auto found = resolve_field(name);
+        if (found) {
+            throw DuplicateNameVariableError("fields with the same name");
+        }
+        member_fields.push_back(name);
+    }
+
+    std::optional<uint8_t> resolve_field(const std::string &name) {
+        for (size_t i = 0; i < member_fields.size(); i++) {
+            if (member_fields.at(i) == name) {
+                return i;
+            }
+        }
+        return std::nullopt;
+    }
+
+    void incre_method_count() {
+        method_count++;
+    }
+
+private:
+    std::vector<std::string> member_fields;
+    std::vector<std::string> static_fields;
+    size_t method_count = 0;
+};
+
 /**
  * 一个Scope是一个函数级的作用域。代码块级的作用域体现在scope内部中的depth
  */

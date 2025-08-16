@@ -57,6 +57,8 @@ public:
 
     size_t instruction_make_closure(Opcode instruction, size_t offset);
 
+    size_t instruction_make_class(Opcode instruction, size_t offset);
+
     void set_chunk(const Chunk *the_chunk) {
         this->chunk = the_chunk;
     }

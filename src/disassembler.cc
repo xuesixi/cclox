@@ -47,6 +47,7 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::MakeClosure, "MakeClosure"},
     {Opcode::Recur, "Recur"},
     {Opcode::StringConcat, "StringConcat"},
+    {Opcode::MakeClass, "MakeClass"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -120,6 +121,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_jump_back(instruction, offset);
         case Opcode::MakeClosure:
             return instruction_make_closure(instruction, offset);
+        case Opcode::MakeClass:
+            return instruction_make_class(instruction, offset);
     }
 }
 
@@ -190,5 +193,14 @@ size_t Disassembler::instruction_make_closure(Opcode instruction, size_t offset)
     uint8_t len = chunk->code.at(offset + 1);
     cout << fmt::format("{:18} {} num of captured: {}\n", opcode_names.at(instruction), spaces_4, len);
     return offset + 2 + 2 * len;
+}
+
+size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
+    uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = chunk->read_identifier(key);
+    uint8_t num_field = chunk->code.at(offset + 3);
+    uint8_t num_method = chunk->code.at(offset + 4);
+    cout << fmt::format("{:18} {} class: {}; field {}, method {}\n", opcode_names.at(instruction), spaces_4, identifier, num_field, num_method);
+    return offset + 5;
 }
 

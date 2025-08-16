@@ -24,6 +24,17 @@ static std::unordered_map<std::string, TokenType> keyword_map{
     {"break", TokenType::BREAK},
     {"continue", TokenType::CONTINUE},
     {"recur", TokenType::RECUR},
+    {"field", TokenType::Field},
+    {"method", TokenType::Method},
+    {"public", TokenType::Public},
+    {"static", TokenType::Static},
+    {"import", TokenType::Import},
+    {"export", TokenType::Export},
+    {"as", TokenType::As},
+    {"throw", TokenType::Throw},
+    {"try", TokenType::Try},
+    {"catch", TokenType::Catch},
+
 };
 
 TokenType Scanner::get_identifier_type() {

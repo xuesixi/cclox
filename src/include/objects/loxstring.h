@@ -17,10 +17,6 @@ public:
 
     ~LoxString() override {
         Runtime::record_free(*this);
-        // auto old = runtime.allocated_size.fetch_sub( LoxString::compute_size());
-        // if (Flag::show_heap) {
-        //     std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - LoxString::compute_size(), LoxString::to_string());
-        // }
     }
 
     void clear_reference() override {};

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include "objects/loxstring.h"
+#include "objects/loxclass.h"
 #include <variant>
 
 VM::VM() {
@@ -295,6 +296,20 @@ InterpreterResult VM::run() {
                     LoxReference result = Runtime::allocate_as_ref<LoxString>(s.str());
                     Runtime::record_allocation(result);
                     push(result);
+                    break;
+                }
+                case Opcode::MakeClass: {
+                    auto name = read_identifier();
+                    auto num_field = read_operand_1();
+                    auto num_method = read_operand_1();
+                    auto new_class = Runtime::allocate_as<LoxClass>(name, num_field);
+                    for (size_t i = 0; i < num_method; i ++) {
+                        Value v = pop_and_get();
+                        auto closure = LoxValue::to_reference_unsafe<LoxClosure>(v);
+                        new_class->add_method(closure);
+                    }
+                    push(new_class);
+                    Runtime::record_allocation(new_class);
                     break;
                 }
                 default:

@@ -90,6 +90,27 @@ private:
     void emit_load_constant_flexible(Value &&value);
 
     /**
+     * 将fun写入常数池中，然后生成下列字节码：
+     * - LoadConstant1/2 来加载该函数，
+     * - MakeClosure
+     * - num_captureds
+     * - <is_local, index> ...
+     * @param fun
+     */
+    void emit_make_closure(std::shared_ptr<LoxFunction> fun, std::shared_ptr<Scope> fun_scope) {
+        emit_load_constant_flexible(std::move(fun));
+
+        emit_opcode(Opcode::MakeClosure);
+        emit_operand_1(fun_scope->upvalues.size());
+
+        for (uint8_t i = 0; i < fun_scope->upvalues.size(); i++) {
+            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local));
+            emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index));
+        }
+
+    }
+
+    /**
      * 表明指定的token处出现了编译问题。如果原本不处于panic_mode，则会输出token元数据和错误消息，并设置panic_mode以及hash_error。
      * 如果原本已经处于panic_mode，则什么都不做，立刻返回（这是为了防止在下一次synchronize之前出现大量的令人疑惑的错误消息）
      */
@@ -97,10 +118,10 @@ private:
 
     /**
      * 如果next是想要的token，则advance()，也就是说，想要的token将会变成curr，而下一个token则是next。否则error-at。
-     * type 的默认参数是semicolon，消息的默认参数是"expect a ';' to end the statement"。
      * 在repl模式下不会报错，而是抛出ConsumePending。
      */
-    void consume(TokenType type, const std::string &message);
+    void consume(TokenType type = TokenType::SEMICOLON,
+        const std::string &message = "expect a ';' to end the statement");
 
     /**
      * 读取新的token，移动next和curr。如果新的token为error，那么一直读，直到遇到一个非error的token。
@@ -149,7 +170,32 @@ private:
      */
     void var_statement();
 
+    /**
+     * 在已知curr是field关键字时调用
+     * @param is_static 是否是静态
+     */
+    void field_statement(bool is_static);
+
+    /**
+     * 在已知curr是method关键字时调用
+     * @param is_static 是否是静态
+     */
+    void method_statement(bool is_static);
+
+    /**
+     * 在curr是已经解析的类名标识符时
+     */
+    void parse_class();
+
+    /**
+     * 在已知curr为fun的时候调用
+     */
     void fun_statement();
+
+    /**
+     * 在已知curr为class的时候调用。
+     */
+    void class_statement();
 
     /**
      * 将next解析为一个identifier，将其lexeme添加到标识符池中，返回其键.
@@ -339,6 +385,7 @@ private:
     bool panic_mode = false; // 是否处于panic模式，出现错误时设置true，一路跳过到下一个statement，然后设置为false
     BackPoint breakpoint; // 循环语句中的break的目的地
     BackPoint continue_point; // 循环语句中的continue的目的地
+    std::optional<ClassScope> class_scope;
     std::shared_ptr<Scope> scope;
     Disassembler disasm;
 };
