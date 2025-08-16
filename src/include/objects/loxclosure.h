@@ -7,7 +7,6 @@
 
 #include "loxfunction.h"
 #include "captured.h"
-#include "common.h"
 
 class LoxClosure: public LoxObject {
 public:
@@ -16,10 +15,7 @@ public:
     }
 
     ~LoxClosure() override {
-        auto old = runtime.allocated_size.fetch_sub( LoxClosure::compute_size());
-        if (Flag::show_heap) {
-            std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - LoxClosure::compute_size(), LoxClosure::to_string());
-        }
+        Runtime::record_free(*this);
     }
 
     void clear_reference() override {};

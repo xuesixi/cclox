@@ -6,6 +6,7 @@
 #define LOXFUNCTION_H
 #include "chunk.h"
 #include "object.h"
+#include "runtime.h"
 
 enum class FunctionType {
     Function,
@@ -18,10 +19,7 @@ public:
     friend class LoxClosure;
 
     ~LoxFunction() override {
-        auto old = runtime.allocated_size.fetch_sub(memory_size);
-        if (Flag::show_heap) {
-            std::cout << fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - memory_size, LoxFunction::to_string());
-        }
+        Runtime::record_free(*this);
     }
     void clear_reference() override {};
 
@@ -47,6 +45,7 @@ public:
     void incre_arity() {
         arity_ ++;
     }
+
     int arity() {
         return arity_;
     }

@@ -11,14 +11,14 @@
 #include <variant>
 
 VM::VM() {
-    globals = std::make_shared<std::unordered_map<std::string, Value> >();
+    // globals = std::make_shared<std::unordered_map<std::string, Value> >();
 }
 
 InterpreterResult VM::interpret(std::string &&source) {
     Compiler compiler;
     auto f = compiler.compile(std::move(source));
-    auto closure = LoxObject::allocate_as<LoxClosure>(f);
-    closure->fix_size();
+    auto closure = Runtime::allocate_as<LoxClosure>(f);
+    Runtime::record_allocation(closure);
     if (f) {
         frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
         push(closure);
@@ -29,7 +29,7 @@ InterpreterResult VM::interpret(std::string &&source) {
 }
 
 void VM::show_stack() {
-    Visual::print_with_color(fmt::format(" heap: {}  ", runtime.allocated_size.load()), Color::MAGENTA);
+    Visual::print_with_color(fmt::format(" heap: {}  ", Runtime::allocated_size.load()), Color::MAGENTA);
     for (size_t i = 0; i < stack.size(); i++) {
         if (i == frames.back().fp) {
             Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::RED);
@@ -178,13 +178,13 @@ InterpreterResult VM::run() {
                 case Opcode::DefineGlobal: {
                     Value value = pop_and_get();
                     std::string key = read_identifier();
-                    (*globals)[key] = value;
+                    Runtime::globals[key] = value;
                     break;
                 }
                 case Opcode::LoadGlobal: {
                     std::string key = read_identifier();
-                    auto found = globals->find(key);
-                    if (found == globals->end()) {
+                    auto found = Runtime::globals.find(key);
+                    if (found == Runtime::globals.end()) {
                         throw LoxNameError(fmt::format("the variable: {} is not found", key));
                     } else {
                         push(found->second);
@@ -193,12 +193,12 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::SetGlobal: {
                     std::string key = read_identifier();
-                    auto found = globals->find(key);
-                    if (found == globals->end()) {
+                    auto found = Runtime::globals.find(key);
+                    if (found == Runtime::globals.end()) {
                         throw LoxNameError(fmt::format("the variable: {} is not found", key));
                     } else {
                         Value v = stack.back();
-                        (*globals)[key] = v;
+                        Runtime::globals[key] = v;
                     }
                     break;
                 }
@@ -250,7 +250,7 @@ InterpreterResult VM::run() {
                 case Opcode::MakeClosure: {
                     Value value = pop_and_get();
                     auto fun = LoxValue::to_reference_unsafe<LoxFunction>(value);
-                    auto new_closure = LoxObject::allocate_as<LoxClosure>(fun);
+                    auto new_closure = Runtime::allocate_as<LoxClosure>(fun);
                     uint8_t num_captures = read_operand_1();
                     for (uint8_t i = 0; i < num_captures; i++) {
                         auto is_local = read_operand_1();
@@ -263,7 +263,7 @@ InterpreterResult VM::run() {
                             new_closure->captureds.push_back(closure()->captureds.at(index));
                         }
                     }
-                    new_closure->fix_size();
+                    Runtime::record_allocation(new_closure);
                     push(new_closure);
                     break;
                 }
@@ -292,8 +292,8 @@ InterpreterResult VM::run() {
                         s << LoxValue::to_string(v);
                     }
                     stack.resize(stack.size() - count);
-                    LoxReference result = LoxObject::allocate_as_ref<LoxString>(s.str());
-                    result->fix_size();
+                    LoxReference result = Runtime::allocate_as_ref<LoxString>(s.str());
+                    Runtime::record_allocation(result);
                     push(result);
                     break;
                 }

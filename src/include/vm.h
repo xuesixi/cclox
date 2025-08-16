@@ -8,6 +8,7 @@
 #include "value.h"
 #include <memory>
 #include <vector>
+#include "runtime.h"
 #include "objects/loxfunction.h"
 #include "objects/loxclosure.h"
 
@@ -183,7 +184,8 @@ private:
      */
     void recur_call(size_t arg_count);
 
-    std::shared_ptr<std::unordered_map<std::string, Value> > globals; // 多个虚拟机线程共享同一个全局变量池
+    // std::shared_ptr<std::unordered_map<std::string, Value> > globals; // 多个虚拟机线程共享同一个全局变量池
+    // std::unordered_map<std::string, Value> &globals;
     std::vector<CallFrame> frames;
     std::vector<Value> stack; // 栈
     std::vector<std::shared_ptr<Captured>> open_captured; // 仍然存在于栈上的捕获值

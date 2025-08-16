@@ -12,6 +12,8 @@
 #include <type_traits>
 #include <variant>
 
+#include "runtime.h"
+
 std::string LoxValue::to_string(const Value &value) {
     return std::visit([](auto &&arg) -> std::string {
         using T = std::decay_t<decltype(arg)>;
@@ -102,8 +104,8 @@ Value operator+(const Value &left, const Value &right) {
             auto *a_str = LoxValue::try_cast<LoxString>(a);
             auto *b_str = LoxValue::try_cast<LoxString>(b);
             if (a_str && b_str) {
-                LoxReference str = LoxObject::allocate_as_ref<LoxString>(*a_str + *b_str);
-                str->fix_size();
+                LoxReference str = Runtime::allocate_as_ref<LoxString>(*a_str + *b_str);
+                Runtime::record_allocation(str);
                 return str;
             } else {
                 throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a), LoxValue::to_string(b)));

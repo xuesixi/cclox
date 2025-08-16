@@ -1,7 +1,9 @@
 #ifndef CCLOX_VISUAL_H
 #define CCLOX_VISUAL_H
 
-#include "vm.h"
+// #include "vm.h"
+#include <string>
+#include "value.h"
 
 enum class Color {
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,

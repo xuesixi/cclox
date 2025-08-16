@@ -10,6 +10,8 @@
 #include <fmt/core.h>
 #include <utility>
 
+#include "runtime.h"
+
 void Compiler::error_at(const Token &token, const std::string &message) {
     if (panic_mode) {
         return;
@@ -61,7 +63,7 @@ std::shared_ptr<LoxFunction> Compiler::compile(std::string &&source) {
     }
     emit_opcode(Opcode::LoadNil);
     emit_opcode(Opcode::Return);
-    scope->function_->fix_size();
+    Runtime::record_allocation(scope->function_);
     if (has_error) {
         return nullptr;
     } else {
@@ -313,8 +315,8 @@ void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::string_expr([[maybe_unused]] bool can_assign) {
-    LoxReference value = LoxObject::allocate_as_ref<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
-    value->fix_size();
+    LoxReference value = Runtime::allocate_as_ref<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
+    Runtime::record_allocation(value);
     emit_load_constant_flexible(std::move(value));
 }
 
@@ -331,8 +333,8 @@ void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
     for (auto [caught, left, right]: ranges.value()) {
         if (!caught) {
             // 普通字符串
-            LoxReference str = LoxObject::allocate_as_ref<LoxString>(s.substr(left, right - left + 1));
-            str->fix_size();
+            LoxReference str = Runtime::allocate_as_ref<LoxString>(s.substr(left, right - left + 1));
+            Runtime::record_allocation(str);
             emit_load_constant_flexible(str);
             count++;
         } else {
@@ -714,7 +716,7 @@ after_param_list:
 
     scope->function_->set_name(fun_name);
 
-    scope->function_->fix_size();
+    Runtime::record_allocation(scope->function_);
 
     if (!has_error) {
         disasm.set_chunk(&scope->function_->get_chunk());
