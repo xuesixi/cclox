@@ -27,6 +27,19 @@ std::string LoxValue::to_string(const Value &value) {
     }, value);
 }
 
+std::string LoxValue::to_visual_string(const Value &value) {
+    return std::visit([](auto &&arg) -> std::string {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, LoxReference>) {
+            return arg->to_visual_string();
+        } else if constexpr (std::is_same_v<T, nullptr_t>) {
+            return "nil";
+        } else {
+            return fmt::format("{}", arg);
+        }
+    }, value);
+}
+
 Value operator-(const Value &value) {
     if (std::holds_alternative<long>(value)) {
         return -std::get<long>(value);

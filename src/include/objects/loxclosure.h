@@ -31,7 +31,7 @@ public:
         return fmt::format("<fn: {}>", function->name);
     }
 
-    std::string name() const {
+    std::string fun_name() const {
         return function->name;
     }
 

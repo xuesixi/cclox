@@ -51,6 +51,9 @@ enum class Opcode: uint8_t {
     Recur, // arg_count: operand1 ； 将栈顶的arg_count个值移动到当前栈帧的前arg_count个本地参数的位置，弹出此后的其他值。重置pc为0
     StringConcat, // str_count: operand1 ； 弹出栈顶的str_count个值，将它们合成一个字符串，置于栈顶。
     MakeClass, // key: operand2, num_field: operand1, num_method: operand1 ; 此时栈顶的num_method个值都是该类的method，将它们全部弹出，生成一个class，置于栈顶
+    LoadField, // index: operand1 ；以stack[fp]为instance，将其索引为index的字段置入栈顶
+    SetField, // index: operand1 ；以stack[fp]为instance，设置instance的索引为index的字段
+    MethodLookup, // key: operand2, cache_index: operand1 ； 此时，栈顶是方法的接受者。根据cache_index查找对应的方法，如果缓存失效，改为使用标识符查询。将获取到的closure绑定到接受者上，弹出接受者，置入method
 };
 
 using OperandSize = uint16_t;
@@ -59,6 +62,11 @@ class Chunk {
 public:
     friend class Disassembler;
     friend class LoxFunction;
+
+    struct MethodCache {
+        std::shared_ptr<LoxClass> cached_class;
+        std::shared_ptr<LoxClosure> cached_closure;
+    };
 
     size_t code_size() {
         return code.size();
@@ -150,6 +158,24 @@ public:
     }
 
     /**
+     * 往方法缓存池中添加一个占位符，返回其索引
+     * @return 索引
+     * @throws Uint8OperandOverflowError 如果索引超出uint8
+     */
+    uint8_t add_method_cache() {
+        method_caches.push_back({});
+        if (within<uint8_t>(method_caches.size())) {
+            return method_caches.size() - 1;
+        } else {
+            throw Uint8OperandOverflowError("method cache overflow");
+        }
+    }
+
+    MethodCache &read_cache(uint8_t cache_index) {
+        return method_caches.at(cache_index);
+    }
+
+    /**
      * 尝试将chunk的各个vector的capacity缩减为size。然后估测本chunk的容器的所占用的内存。但不包括chunk自身的内存。
      * @return 估算的内存占用
      */
@@ -169,11 +195,6 @@ public:
     }
 
 private:
-
-    struct MethodCache {
-        std::shared_ptr<LoxClass> cached_class;
-        std::shared_ptr<LoxClosure> cached_closure;
-    };
 
     // 字节码
     std::vector<uint8_t> code;

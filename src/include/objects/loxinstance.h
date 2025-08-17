@@ -9,13 +9,39 @@
 
 class LoxInstance: public LoxObject {
 public:
-    size_t compute_size() override;
+    explicit LoxInstance(std::shared_ptr<LoxClass> input_class, size_t num_filed):
+        the_class(input_class),
+        fields(num_filed, nullptr) {
+        // 初始化所有字段为nil
+    }
 
-    void clear_reference() override;
+    ~LoxInstance() override {
+        Runtime::record_free(*this);
+    }
 
-    bool operator==(const LoxObject &other) const override;
+    size_t compute_size() override {
+        return sizeof(LoxInstance) + sizeof(Value) * fields.capacity();
+    }
 
-    [[nodiscard]] std::string to_string() const override;
+    void clear_reference() override {
+
+    }
+
+    bool operator==(const LoxObject &other) const override {
+        return this == &other;
+    }
+
+    [[nodiscard]] std::string to_string() const override {
+        return fmt::format("<obj: {}>", the_class->get_name());
+    }
+
+    std::shared_ptr<LoxClass> &get_class() {
+        return the_class;
+    }
+
+    Value &get_field(uint8_t index) {
+        return fields.at(index);
+    }
 
 private:
     std::vector<Value> fields;

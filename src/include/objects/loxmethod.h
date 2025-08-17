@@ -8,19 +8,44 @@
 #include "loxinstance.h"
 #include "object.h"
 
-class LoxMethod: LoxObject {
+class LoxMethod: public LoxObject {
 public:
-    size_t compute_size() override;
 
-    void clear_reference() override;
+    explicit LoxMethod(const std::shared_ptr<LoxClosure> &cl, const std::shared_ptr<LoxInstance> &rc): closure_(cl), receiver_(rc) {
 
-    bool operator==(const LoxObject &other) const override;
+    }
 
-    [[nodiscard]] std::string to_string() const override;
+    ~LoxMethod() override {
+        Runtime::record_free(*this);
+    }
+
+    size_t compute_size() override {
+        return sizeof(LoxMethod);
+    }
+
+    void clear_reference() override {
+
+    }
+
+    bool operator==(const LoxObject &other) const override {
+        return this == &other;
+    }
+
+    [[nodiscard]] std::string to_string() const override {
+        return fmt::format("<mthd: {}>", closure_->fun_name());
+    }
+
+    std::shared_ptr<LoxClosure> & closure() {
+        return closure_;
+    }
+
+    std::shared_ptr<LoxInstance> &receiver() {
+        return receiver_;
+    }
 
 private:
     std::shared_ptr<LoxClosure> closure_;
-    std::shared_ptr<LoxInstance> receiver;
+    std::shared_ptr<LoxInstance> receiver_;
 };
 
 #endif //LOXMETHOD_H

@@ -10,6 +10,14 @@
 #include <limits>
 #include <tuple>
 
+enum class Color {
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,
+    BRIGHT_BLACK, BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW,
+    BRIGHT_BLUE, BRIGHT_MAGENTA, BRIGHT_CYAN, BRIGHT_WHITE
+};
+
+void print_with_color(const std::string &content, Color color);
+
 /**
  * 返回值的第一个是high，第二个是low
  */
@@ -88,6 +96,7 @@ size_t estimate_string_map_size(std::unordered_map<std::string, A> map) {
  * @throws FileOpenFailureError 文件打开异常
  */
 std::string read_file(const std::string &path);
+
 
 
 #endif //CCLOX_CCLOX_UTIL_H

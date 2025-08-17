@@ -17,6 +17,8 @@ namespace LoxValue {
      */
     std::string to_string(const Value &value);
 
+    std::string to_visual_string(const Value &value);
+
     /**
      * 幂运算
      */
@@ -53,10 +55,11 @@ namespace LoxValue {
      * @pre 只有在确认该转化是正确的时候，才可以使用。
      */
     template<typename T>
-    std::shared_ptr<T> to_reference_unsafe(Value &value) {
+    std::shared_ptr<T> to_reference_unsafe(const Value &value) {
         static_assert(std::is_base_of_v<LoxObject, T>);
         return std::static_pointer_cast<T>(std::get<LoxReference>(value));
     }
+
 }
 
 Value operator-(const Value &value);

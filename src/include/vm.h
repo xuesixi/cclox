@@ -11,6 +11,7 @@
 #include "runtime.h"
 #include "objects/loxfunction.h"
 #include "objects/loxclosure.h"
+#include "objects/loxmethod.h"
 
 constexpr int STACK_MAX = 256;
 
@@ -113,6 +114,14 @@ private:
         return chunk().read_identifier(key);
     }
 
+    /**
+     * 读取下一个操作数作为cache的索引，从缓存池中读取对应的缓存
+     */
+    Chunk::MethodCache &read_cache() {
+        auto index = read_operand_1();
+        return chunk().read_cache(index);
+    }
+
     std::shared_ptr<LoxClosure> &closure() {
         return frames.back().closure;
     }
@@ -177,6 +186,12 @@ private:
      * @throws LoxArgError 如果传入参数的数量与栈帧对应的closure不匹配
      */
     void call_value(size_t arg_count);
+
+    void call_closure(size_t arg_count);
+
+    void call_method(size_t arg_count);
+
+    void call_class(size_t arg_count);
 
     /**
      * 将当前栈帧末尾的arg_count个参数移动到栈帧的开头，删除除了参数之外的其他本地变量，pc归零。

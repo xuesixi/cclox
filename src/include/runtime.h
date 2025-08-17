@@ -7,7 +7,8 @@
 #include <memory>
 #include <vector>
 #include "object.h"
-#include "visual.h"
+#include "value.h"
+#include "cclox_util.h"
 
 class LoxObject;
 
@@ -34,14 +35,14 @@ namespace Runtime {
     inline void record_allocation(const LoxReference &reference) {
         auto old = allocated_size.fetch_add(reference->compute_size());
         if (Flag::show_heap) {
-            Visual::print_with_color(fmt::format("[+] heap: {:^6} -> {:^6}; {}\n", old, old + reference->compute_size(), reference->to_string()), Color::BRIGHT_YELLOW);
+            print_with_color(fmt::format("[+] heap: {:^6} -> {:^6}; {}\n", old, old + reference->compute_size(), reference->to_visual_string()), Color::BRIGHT_YELLOW);
         }
     }
 
     inline void record_free(LoxObject &lox_object) {
         auto old = allocated_size.fetch_sub(lox_object.compute_size());
         if (Flag::show_heap) {
-            Visual::print_with_color(fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - lox_object.compute_size(), lox_object.to_string()), Color::BRIGHT_YELLOW);
+            print_with_color(fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - lox_object.compute_size(), lox_object.to_visual_string()), Color::BRIGHT_YELLOW);
         }
     }
 

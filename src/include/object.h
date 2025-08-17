@@ -23,7 +23,7 @@ public:
     /**
      * 由于大部份内存方面的工作都由RAII处理，本函数仅仅减少gc中的内存分配记录。该值应该和fix_size中的对应。
      */
-    virtual ~LoxObject() = default;
+    virtual ~LoxObject() = 0;
 
     /**
      * 估算本对象的内存占用（包括本对象的本体，但不包括其他loxobject本体
@@ -39,7 +39,14 @@ public:
 
     [[nodiscard]] virtual std::string to_string() const = 0;
 
+    virtual std::string to_visual_string() const {
+        return to_string();
+    }
+
 };
+
+inline LoxObject::~LoxObject() = default;
+
 
 
 #endif //CCLOX_OBJECT_H

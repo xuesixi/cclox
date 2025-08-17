@@ -2,7 +2,6 @@
 #include "chunk.h"
 #include "value.h"
 #include "common.h"
-#include "visual.h"
 #include "compiler.h"
 #include <sstream>
 #include <iostream>
@@ -10,6 +9,8 @@
 #include "objects/loxstring.h"
 #include "objects/loxclass.h"
 #include <variant>
+
+#include "objects/loxinstance.h"
 
 VM::VM() {
     // globals = std::make_shared<std::unordered_map<std::string, Value> >();
@@ -30,12 +31,12 @@ InterpreterResult VM::interpret(std::string &&source) {
 }
 
 void VM::show_stack() {
-    Visual::print_with_color(fmt::format(" heap: {}  ", Runtime::allocated_size.load()), Color::MAGENTA);
+    print_with_color(fmt::format(" heap: {}  ", Runtime::allocated_size.load()), Color::MAGENTA);
     for (size_t i = 0; i < stack.size(); i++) {
         if (i == frames.back().fp) {
-            Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::RED);
+            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack.at(i))), Color::RED);
         } else {
-            Visual::print_with_color(fmt::format("[{}] ", Visual::to_visual_string(stack.at(i))), Color::BLUE);
+            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack.at(i))), Color::BLUE);
         }
     }
     std::cout << std::endl;
@@ -166,7 +167,7 @@ InterpreterResult VM::run() {
                 case Opcode::Print: {
                     Value v = pop_and_get();
                     if (Flag::print_color) {
-                        Visual::print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
+                        print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
                     } else {
                         std::cout << LoxValue::to_string(v) << std::endl;
                     }
@@ -178,28 +179,28 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::DefineGlobal: {
                     Value value = pop_and_get();
-                    std::string key = read_identifier();
-                    Runtime::globals[key] = value;
+                    std::string identifier = read_identifier();
+                    Runtime::globals[identifier] = value;
                     break;
                 }
                 case Opcode::LoadGlobal: {
-                    std::string key = read_identifier();
-                    auto found = Runtime::globals.find(key);
+                    std::string identifier = read_identifier();
+                    auto found = Runtime::globals.find(identifier);
                     if (found == Runtime::globals.end()) {
-                        throw LoxNameError(fmt::format("the variable: {} is not found", key));
+                        throw LoxNameError(fmt::format("the variable: {} is not found", identifier));
                     } else {
                         push(found->second);
                     }
                     break;
                 }
                 case Opcode::SetGlobal: {
-                    std::string key = read_identifier();
-                    auto found = Runtime::globals.find(key);
+                    std::string identifier = read_identifier();
+                    auto found = Runtime::globals.find(identifier);
                     if (found == Runtime::globals.end()) {
-                        throw LoxNameError(fmt::format("the variable: {} is not found", key));
+                        throw LoxNameError(fmt::format("the variable: {} is not found", identifier));
                     } else {
                         Value v = stack.back();
-                        Runtime::globals[key] = v;
+                        Runtime::globals[identifier] = v;
                     }
                     break;
                 }
@@ -287,7 +288,7 @@ InterpreterResult VM::run() {
                 case Opcode::StringConcat: {
                     auto count = read_operand_1();
                     std::stringstream s;
-                    for (uint8_t i = 0; i < count; i ++) {
+                    for (uint8_t i = 0; i < count; i++) {
                         // a, b, c, x
                         Value v = stack.at(stack.size() - count + i);
                         s << LoxValue::to_string(v);
@@ -303,13 +304,54 @@ InterpreterResult VM::run() {
                     auto num_field = read_operand_1();
                     auto num_method = read_operand_1();
                     auto new_class = Runtime::allocate_as<LoxClass>(name, num_field);
-                    for (size_t i = 0; i < num_method; i ++) {
+                    for (size_t i = 0; i < num_method; i++) {
                         Value v = pop_and_get();
                         auto closure = LoxValue::to_reference_unsafe<LoxClosure>(v);
                         new_class->add_method(closure);
                     }
                     push(new_class);
                     Runtime::record_allocation(new_class);
+                    break;
+                }
+                case Opcode::MethodLookup: {
+                    auto receiver = pop_and_get();
+                    auto identifier_key = read_operand_2();
+                    Chunk::MethodCache &cache = read_cache();
+                    if (LoxValue::try_cast<LoxInstance>(receiver) == nullptr) {
+                        throw LoxTypeError(fmt::format("the value {} is not an instance and cannot bind to a method",
+                                                       LoxValue::to_string(receiver)));
+                    }
+                    auto instance = LoxValue::to_reference_unsafe<LoxInstance>(receiver);
+
+                    if (cache.cached_closure == nullptr || *cache.cached_class != *instance->get_class()) {
+                        // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
+                        auto identifier = chunk().read_identifier(identifier_key);
+                        cache.cached_closure = instance->get_class()->resolve_method(identifier);
+                        cache.cached_class = instance->get_class();
+                        auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure, instance);
+                        Runtime::record_allocation(method);
+                        push(method);
+                    } else {
+                        // 如果缓存的class匹配，则直接读取缓存
+                        auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure, instance);
+                        Runtime::record_allocation(method);
+                        push(method);
+                    }
+                    break;
+                }
+                case Opcode::LoadField: {
+                    auto index = read_operand_1();
+                    auto instance = LoxValue::to_reference_unsafe<LoxInstance>(frame_at(0));
+                    push(instance->get_field(index));
+                    break;
+                }
+                case Opcode::SetField: {
+                    // [instance, to_set] => [to_set]
+                    auto index = read_operand_1();
+                    Value v = pop_and_get();
+                    auto instance = LoxValue::to_reference_unsafe<LoxInstance>(frame_at(0));
+                    instance->get_field(index) = v;
+                    push(v);
                     break;
                 }
                 default:
@@ -329,7 +371,7 @@ InterpreterResult VM::run() {
 
 std::string VM::backtrace() {
     std::stringstream result;
-    for (auto it = frames.rbegin(); it != frames.rend(); it ++) {
+    for (auto it = frames.rbegin(); it != frames.rend(); it++) {
         auto call_frame = *it;
         auto line = call_frame.closure->function->get_chunk().get_line_num(call_frame.pc);
         result << fmt::format("{} at line {}\n", call_frame.closure->to_string(), line);
@@ -339,20 +381,74 @@ std::string VM::backtrace() {
 
 void VM::call_value(size_t arg_count) {
     if (frames.size() == Configuration::frame_max) {
-       throw LoxStackOverflowError("stack overflow");
+        throw LoxStackOverflowError("stack overflow");
     }
     size_t fp = stack.size() - 1 - arg_count;
     Value callable = stack.at(fp);
-    if (LoxValue::try_cast<LoxClosure>(callable) == nullptr) {
-        throw LoxTypeError(fmt::format("the value {} is not a function thus cannot not be called", LoxValue::to_string(callable)));
+
+    if (LoxValue::try_cast<LoxClosure>(callable)) {
+        call_closure(arg_count);
+    } else if (LoxValue::try_cast<LoxMethod>(callable)) {
+        call_method(arg_count);
+    } else if (LoxValue::try_cast<LoxClass>(callable)) {
+        call_class(arg_count);
+    } else {
+        throw LoxTypeError(fmt::format("the value {} is not a function thus cannot not be called",
+                                       LoxValue::to_string(callable)));
     }
-    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(callable);
+}
+
+void VM::call_closure(size_t arg_count) {
+    size_t fp = stack.size() - 1 - arg_count;
+    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack.at(fp));
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
                                       cl->function->arity(), arg_count));
     }
     CallFrame frame{cl, 0, fp};
     frames.push_back(frame);
+}
+
+void VM::call_method(size_t arg_count) {
+    size_t fp = stack.size() - 1 - arg_count;
+    auto method = LoxValue::to_reference_unsafe<LoxMethod>(stack.at(fp));
+    auto &cl = method->closure();
+    if (cl->function->arity() != arg_count) {
+        throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
+                                      cl->function->arity(), arg_count));
+    }
+    CallFrame frame{cl, 0, fp};
+    frames.push_back(frame);
+    stack.at(fp) = method->receiver(); // 将帧底替换为receiver
+}
+
+void VM::call_class(size_t arg_count) {
+    size_t fp = stack.size() - 1 - arg_count;
+    auto a_class = LoxValue::to_reference_unsafe<LoxClass>(stack.at(fp));
+    auto &constructor = a_class->constructor();
+    if (constructor == nullptr) {
+        // 无构造函数
+        if (arg_count != 0) {
+            throw LoxArgError(fmt::format("default constructor expect 0 argument, but got {}", arg_count));
+        } else {
+            // 默认构造
+            LoxReference v = Runtime::allocate_as_ref<LoxInstance>(a_class, a_class->get_num_fields());
+            stack.resize(stack.size() - 1 - arg_count);
+            Runtime::record_allocation(v);
+            push(v);
+        }
+    } else {
+        if (arg_count != constructor->function->arity()) {
+            throw LoxArgError(fmt::format("the constructor expect {} argument, but got {}", constructor->function->arity(),
+                                          arg_count));
+        } else {
+            LoxReference v = Runtime::allocate_as_ref<LoxInstance>(a_class, a_class->get_num_fields());
+            stack.at(fp) = v;
+            CallFrame frame{constructor, 0, fp};
+            frames.push_back(frame);
+            Runtime::record_allocation(v);
+        }
+    }
 }
 
 void VM::recur_call(size_t arg_count) {

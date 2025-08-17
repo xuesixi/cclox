@@ -96,6 +96,8 @@ Compiler::ParseFn Compiler::get_prefix(TokenType type) {
             return &Compiler::fmt_string_expr;
         case TokenType::IDENTIFIER:
             return &Compiler::variable_expr;
+        case TokenType::THIS:
+            return &Compiler::this_expr;
         default:
             return nullptr;
     }
@@ -121,6 +123,8 @@ auto Compiler::get_infix(TokenType type) -> Compiler::ParseFn {
             return &Compiler::or_expr;
         case TokenType::LEFT_PAREN:
             return &Compiler::call_expr;
+        case TokenType::DOT:
+            return &Compiler::dot_expr;
         default:
             return nullptr;
     }
@@ -158,6 +162,7 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         case TokenType::OR:
             return Precedence::OR;
         case TokenType::LEFT_PAREN:
+        case TokenType::DOT:
             return Precedence::CALL;
         default:
             return Precedence::NONE;
@@ -272,6 +277,18 @@ void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
         default:
             return;
     }
+}
+
+void Compiler::dot_expr(bool can_assign) {
+    // this.num = 10; dog.run(); var a = dog.eat;
+    // a.b().c()
+
+    consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
+    auto key = current_chunk().add_identifier(curr.get_lexeme());
+    auto cache_index = current_chunk().add_method_cache();
+    emit_opcode(Opcode::MethodLookup);
+    emit_operand_2(key);
+    emit_operand_1(cache_index);
 }
 
 void Compiler::and_expr([[maybe_unused]] bool can_assign) {
@@ -411,6 +428,33 @@ void Compiler::variable_expr(bool can_assign) {
         return;
     }
 
+    if (scope->function_type_ == FunctionType::Method) {
+        // 如果在方法内部，则还可能是对象字段。
+        auto field_found = class_scope->resolve_field(curr.get_lexeme());
+        if (field_found) {
+            if (match(TokenType::EQUAL)) {
+                if (can_assign) {
+                    // emit_opcode(Opcode::LoadLocal);
+                    // emit_operand_1(0);
+                    compile_precedence_at_least(Precedence::ASSIGNMENT);
+                    emit_opcode(Opcode::SetField);
+                    emit_operand_1(field_found.value());
+                } else {
+                    error_at(curr, fmt::format("invalid assignment target"));
+                }
+            } else {
+                // emit_opcode(Opcode::LoadLocal);
+                // emit_operand_1(0);
+                emit_opcode(Opcode::LoadField);
+                emit_operand_1(field_found.value());
+            }
+            return;
+        }
+    }
+
+    // todo: this.method() 如何处理?
+
+    // 查找upvalues
     found = scope->resolve_upvalue(curr);
 
     if (found.has_value()) {
@@ -433,7 +477,7 @@ void Compiler::variable_expr(bool can_assign) {
     OperandSize key = current_chunk().add_identifier(curr.lexeme);
     if (match(TokenType::EQUAL)) {
         if (can_assign) {
-            compile_precedence_at_least(Precedence::ASSIGNMENT); // todo: 原书中是expression()
+            compile_precedence_at_least(Precedence::ASSIGNMENT);
             emit_opcode(Opcode::SetGlobal);
         } else {
             error_at(curr, fmt::format("invalid assignment target"));
@@ -442,6 +486,64 @@ void Compiler::variable_expr(bool can_assign) {
         emit_opcode(Opcode::LoadGlobal);
     }
     emit_operand_2(key);
+}
+
+void Compiler::this_expr(bool can_assign) {
+    // this.num = 10;
+    // this.run();
+    // var age = this.num = 4;
+    // var age = this.num;
+
+    if (scope->function_type_ != FunctionType::Method) {
+        error_at(curr, "'this' can only be used inside of a class method");
+        return;
+    }
+    if (match(TokenType::DOT)) {
+        // this.identifier
+        consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
+        auto field_found = class_scope->resolve_field(curr.lexeme);
+        if (field_found) {
+            // 找到了对应的字段
+
+            if (match(TokenType::EQUAL)) {
+                // 写入
+                if (can_assign) {
+                    // 允许赋值
+                    // emit_opcode(Opcode::LoadLocal);
+                    // emit_operand_1(0);
+                    compile_precedence_at_least(get_higher_precedence(Precedence::ASSIGNMENT));
+                    emit_opcode(Opcode::SetField);
+                    emit_operand_1(field_found.value());
+                } else {
+                    // 不允许赋值
+                    error_at(curr, "invalid assignment target");
+                }
+            } else {
+                // 读取
+                // emit_opcode(Opcode::LoadLocal);
+                // emit_operand_1(0);
+                emit_opcode(Opcode::LoadField);
+                emit_operand_1(field_found.value());
+            }
+
+        } else {
+
+            emit_opcode(Opcode::LoadLocal);
+            emit_operand_1(0);
+
+            // 没有找到字段，则判断是方法
+            auto key = current_chunk().add_identifier(curr.get_lexeme());
+            auto cache_index = current_chunk().add_method_cache();
+            emit_opcode(Opcode::MethodLookup);
+            emit_operand_2(key);
+            emit_operand_1(cache_index);
+        }
+    } else {
+        // 单独的this
+        emit_opcode(Opcode::LoadLocal);
+        emit_operand_1(0);
+    }
+
 }
 
 void Compiler::emit_load_constant_flexible(Value &&value) {
@@ -771,8 +873,14 @@ after_param_list:
     // 这里不需要退出层级的操作，因为函数调用后，整个栈帧都会被废弃，栈vector会resize至前一个栈帧的尺寸
     // 所有本栈帧的本地变量自然也就被销毁了
 
-    emit_opcode(Opcode::LoadNil); // 默认返回值为nil
+    if (fun_name == "init" and type == FunctionType::Method) {
+        emit_opcode(Opcode::LoadLocal); // 构造函数返回this
+        emit_operand_1(0);
+    } else {
+        emit_opcode(Opcode::LoadNil); // 默认返回值为nil
+    }
     emit_opcode(Opcode::Return);
+
 
     scope->function_->set_name(fun_name);
 

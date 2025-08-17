@@ -273,6 +273,15 @@ private:
     void variable_expr(bool can_assign);
 
     /**
+     * 在已知curr是this的时候调用。可以处理
+     * - 单独的this
+     * - this.字段读取
+     * - this.字段赋值
+     * - this.方法查看
+     */
+    void this_expr(bool can_assign);
+
+    /**
      * 在已知curr是一个integer的时候调用
      */
     void integer_expr(bool can_assign);
@@ -296,6 +305,12 @@ private:
      * 在已知curr是一个二元操作符的时候调用。
      */
     void binary_expr(bool can_assign);
+
+    /**
+     * 在已知curr是.的时候调用。虽然理论上是binary的一种，但由于特殊的解析规则，独立出来。
+     * 该函数只会解析对象的方法查找。如果是对象字段操作，则会由this_expr解析。
+     */
+    void dot_expr(bool can_assign);
     
     /**
      * 在已知curr是and的时候调用。

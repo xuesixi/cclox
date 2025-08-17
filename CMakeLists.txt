@@ -24,8 +24,6 @@ add_executable(cclox
         src/value.cc
         src/include/disassembler.h
         src/disassembler.cc
-        src/include/visual.h
-        src/visual.cc
         src/include/vm.h
         src/vm.cc
         src/include/compiler.h
@@ -59,8 +57,6 @@ add_library(cclox_lib
         src/value.cc
         src/include/disassembler.h
         src/disassembler.cc
-        src/include/visual.h
-        src/visual.cc
         src/include/vm.h
         src/vm.cc
         src/include/compiler.h

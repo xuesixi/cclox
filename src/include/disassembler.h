@@ -32,10 +32,10 @@ public:
      */
     size_t instruction_constant_operand_1(Opcode instruction, size_t offset);
 
-    /**
-     * 有一个用于标识本地变量索引的操作数
-     */
-    size_t instruction_local(Opcode instruction, size_t offset);
+    // /**
+    //  * 有一个用于标识本地变量索引的操作数
+    //  */
+    // size_t instruction_local(Opcode instruction, size_t offset);
 
     /**
      * 通用的单操作数指令
@@ -58,6 +58,8 @@ public:
     size_t instruction_make_closure(Opcode instruction, size_t offset);
 
     size_t instruction_make_class(Opcode instruction, size_t offset);
+
+    size_t instruction_cache(Opcode instruction, size_t offset);
 
     void set_chunk(const Chunk *the_chunk) {
         this->chunk = the_chunk;

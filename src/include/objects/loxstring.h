@@ -41,6 +41,11 @@ public:
         return str;
     }
 
+    std::string to_visual_string() const override {
+        return fmt::format("\"{}\"", str);
+    }
+
+
 private:
     const std::string str;
     size_t compute_size() override {
