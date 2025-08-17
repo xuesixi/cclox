@@ -18,6 +18,8 @@ namespace Runtime {
 
     extern std::unordered_map<std::string, Value> globals;
 
+    extern std::unordered_map<std::string, Value> builtin;
+
     extern std::mutex gc_lock;
 
     inline void register_object(const std::shared_ptr<LoxObject> &ptr) {

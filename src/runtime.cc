@@ -12,6 +12,8 @@ namespace Runtime {
 
     std::unordered_map<std::string, Value> globals;
 
+    std::unordered_map<std::string, Value> builtin;
+
     std::mutex gc_lock;
 
     // void gc() {

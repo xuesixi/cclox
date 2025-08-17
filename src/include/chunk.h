@@ -64,8 +64,9 @@ public:
     friend class LoxFunction;
 
     struct MethodCache {
-        std::shared_ptr<LoxClass> cached_class;
-        std::shared_ptr<LoxClosure> cached_closure;
+        // 弱指针以避免本该被回收的对象因为缓存而不被回收
+        std::weak_ptr<LoxClass> cached_class;
+        std::weak_ptr<LoxClosure> cached_closure;
     };
 
     size_t code_size() {

@@ -317,26 +317,7 @@ InterpreterResult VM::run() {
                     auto receiver = pop_and_get();
                     auto identifier_key = read_operand_2();
                     Chunk::MethodCache &cache = read_cache();
-                    if (LoxValue::try_cast<LoxInstance>(receiver) == nullptr) {
-                        throw LoxTypeError(fmt::format("the value {} is not an instance and cannot bind to a method",
-                                                       LoxValue::to_string(receiver)));
-                    }
-                    auto instance = LoxValue::to_reference_unsafe<LoxInstance>(receiver);
-
-                    if (cache.cached_closure == nullptr || *cache.cached_class != *instance->get_class()) {
-                        // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
-                        auto identifier = chunk().read_identifier(identifier_key);
-                        cache.cached_closure = instance->get_class()->resolve_method(identifier);
-                        cache.cached_class = instance->get_class();
-                        auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure, instance);
-                        Runtime::record_allocation(method);
-                        push(method);
-                    } else {
-                        // 如果缓存的class匹配，则直接读取缓存
-                        auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure, instance);
-                        Runtime::record_allocation(method);
-                        push(method);
-                    }
+                    method_lookup(receiver, identifier_key, cache);
                     break;
                 }
                 case Opcode::LoadField: {

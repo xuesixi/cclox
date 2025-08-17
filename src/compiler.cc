@@ -886,7 +886,7 @@ after_param_list:
 
     Runtime::record_allocation(scope->function_);
 
-    if (!has_error) {
+    if (!has_error && Flag::disassembly) {
         disasm.set_chunk(&scope->function_->get_chunk());
         disasm.disassemble(fun_name);
     }

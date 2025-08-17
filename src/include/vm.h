@@ -199,9 +199,43 @@ private:
      */
     void recur_call(size_t arg_count);
 
+    /**
+     * 查找一个closure，将其绑定到receiver上，产生一个method，将其入栈。
+     * 该函数会先试图使用缓存，如果失败，则用哈希表查找并更新缓存
+     * @param receiver 该方法要绑定的接受者
+     * @param identifier_key 如果缓存失效，使用该key进行标识符查询。
+     * @param cache 缓存
+     */
+    void method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache) {
+        if (LoxValue::try_cast<LoxInstance>(receiver) == nullptr) {
+            throw LoxTypeError(fmt::format("the value {} is not an instance and cannot bind to a method",
+                                           LoxValue::to_string(receiver)));
+        }
+        auto instance = LoxValue::to_reference_unsafe<LoxInstance>(receiver);
+
+        std::shared_ptr<LoxClass> cached_class = cache.cached_class.lock();
+        // 如果class还活着，那么其method必然活着。但反之则未必，因此只检查class即可
+
+        if (!cached_class || *cached_class != *instance->get_class()) {
+            // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
+            auto identifier = chunk().read_identifier(identifier_key);
+            const auto &cached_closure = instance->get_class()->resolve_method(identifier);
+            cache.cached_closure = cached_closure;
+            cache.cached_class = instance->get_class();
+            auto method = Runtime::allocate_as_ref<LoxMethod>(cached_closure, instance);
+            Runtime::record_allocation(method);
+            push(method);
+        } else {
+            // 如果缓存的class匹配，则直接读取缓存
+            auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure.lock(), instance);
+            Runtime::record_allocation(method);
+            push(method);
+        }
+    }
+
     std::vector<CallFrame> frames;
     std::vector<Value> stack; // 栈
-    std::vector<std::shared_ptr<Captured>> open_captured; // 仍然存在于栈上的捕获值
+    std::vector<std::shared_ptr<Captured> > open_captured; // 仍然存在于栈上的捕获值
 };
 
 #endif
