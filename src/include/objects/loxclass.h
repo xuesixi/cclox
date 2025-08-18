@@ -33,10 +33,6 @@ public:
 
     }
 
-    bool operator==(const LoxObject &other) const override {
-        return this == &other;
-    }
-
     [[nodiscard]] std::string to_string() const override {
         return fmt::format("<cls: {}>", name);
     }
@@ -66,6 +62,10 @@ public:
 
     uint8_t get_num_fields() const {
         return num_fields;
+    }
+
+    LoxObjectType get_object_type() const override {
+        return LoxObjectType::Class;
     }
 
 private:

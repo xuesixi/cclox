@@ -24,10 +24,6 @@ public:
     }
     void clear_reference() override {};
 
-    bool operator==(const LoxObject &other) const override {
-        return this == &other;
-    }
-
     std::string to_string() const override {
         if (name == "<main>") {
             return "<proto: main>";
@@ -49,6 +45,10 @@ public:
 
     int arity() {
         return arity_;
+    }
+
+    LoxObjectType get_object_type() const override {
+        return LoxObjectType::Function;
     }
 
 private:

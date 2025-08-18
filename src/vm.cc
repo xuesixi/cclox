@@ -11,6 +11,7 @@
 #include <variant>
 
 #include "objects/loxinstance.h"
+#include "objects/loxnative.h"
 
 VM::VM() {
     // globals = std::make_shared<std::unordered_map<std::string, Value> >();
@@ -186,11 +187,16 @@ InterpreterResult VM::run() {
                 case Opcode::LoadGlobal: {
                     std::string identifier = read_identifier();
                     auto found = Runtime::globals.find(identifier);
-                    if (found == Runtime::globals.end()) {
-                        throw LoxNameError(fmt::format("the variable: {} is not found", identifier));
-                    } else {
+                    if (found != Runtime::globals.end()) {
                         push(found->second);
+                        break;
                     }
+                    found = Runtime::builtin.find(identifier);
+                    if (found != Runtime::builtin.end()) {
+                        push(found->second);
+                        break;
+                    }
+                    throw LoxNameError(fmt::format("the variable: {} is not found", identifier));
                     break;
                 }
                 case Opcode::SetGlobal: {
@@ -367,15 +373,24 @@ void VM::call_value(size_t arg_count) {
     size_t fp = stack.size() - 1 - arg_count;
     Value callable = stack.at(fp);
 
-    if (LoxValue::try_cast<LoxClosure>(callable)) {
-        call_closure(arg_count);
-    } else if (LoxValue::try_cast<LoxMethod>(callable)) {
-        call_method(arg_count);
-    } else if (LoxValue::try_cast<LoxClass>(callable)) {
-        call_class(arg_count);
-    } else {
-        throw LoxTypeError(fmt::format("the value {} is not a function thus cannot not be called",
-                                       LoxValue::to_string(callable)));
+    if (!std::holds_alternative<LoxReference>(callable)) {
+        throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
+    }
+    switch (std::get<LoxReference>(callable)->get_object_type()) {
+        case LoxObjectType::Closure:
+            call_closure(arg_count);
+            break;
+        case LoxObjectType::Method:
+            call_method(arg_count);
+            break;
+        case LoxObjectType::Class:
+            call_class(arg_count);
+            break;
+        case LoxObjectType::Native:
+            call_native(arg_count);
+            break;
+        default:
+            throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
     }
 }
 
@@ -432,6 +447,16 @@ void VM::call_class(size_t arg_count) {
     }
 }
 
+void VM::call_native(size_t arg_count) {
+    size_t fp = stack.size() - 1 - arg_count;
+    auto native = LoxValue::to_reference_unsafe<LoxNative>(stack.at(fp));
+    if (arg_count != native->get_arity()) {
+        throw LoxArgError(fmt::format("the native function {} expect {} arguments, but got {}", native->get_name(), native->get_arity(), arg_count));
+    }
+    auto impl = native->get_impl();
+    impl(stack, fp);
+}
+
 void VM::recur_call(size_t arg_count) {
     if (arg_count != closure()->function->arity()) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(closure()),
@@ -442,4 +467,36 @@ void VM::recur_call(size_t arg_count) {
     }
     stack.resize(frame().fp + arg_count + 1);
     pc() = 0;
+}
+
+void VM::method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache) {
+    if (std::holds_alternative<LoxReference>(receiver) == false) {
+        throw LoxTypeError(fmt::format("the value {} is not an reference type and cannot bind to a method",
+                                       LoxValue::to_string(receiver)));
+    }
+    auto ref = std::get<LoxReference>(receiver);
+    if (!ref->is_of_type(LoxObjectType::Instance)) {
+        throw LoxTypeError(fmt::format("the value {} is not an reference type and cannot bind to a method",
+                                       LoxValue::to_string(receiver)));
+    }
+    auto instance = std::static_pointer_cast<LoxInstance>(ref);
+
+    std::shared_ptr<LoxClass> cached_class = cache.cached_class.lock();
+    // 如果class还活着，那么其method必然活着。但反之则未必，因此只检查class即可
+
+    if (!cached_class || *cached_class != *instance->get_class()) {
+        // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
+        auto identifier = chunk().read_identifier(identifier_key);
+        const auto &cached_closure = instance->get_class()->resolve_method(identifier);
+        cache.cached_closure = cached_closure;
+        cache.cached_class = instance->get_class();
+        auto method = Runtime::allocate_as_ref<LoxMethod>(cached_closure, instance);
+        Runtime::record_allocation(method);
+        push(method);
+    } else {
+        // 如果缓存的class匹配，则直接读取缓存
+        auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure.lock(), instance);
+        Runtime::record_allocation(method);
+        push(method);
+    }
 }

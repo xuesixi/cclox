@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "vm.h"
 #include "scanner.h"
+#include "native.h"
 #include <error.h>
 #include <memory>
 #include "CLI11.hpp"
@@ -79,6 +80,7 @@ void go(int argc, const char **args) {
 }
 
 int main(int argc, const char **args) {
+    load_all_natives();
     CLI::App app{"cclox description"};
     std::string filepath;
 

@@ -27,10 +27,6 @@ public:
 
     }
 
-    bool operator==(const LoxObject &other) const override {
-        return this == &other;
-    }
-
     [[nodiscard]] std::string to_string() const override {
         return fmt::format("<mthd: {}>", closure_->fun_name());
     }
@@ -41,6 +37,10 @@ public:
 
     std::shared_ptr<LoxInstance> &receiver() {
         return receiver_;
+    }
+
+    LoxObjectType get_object_type() const override {
+        return LoxObjectType::Method;
     }
 
 private:

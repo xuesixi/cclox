@@ -15,6 +15,16 @@ class LoxObject;
 
 using LoxReference = std::shared_ptr<LoxObject>;
 
+enum class LoxObjectType {
+    Class,
+    Closure,
+    Function,
+    Instance,
+    Method,
+    Native,
+    String
+};
+
 class LoxObject {
 public:
 
@@ -35,7 +45,9 @@ public:
      */
     virtual void clear_reference() = 0;
 
-    virtual bool operator==(const LoxObject &other) const = 0;
+    virtual bool operator==(const LoxObject &other) const {
+        return this == &other;
+    }
 
     [[nodiscard]] virtual std::string to_string() const = 0;
 
@@ -43,10 +55,14 @@ public:
         return to_string();
     }
 
+    virtual LoxObjectType get_object_type() const = 0;
+
+    bool is_of_type(LoxObjectType type) const {
+        return get_object_type() == type;
+    }
+
 };
 
 inline LoxObject::~LoxObject() = default;
-
-
 
 #endif //CCLOX_OBJECT_H

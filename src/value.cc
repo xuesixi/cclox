@@ -114,9 +114,10 @@ Value operator+(const Value &left, const Value &right) {
             return a + b;
         } else if constexpr (are_same<A, B, LoxReference>()) {
             // LoxString是唯一支持+的引用类型
-            auto *a_str = LoxValue::try_cast<LoxString>(a);
-            auto *b_str = LoxValue::try_cast<LoxString>(b);
-            if (a_str && b_str) {
+            if (a->is_of_type(LoxObjectType::String) && b->is_of_type(LoxObjectType::String)) {
+                auto a_str = std::static_pointer_cast<LoxString>(a);
+                auto b_str = std::static_pointer_cast<LoxString>(b);
+
                 LoxReference str = Runtime::allocate_as_ref<LoxString>(*a_str + *b_str);
                 Runtime::record_allocation(str);
                 return str;

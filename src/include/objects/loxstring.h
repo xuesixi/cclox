@@ -45,6 +45,9 @@ public:
         return fmt::format("\"{}\"", str);
     }
 
+    LoxObjectType get_object_type() const override {
+        return LoxObjectType::String;
+    }
 
 private:
     const std::string str;

@@ -34,23 +34,6 @@ namespace LoxValue {
     }
 
     /**
-     * 试图将一个LoxReference动态转化为T类型的指针，如果失败，返回nullptr。
-     */
-    template<typename T>
-    T *try_cast(const LoxReference &ref) {
-        return dynamic_cast<T *>(ref.get());
-    }
-
-    /**
-     * 将一个value动态地转化为T类型的指针
-     * @pre Value 是一个LoxReference
-     */
-    template<typename T>
-    T *try_cast(const Value &value) {
-        return try_cast<T>(std::get<LoxReference>(value));
-    }
-
-    /**
      * 将一个value静态地转化为一个LoxObject的子类的shared_ptr。
      * @pre 只有在确认该转化是正确的时候，才可以使用。
      */

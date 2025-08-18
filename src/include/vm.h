@@ -193,6 +193,8 @@ private:
 
     void call_class(size_t arg_count);
 
+    void call_native(size_t arg_count);
+
     /**
      * 将当前栈帧末尾的arg_count个参数移动到栈帧的开头，删除除了参数之外的其他本地变量，pc归零。
      * @throws LoxArgError 如果传入参数的数量与栈帧对应的closure不匹配
@@ -206,32 +208,7 @@ private:
      * @param identifier_key 如果缓存失效，使用该key进行标识符查询。
      * @param cache 缓存
      */
-    void method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache) {
-        if (LoxValue::try_cast<LoxInstance>(receiver) == nullptr) {
-            throw LoxTypeError(fmt::format("the value {} is not an instance and cannot bind to a method",
-                                           LoxValue::to_string(receiver)));
-        }
-        auto instance = LoxValue::to_reference_unsafe<LoxInstance>(receiver);
-
-        std::shared_ptr<LoxClass> cached_class = cache.cached_class.lock();
-        // 如果class还活着，那么其method必然活着。但反之则未必，因此只检查class即可
-
-        if (!cached_class || *cached_class != *instance->get_class()) {
-            // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
-            auto identifier = chunk().read_identifier(identifier_key);
-            const auto &cached_closure = instance->get_class()->resolve_method(identifier);
-            cache.cached_closure = cached_closure;
-            cache.cached_class = instance->get_class();
-            auto method = Runtime::allocate_as_ref<LoxMethod>(cached_closure, instance);
-            Runtime::record_allocation(method);
-            push(method);
-        } else {
-            // 如果缓存的class匹配，则直接读取缓存
-            auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure.lock(), instance);
-            Runtime::record_allocation(method);
-            push(method);
-        }
-    }
+    void method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache);
 
     std::vector<CallFrame> frames;
     std::vector<Value> stack; // 栈
