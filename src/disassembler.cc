@@ -49,7 +49,8 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::MakeClass, "MakeClass"},
     {Opcode::LoadField, "LoadField"},
     {Opcode::SetField, "SetField"},
-    {Opcode::MethodLookup, "MethodLookup"},
+    {Opcode::MethodBind, "MethodBind"},
+    {Opcode::MethodInvoke, "MethodInvoke"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -126,8 +127,10 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_make_closure(instruction, offset);
         case Opcode::MakeClass:
             return instruction_make_class(instruction, offset);
-        case Opcode::MethodLookup:
-            return instruction_cache(instruction, offset);
+        case Opcode::MethodBind:
+            return instruction_method_bind(instruction, offset);
+        case Opcode::MethodInvoke:
+            return instruction_method_invoke(instruction, offset);
     }
 }
 
@@ -143,12 +146,6 @@ size_t Disassembler::instruction_constant_operand_1(Opcode instruction, size_t o
     cout << fmt::format("{:18} {} index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 2;
 }
-
-// size_t Disassembler::instruction_local(Opcode instruction, size_t offset) {
-//     uint8_t index = chunk->code.at(offset + 1);
-//     cout << fmt::format("{:18} {} local index: {}\n", opcode_names.at(instruction), spaces_4, index);
-//     return offset + 2;
-// }
 
 size_t Disassembler::instruction_general(Opcode instruction, size_t offset) {
     uint8_t value = chunk->code.at(offset + 1);
@@ -209,12 +206,21 @@ size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
     return offset + 5;
 }
 
-size_t Disassembler::instruction_cache(Opcode instruction, size_t offset) {
+size_t Disassembler::instruction_method_bind(Opcode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = chunk->read_identifier(key);
     uint8_t cache_index = chunk->code.at(offset + 3);
     cout << fmt::format("{:18} {} method: {}; cache index {}\n", opcode_names.at(instruction), spaces_4, identifier, cache_index);
     return offset + 4;
+}
+
+size_t Disassembler::instruction_method_invoke(Opcode instruction, size_t offset) {
+    uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = chunk->read_identifier(key);
+    uint8_t cache_index = chunk->code.at(offset + 3);
+    uint8_t arg_count = chunk->code.at(offset + 4);
+    cout << fmt::format("{:18} {} method: {}; cache index {}, arg count {}\n", opcode_names.at(instruction), spaces_4, identifier, cache_index, arg_count);
+    return offset + 5;
 }
 
 

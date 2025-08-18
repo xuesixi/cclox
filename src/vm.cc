@@ -6,6 +6,9 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <variant>
+#include <variant>
+
 #include "objects/loxstring.h"
 #include "objects/loxclass.h"
 #include <variant>
@@ -319,11 +322,21 @@ InterpreterResult VM::run() {
                     Runtime::record_allocation(new_class);
                     break;
                 }
-                case Opcode::MethodLookup: {
+                case Opcode::MethodBind: {
                     auto receiver = pop_and_get();
                     auto identifier_key = read_operand_2();
                     Chunk::MethodCache &cache = read_cache();
-                    method_lookup(receiver, identifier_key, cache);
+                    auto cl = method_lookup(receiver, identifier_key, cache);
+                    auto method = Runtime::allocate_as_ref<LoxMethod>(cl, LoxValue::to_reference_unsafe<LoxInstance>(receiver));
+                    Runtime::record_allocation(method);
+                    push(method);
+                    break;
+                }
+                case Opcode::MethodInvoke: {
+                    auto identifier_key = read_operand_2();
+                    Chunk::MethodCache &cache = read_cache();
+                    uint8_t arg_count = read_operand_1();
+                    method_invoke(identifier_key, cache, arg_count);
                     break;
                 }
                 case Opcode::LoadField: {
@@ -435,7 +448,8 @@ void VM::call_class(size_t arg_count) {
         }
     } else {
         if (arg_count != constructor->function->arity()) {
-            throw LoxArgError(fmt::format("the constructor expect {} argument, but got {}", constructor->function->arity(),
+            throw LoxArgError(fmt::format("the constructor expect {} argument, but got {}",
+                                          constructor->function->arity(),
                                           arg_count));
         } else {
             LoxReference v = Runtime::allocate_as_ref<LoxInstance>(a_class, a_class->get_num_fields());
@@ -451,7 +465,8 @@ void VM::call_native(size_t arg_count) {
     size_t fp = stack.size() - 1 - arg_count;
     auto native = LoxValue::to_reference_unsafe<LoxNative>(stack.at(fp));
     if (arg_count != native->get_arity()) {
-        throw LoxArgError(fmt::format("the native function {} expect {} arguments, but got {}", native->get_name(), native->get_arity(), arg_count));
+        throw LoxArgError(fmt::format("the native function {} expect {} arguments, but got {}", native->get_name(),
+                                      native->get_arity(), arg_count));
     }
     auto impl = native->get_impl();
     impl(stack, fp);
@@ -469,7 +484,7 @@ void VM::recur_call(size_t arg_count) {
     pc() = 0;
 }
 
-void VM::method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache) {
+std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache) {
     if (std::holds_alternative<LoxReference>(receiver) == false) {
         throw LoxTypeError(fmt::format("the value {} is not an reference type and cannot bind to a method",
                                        LoxValue::to_string(receiver)));
@@ -487,16 +502,24 @@ void VM::method_lookup(const Value &receiver, OperandSize identifier_key, Chunk:
     if (!cached_class || *cached_class != *instance->get_class()) {
         // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
         auto identifier = chunk().read_identifier(identifier_key);
-        const auto &cached_closure = instance->get_class()->resolve_method(identifier);
+        auto cached_closure = instance->get_class()->resolve_method(identifier);
         cache.cached_closure = cached_closure;
         cache.cached_class = instance->get_class();
-        auto method = Runtime::allocate_as_ref<LoxMethod>(cached_closure, instance);
-        Runtime::record_allocation(method);
-        push(method);
+        return cached_closure;
     } else {
         // 如果缓存的class匹配，则直接读取缓存
-        auto method = Runtime::allocate_as_ref<LoxMethod>(cache.cached_closure.lock(), instance);
-        Runtime::record_allocation(method);
-        push(method);
+        return cache.cached_closure.lock();
     }
+}
+
+void VM::method_invoke(OperandSize identifier_key, Chunk::MethodCache &cache, uint8_t arg_count) {
+    // receiver, arg1, arg2, arg3
+    size_t fp = stack.size() - arg_count - 1;
+    Value receiver = stack.at(fp);
+    auto cl = method_lookup(receiver, identifier_key, cache);
+    if (cl->function->arity() != arg_count) {
+        throw LoxArgError(fmt::format("the method {} expects {} arguments, but got {}", cl->to_string(), cl->function->arity(), arg_count));
+    }
+    frames.push_back({cl, 0, fp});
+    stack.at(fp) = receiver;
 }

@@ -286,9 +286,17 @@ void Compiler::dot_expr(bool can_assign) {
     consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
     auto key = current_chunk().add_identifier(curr.get_lexeme());
     auto cache_index = current_chunk().add_method_cache();
-    emit_opcode(Opcode::MethodLookup);
-    emit_operand_2(key);
-    emit_operand_1(cache_index);
+    if (match(TokenType::LEFT_PAREN)) {
+        auto arg_count = argument_list();
+        emit_opcode(Opcode::MethodInvoke);
+        emit_operand_2(key);
+        emit_operand_1(cache_index);
+        emit_operand_1(arg_count);
+    } else {
+        emit_opcode(Opcode::MethodBind);
+        emit_operand_2(key);
+        emit_operand_1(cache_index);
+    }
 }
 
 void Compiler::and_expr([[maybe_unused]] bool can_assign) {
@@ -525,25 +533,30 @@ void Compiler::this_expr(bool can_assign) {
                 emit_opcode(Opcode::LoadField);
                 emit_operand_1(field_found.value());
             }
-
         } else {
-
             emit_opcode(Opcode::LoadLocal);
             emit_operand_1(0);
 
             // 没有找到字段，则判断是方法
             auto key = current_chunk().add_identifier(curr.get_lexeme());
             auto cache_index = current_chunk().add_method_cache();
-            emit_opcode(Opcode::MethodLookup);
-            emit_operand_2(key);
-            emit_operand_1(cache_index);
+            if (match(TokenType::LEFT_PAREN)) {
+                uint8_t arg_count = argument_list();
+                emit_opcode(Opcode::MethodInvoke);
+                emit_operand_2(key);
+                emit_operand_1(cache_index);
+                emit_operand_1(arg_count);
+            } else {
+                emit_opcode(Opcode::MethodBind);
+                emit_operand_2(key);
+                emit_operand_1(cache_index);
+            }
         }
     } else {
         // 单独的this
         emit_opcode(Opcode::LoadLocal);
         emit_operand_1(0);
     }
-
 }
 
 void Compiler::emit_load_constant_flexible(Value &&value) {
@@ -833,7 +846,6 @@ void Compiler::parse_class() {
     emit_operand_1(class_scope->method_count);
 
     class_scope = std::nullopt;
-
 }
 
 void Compiler::expression_statement() {

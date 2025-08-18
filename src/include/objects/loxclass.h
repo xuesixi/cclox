@@ -44,6 +44,10 @@ public:
         methods.insert({method->fun_name(), method});
     }
 
+    /**
+     * 在类中寻找对应名字的方法
+     * @throws LoxNameError 如果没找到
+     */
     std::shared_ptr<LoxClosure> resolve_method(const std::string &method_name) {
         auto found = methods.find(method_name);
         if (found == methods.end()) {

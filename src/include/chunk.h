@@ -53,7 +53,8 @@ enum class Opcode: uint8_t {
     MakeClass, // key: operand2, num_field: operand1, num_method: operand1 ; 此时栈顶的num_method个值都是该类的method，将它们全部弹出，生成一个class，置于栈顶
     LoadField, // index: operand1 ；以stack[fp]为instance，将其索引为index的字段置入栈顶
     SetField, // index: operand1 ；以stack[fp]为instance，设置instance的索引为index的字段
-    MethodLookup, // key: operand2, cache_index: operand1 ； 此时，栈顶是方法的接受者。根据cache_index查找对应的方法，如果缓存失效，改为使用标识符查询。将获取到的closure绑定到接受者上，弹出接受者，置入method
+    MethodBind, // key: operand2, cache_index: operand1 ； 此时，栈顶是方法的接受者。根据cache_index查找对应的方法，如果缓存失效，改为使用标识符查询。将获取到的closure绑定到接受者上，弹出接受者，置入method
+    MethodInvoke, // key: operand2, cache_index: operand1, arg_count: operand1； 此时，栈顶是方法的接受者。根据cache_index查找对应的方法，如果缓存失效，改为使用标识符查询。用查询到的closure创建新的栈帧。
 };
 
 using OperandSize = uint16_t;
