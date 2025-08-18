@@ -105,18 +105,18 @@ public:
      */
     OperandSize add_constant(Value &&value);
 
-    /**
-     * 获取str在标识符中的键。如果已存在，则直接返回键。否则，向标识符池中增加一个值
-     * @throws IdentifierPoolOverFlowError 如果标识符池的元素数量无法用uint16表示
-     */
-    OperandSize add_identifier(const std::string &str);
+    // /**
+    //  * 获取str在标识符中的键。如果已存在，则直接返回键。否则，向标识符池中增加一个值
+    //  * @throws IdentifierPoolOverFlowError 如果标识符池的元素数量无法用uint16表示
+    //  */
+    // OperandSize add_identifier(const std::string &str);
 
-    /**
-     * 读取key所代表的标识符字符串
-     */
-    std::string read_identifier(OperandSize key) const {
-        return identifiers.at(key);
-    }
+    // /**
+    //  * 读取key所代表的标识符字符串
+    //  */
+    // std::string read_identifier(OperandSize key) const {
+    //     return identifiers.at(key);
+    // }
 
     /**
      * 对于一个Value，如果它属于立即数，返回其立即数索引，否则返回nullopt
@@ -185,14 +185,9 @@ public:
         code.shrink_to_fit();
         constants.shrink_to_fit();
         lines.shrink_to_fit();
-        identifiers.shrink_to_fit();
         method_caches.shrink_to_fit();
         size_t sum = sizeof(uint8_t) * code.capacity() + sizeof(Value) * constants.capacity()
-        + sizeof(int) * lines.capacity() + sizeof(std::string) * identifiers.capacity()
-        + sizeof(MethodCache) * method_caches.size();
-        for (auto & identifier : identifiers) {
-            sum += identifier.capacity();
-        }
+        + sizeof(int) * lines.capacity() + sizeof(MethodCache) * method_caches.size();
         return sum;
     }
 
@@ -205,7 +200,7 @@ private:
     // 与字节码一一对应的行数记录
     std::vector<int> lines;
     // 标识符池
-    std::vector<std::string> identifiers;
+    // std::vector<std::string> identifiers;
 
     std::vector<MethodCache> method_caches;
 };

@@ -13,6 +13,7 @@
 #include "objects/loxclass.h"
 #include <variant>
 
+#include "stringintern.h"
 #include "objects/loxinstance.h"
 #include "objects/loxnative.h"
 
@@ -183,33 +184,36 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::DefineGlobal: {
                     Value value = pop_and_get();
-                    std::string identifier = read_identifier();
-                    Runtime::globals[identifier] = value;
+                    // std::string identifier = read_identifier();
+                    uint16_t str_id = read_operand_2();
+                    Runtime::globals[str_id] = value;
                     break;
                 }
                 case Opcode::LoadGlobal: {
-                    std::string identifier = read_identifier();
-                    auto found = Runtime::globals.find(identifier);
+                    // std::string identifier = read_identifier();
+                    auto str_id = read_operand_2();
+                    auto found = Runtime::globals.find(str_id);
                     if (found != Runtime::globals.end()) {
                         push(found->second);
                         break;
                     }
-                    found = Runtime::builtin.find(identifier);
+                    found = Runtime::builtin.find(str_id);
                     if (found != Runtime::builtin.end()) {
                         push(found->second);
                         break;
                     }
-                    throw LoxNameError(fmt::format("the variable: {} is not found", identifier));
+                    throw LoxNameError(fmt::format("the variable: {} is not found", StringIntern::read_from_id(str_id)));
                     break;
                 }
                 case Opcode::SetGlobal: {
-                    std::string identifier = read_identifier();
-                    auto found = Runtime::globals.find(identifier);
+                    // std::string identifier = read_identifier();
+                    auto str_id = read_operand_2();
+                    auto found = Runtime::globals.find(str_id);
                     if (found == Runtime::globals.end()) {
-                        throw LoxNameError(fmt::format("the variable: {} is not found", identifier));
+                        throw LoxNameError(fmt::format("the variable: {} is not found", StringIntern::read_from_id(str_id)));
                     } else {
                         Value v = stack.back();
-                        Runtime::globals[identifier] = v;
+                        Runtime::globals[str_id] = v;
                     }
                     break;
                 }
@@ -309,7 +313,8 @@ InterpreterResult VM::run() {
                     break;
                 }
                 case Opcode::MakeClass: {
-                    auto name = read_identifier();
+                    auto str_id = read_operand_2();
+                    auto name = StringIntern::read_from_id(str_id);
                     auto num_field = read_operand_1();
                     auto num_method = read_operand_1();
                     auto new_class = Runtime::allocate_as<LoxClass>(name, num_field);
@@ -501,8 +506,7 @@ std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize
 
     if (!cached_class || *cached_class != *instance->get_class()) {
         // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
-        auto identifier = chunk().read_identifier(identifier_key);
-        auto cached_closure = instance->get_class()->resolve_method(identifier);
+        auto cached_closure = instance->get_class()->resolve_method(identifier_key);
         cache.cached_closure = cached_closure;
         cache.cached_class = instance->get_class();
         return cached_closure;

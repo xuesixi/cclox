@@ -10,9 +10,9 @@ namespace Runtime {
 
     std::atomic<size_t> allocated_size = 0;
 
-    std::unordered_map<std::string, Value> globals;
+    std::unordered_map<uint16_t, Value> globals;
 
-    std::unordered_map<std::string, Value> builtin;
+    std::unordered_map<uint16_t, Value> builtin;
 
     std::mutex gc_lock;
 

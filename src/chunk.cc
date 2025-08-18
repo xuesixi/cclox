@@ -67,20 +67,3 @@ OperandSize Chunk::add_constant(Value &&value) {
         return index;
     }
 }
-
-OperandSize Chunk::add_identifier(const std::string &str) {
-    auto found = std::find(identifiers.begin(), identifiers.end(), str);
-    if (found != identifiers.end()) {
-        // 如果存在，则返回键
-        size_t index = std::distance(identifiers.begin(), found);
-        return index;
-    }
-
-    // 如果不存在，则新增
-    size_t key = identifiers.size();
-    identifiers.push_back(str);
-    if (!within<uint16_t>(key)) {
-        throw IdentifierPoolOverFlowError("identifier pool overflow");
-    }
-    return key;
-}

@@ -108,11 +108,11 @@ private:
         return chunk().constant_at(index);
     }
 
-    // 读取下两个操作数作为uint16索引，从标识符池中读取对应的标识符
-    std::string read_identifier() {
-        uint16_t key = read_operand_2();
-        return chunk().read_identifier(key);
-    }
+    // // 读取下两个操作数作为uint16索引，从标识符池中读取对应的标识符
+    // std::string read_identifier() {
+    //     uint16_t key = read_operand_2();
+    //     return chunk().read_identifier(key);
+    // }
 
     /**
      * 读取下一个操作数作为cache的索引，从缓存池中读取对应的缓存

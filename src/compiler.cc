@@ -9,6 +9,7 @@
 #include <string>
 #include <fmt/core.h>
 #include <utility>
+#include "stringintern.h"
 
 #include "runtime.h"
 
@@ -284,7 +285,8 @@ void Compiler::dot_expr(bool can_assign) {
     // a.b().c()
 
     consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
-    auto key = current_chunk().add_identifier(curr.get_lexeme());
+    // auto key = current_chunk().add_identifier(curr.get_lexeme());
+    auto key = StringIntern::resolve_string(curr.get_lexeme());
     auto cache_index = current_chunk().add_method_cache();
     if (match(TokenType::LEFT_PAREN)) {
         auto arg_count = argument_list();
@@ -482,7 +484,8 @@ void Compiler::variable_expr(bool can_assign) {
     }
 
     // 都没找到，则认为是全局变量
-    OperandSize key = current_chunk().add_identifier(curr.lexeme);
+    // OperandSize key = current_chunk().add_identifier(curr.lexeme);
+    OperandSize key = StringIntern::resolve_string(curr.lexeme);
     if (match(TokenType::EQUAL)) {
         if (can_assign) {
             compile_precedence_at_least(Precedence::ASSIGNMENT);
@@ -538,7 +541,8 @@ void Compiler::this_expr(bool can_assign) {
             emit_operand_1(0);
 
             // 没有找到字段，则判断是方法
-            auto key = current_chunk().add_identifier(curr.get_lexeme());
+            // auto key = current_chunk().add_identifier(curr.get_lexeme());
+            auto key = StringIntern::resolve_string(curr.get_lexeme());
             auto cache_index = current_chunk().add_method_cache();
             if (match(TokenType::LEFT_PAREN)) {
                 uint8_t arg_count = argument_list();
@@ -716,7 +720,8 @@ void Compiler::block_statement() {
 
 OperandSize Compiler::resolve_global_identifier() {
     consume(TokenType::IDENTIFIER, "expect an identifier here");
-    return current_chunk().add_identifier(curr.lexeme);
+    // return current_chunk().add_identifier(curr.lexeme);
+    return StringIntern::resolve_string(curr.get_lexeme());
 }
 
 void Compiler::fun_statement() {
@@ -804,7 +809,8 @@ void Compiler::method_statement(bool is_static) {
 
 void Compiler::parse_class() {
     std::string class_name = curr.get_lexeme();
-    auto key = current_chunk().add_identifier(class_name);
+    // auto key = current_chunk().add_identifier(class_name);
+    auto key = StringIntern::resolve_string(class_name);
     consume(TokenType::LEFT_BRACE, "expect a '{' after the class name");
     class_scope = ClassScope{};
     bool field_finished = false; // 方法都必须写在所有的field后面

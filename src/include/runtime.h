@@ -16,9 +16,9 @@ namespace Runtime {
 
     extern std::vector<std::weak_ptr<LoxObject>> weak_pool;
 
-    extern std::unordered_map<std::string, Value> globals;
+    extern std::unordered_map<uint16_t, Value> globals;
 
-    extern std::unordered_map<std::string, Value> builtin;
+    extern std::unordered_map<uint16_t, Value> builtin;
 
     extern std::mutex gc_lock;
 

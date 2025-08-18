@@ -7,6 +7,8 @@
 #include "runtime.h"
 #include <chrono>
 
+#include "stringintern.h"
+
 namespace Native {
     /**
      * 获取当前的时间，单位为秒的浮点数
@@ -20,7 +22,8 @@ namespace Native {
 void add_native(const std::string &name, LoxNative::NativeImpl impl, int arity) {
     auto native = Runtime::allocate_as_ref<LoxNative>(impl, name, arity);
     Runtime::record_allocation(native);
-    Runtime::builtin.insert({name, native});
+    auto str_id = StringIntern::resolve_string(name);
+    Runtime::builtin.insert({str_id, native});
 }
 
 void load_all_natives() {

@@ -6,6 +6,7 @@
 #define LOXCLASS_H
 #include "object.h"
 #include "cclox_util.h"
+#include "stringintern.h"
 #include "objects/loxclosure.h"
 #include "value.h"
 
@@ -22,7 +23,7 @@ public:
 
     size_t compute_size() override {
         if (mem_size == 0) {
-            mem_size = sizeof(LoxClass) + estimate_string_map_size(methods);
+            mem_size = sizeof(LoxClass) + estimate_u16_map_size(methods);
             return mem_size;
         } else {
             return mem_size;
@@ -41,17 +42,18 @@ public:
         if (method->fun_name() == "init") {
             constructor_ = method;
         }
-        methods.insert({method->fun_name(), method});
+        auto stdid = StringIntern::resolve_string(method->fun_name());
+        methods.insert({stdid, method});
     }
 
     /**
      * 在类中寻找对应名字的方法
      * @throws LoxNameError 如果没找到
      */
-    std::shared_ptr<LoxClosure> resolve_method(const std::string &method_name) {
-        auto found = methods.find(method_name);
+    std::shared_ptr<LoxClosure> resolve_method(uint16_t strid) {
+        auto found = methods.find(strid);
         if (found == methods.end()) {
-            throw LoxNameError(fmt::format("no such method {} in class {}", method_name, name));
+            throw LoxNameError(fmt::format("no such method {} in class {}", StringIntern::read_from_id(strid), name));
         }
         return found->second;
     }
@@ -73,7 +75,7 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<LoxClosure>> methods;
+    std::unordered_map<uint16_t, std::shared_ptr<LoxClosure>> methods;
     std::shared_ptr<LoxClosure> constructor_;
     size_t mem_size = 0;
     std::string name;

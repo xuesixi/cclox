@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "compiler.h"
+#include "stringintern.h"
 
 using std::cout;
 
@@ -186,7 +187,7 @@ size_t Disassembler::instruction_constant_operand_2(Opcode instruction, size_t o
 
 size_t Disassembler::instruction_identifier_operand_2(Opcode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = chunk->read_identifier(key);
+    std::string identifier = StringIntern::read_from_id(key);
     cout << fmt::format("{:18} {} identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
@@ -199,7 +200,7 @@ size_t Disassembler::instruction_make_closure(Opcode instruction, size_t offset)
 
 size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = chunk->read_identifier(key);
+    std::string identifier = StringIntern::read_from_id(key);
     uint8_t num_field = chunk->code.at(offset + 3);
     uint8_t num_method = chunk->code.at(offset + 4);
     cout << fmt::format("{:18} {} class: {}; field {}, method {}\n", opcode_names.at(instruction), spaces_4, identifier, num_field, num_method);
@@ -208,7 +209,7 @@ size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
 
 size_t Disassembler::instruction_method_bind(Opcode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = chunk->read_identifier(key);
+    std::string identifier = StringIntern::read_from_id(key);
     uint8_t cache_index = chunk->code.at(offset + 3);
     cout << fmt::format("{:18} {} method: {}; cache index {}\n", opcode_names.at(instruction), spaces_4, identifier, cache_index);
     return offset + 4;
@@ -216,7 +217,7 @@ size_t Disassembler::instruction_method_bind(Opcode instruction, size_t offset) 
 
 size_t Disassembler::instruction_method_invoke(Opcode instruction, size_t offset) {
     uint16_t key = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = chunk->read_identifier(key);
+    std::string identifier = StringIntern::read_from_id(key);
     uint8_t cache_index = chunk->code.at(offset + 3);
     uint8_t arg_count = chunk->code.at(offset + 4);
     cout << fmt::format("{:18} {} method: {}; cache index {}, arg count {}\n", opcode_names.at(instruction), spaces_4, identifier, cache_index, arg_count);

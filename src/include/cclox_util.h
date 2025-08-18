@@ -88,6 +88,27 @@ size_t estimate_string_map_size(std::unordered_map<std::string, A> map) {
     return total_bytes;
 }
 
+template <typename A>
+size_t estimate_u16_map_size(std::unordered_map<uint16_t, A> map) {
+
+    size_t total_bytes = 0;
+
+    // 2. Bucket array memory
+    // Each bucket typically stores a pointer to the first node in that bucket
+    total_bytes += map.bucket_count() * sizeof(void*);
+
+    // 3. Node memory
+    // Each element is typically stored in a node with: key, value, next pointer, hash
+    const size_t node_overhead = sizeof(void*) + sizeof(size_t); // next pointer + hash
+    const size_t per_node_size = sizeof(uint16_t) + sizeof(A) + node_overhead;
+    total_bytes += map.size() * per_node_size;
+    // for (const auto &pair: map) {
+    //     total_bytes += per_node_size;
+    //     total_bytes += pair.first.capacity();
+    // }
+    return total_bytes;
+}
+
 //
 /**
  * 打开指定路径的文件，并将其全部内容返回为一个string。
