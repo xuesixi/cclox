@@ -292,12 +292,12 @@ void Compiler::dot_expr(bool can_assign) {
         auto arg_count = argument_list();
         emit_opcode(Opcode::MethodInvoke);
         emit_operand_2(key);
-        emit_operand_1(cache_index);
+        // emit_operand_1(cache_index);
         emit_operand_1(arg_count);
     } else {
         emit_opcode(Opcode::MethodBind);
         emit_operand_2(key);
-        emit_operand_1(cache_index);
+        // emit_operand_1(cache_index);
     }
 }
 
@@ -548,12 +548,12 @@ void Compiler::this_expr(bool can_assign) {
                 uint8_t arg_count = argument_list();
                 emit_opcode(Opcode::MethodInvoke);
                 emit_operand_2(key);
-                emit_operand_1(cache_index);
+                // emit_operand_1(cache_index);
                 emit_operand_1(arg_count);
             } else {
                 emit_opcode(Opcode::MethodBind);
                 emit_operand_2(key);
-                emit_operand_1(cache_index);
+                // emit_operand_1(cache_index);
             }
         }
     } else {

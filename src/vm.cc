@@ -330,8 +330,9 @@ InterpreterResult VM::run() {
                 case Opcode::MethodBind: {
                     auto receiver = pop_and_get();
                     auto identifier_key = read_operand_2();
-                    Chunk::MethodCache &cache = read_cache();
-                    auto cl = method_lookup(receiver, identifier_key, cache);
+                    // Chunk::MethodCache &cache = read_cache();
+                    // next();
+                    auto cl = method_lookup(receiver, identifier_key);
                     auto method = Runtime::allocate_as_ref<LoxMethod>(cl, LoxValue::to_reference_unsafe<LoxInstance>(receiver));
                     Runtime::record_allocation(method);
                     push(method);
@@ -339,9 +340,10 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::MethodInvoke: {
                     auto identifier_key = read_operand_2();
-                    Chunk::MethodCache &cache = read_cache();
+                    // Chunk::MethodCache &cache = read_cache();
+                    // next();
                     uint8_t arg_count = read_operand_1();
-                    method_invoke(identifier_key, cache, arg_count);
+                    method_invoke(identifier_key, arg_count);
                     break;
                 }
                 case Opcode::LoadField: {
@@ -489,7 +491,7 @@ void VM::recur_call(size_t arg_count) {
     pc() = 0;
 }
 
-std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize identifier_key, Chunk::MethodCache &cache) {
+std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize identifier_key) {
     if (std::holds_alternative<LoxReference>(receiver) == false) {
         throw LoxTypeError(fmt::format("the value {} is not an reference type and cannot bind to a method",
                                        LoxValue::to_string(receiver)));
@@ -501,26 +503,30 @@ std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize
     }
     auto instance = std::static_pointer_cast<LoxInstance>(ref);
 
-    std::shared_ptr<LoxClass> cached_class = cache.cached_class.lock();
-    // 如果class还活着，那么其method必然活着。但反之则未必，因此只检查class即可
+    auto cached_closure = instance->get_class()->resolve_method(identifier_key);
 
-    if (!cached_class || *cached_class != *instance->get_class()) {
-        // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
-        auto cached_closure = instance->get_class()->resolve_method(identifier_key);
-        cache.cached_closure = cached_closure;
-        cache.cached_class = instance->get_class();
-        return cached_closure;
-    } else {
-        // 如果缓存的class匹配，则直接读取缓存
-        return cache.cached_closure.lock();
-    }
+    return cached_closure;
+
+    // std::shared_ptr<LoxClass> cached_class = cache.cached_class.lock();
+    // // 如果class还活着，那么其method必然活着。但反之则未必，因此只检查class即可
+    //
+    // if (!cached_class || *cached_class != *instance->get_class()) {
+    //     // 如果缓存不存在或者class不匹配，则进行哈希表查询，然后更新缓存
+    //     auto cached_closure = instance->get_class()->resolve_method(identifier_key);
+    //     cache.cached_closure = cached_closure;
+    //     cache.cached_class = instance->get_class();
+    //     return cached_closure;
+    // } else {
+    //     // 如果缓存的class匹配，则直接读取缓存
+    //     return cache.cached_closure.lock();
+    // }
 }
 
-void VM::method_invoke(OperandSize identifier_key, Chunk::MethodCache &cache, uint8_t arg_count) {
+void VM::method_invoke(OperandSize identifier_key, uint8_t arg_count) {
     // receiver, arg1, arg2, arg3
     size_t fp = stack.size() - arg_count - 1;
     Value receiver = stack.at(fp);
-    auto cl = method_lookup(receiver, identifier_key, cache);
+    auto cl = method_lookup(receiver, identifier_key);
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the method {} expects {} arguments, but got {}", cl->to_string(), cl->function->arity(), arg_count));
     }
