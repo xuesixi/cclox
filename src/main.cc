@@ -18,6 +18,7 @@ namespace Flag {
     bool repl = false;
     bool show_heap = false;
     bool print_color = false;
+    bool not_run = false;
 }
 
 namespace Configuration {
@@ -90,6 +91,7 @@ int main(int argc, const char **args) {
     app.add_flag("-t, --trace", Flag::trace, "trace each step");
     app.add_flag("-H, --heap", Flag::show_heap, "show heap allocation info");
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
+    app.add_flag("-n, --not-run", Flag::not_run, "don't run the code after the compilation");
     app.add_flag("-C, --color", Flag::print_color, "the result of print will be colored");
 
     CLI11_PARSE(app, argc, args);

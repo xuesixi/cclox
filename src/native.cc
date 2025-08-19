@@ -4,6 +4,7 @@
 
 #include "objects/loxnative.h"
 #include "native.h"
+
 #include "runtime.h"
 #include <chrono>
 
@@ -17,6 +18,8 @@ namespace Native {
         stack.pop_back();
         stack.push_back(static_cast<double>(clock()) / CLOCKS_PER_SEC);
     }
+
+
 }
 
 void add_native(const std::string &name, LoxNative::NativeImpl impl, int arity) {

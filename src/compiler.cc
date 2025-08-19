@@ -18,7 +18,7 @@ void Compiler::error_at(const Token &token, const std::string &message) {
         return;
     }
     panic_mode = true;
-    std::cerr << fmt::format("[line {}] Error", token.line);
+    std::cerr << fmt::format("[line {}] Error ", token.line);
     if (token.type == TokenType::END_OF_FILE) {
         std::cerr << " at end. ";
     } else if (token.type == TokenType::ERROR) {

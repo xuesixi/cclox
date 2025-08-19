@@ -59,6 +59,14 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+/**
+ * 在scan_token中可能会被抛出。只在interpret()中被捕获。
+ */
+class ScannerError: public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 class ConstantPoolOverflowError : public CompilerError {
 public:
     using CompilerError::CompilerError;

@@ -4,10 +4,12 @@
 
 #ifndef CCLOX_VALUE_H
 #define CCLOX_VALUE_H
+#include <any>
 #include <variant>
 #include <memory>
 #include "object.h"
 
+using NativeReference = std::shared_ptr<std::any>;
 using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference>;
 
 namespace LoxValue {

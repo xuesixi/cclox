@@ -55,7 +55,7 @@ Token Scanner::scan_string() {
         advance();
     }
     if (is_at_end()) {
-        return error_token("unterminated string");
+        throw ScannerError(fmt::format("unterminated string at line {}", curr_line));
     }
     advance();
     return make_token(TokenType::STRING);
@@ -69,7 +69,7 @@ Token Scanner::scan_fmt_string() {
         advance();
     }
     if (is_at_end()) {
-        return error_token("unterminated format string");
+        throw ScannerError(fmt::format("unterminated format string at line {}", curr_line));
     }
     advance();
     return make_token(TokenType::FMT_STRING);
@@ -151,7 +151,7 @@ Token Scanner::scan_token() {
         case '"': // 处理字符串
             return scan_string();
         default:
-            return error_token("unknown character");
+            throw ScannerError(fmt::format("unknown character at line {}", curr_line));
     }
 }
 
@@ -230,7 +230,7 @@ void Scanner::skip_whitespace() {
                 advance();
                 break;
             case '/': {
-                if (peek_next(1) == '/') {
+                if (!is_at_end(1) && peek_next(1) == '/') {
                     // 说明遇到了注释，那么一路前进到本行结束
 
                     while (!is_at_end() && peek_next() != '\n') {
@@ -238,6 +238,27 @@ void Scanner::skip_whitespace() {
                         // 如果遇到了换行符，本循环结束。在下一次的外层循环中，进入换行符的case
                         advance();
                     }
+                    break;
+                } else if (!is_at_end(1) && peek_next(1) == '*') {
+                    /* */
+                    advance();
+                    advance();
+                    while (true) {
+                        if (!is_at_end(1) && peek_next() == '*' && peek_next(1) == '/') {
+                            advance();
+                            advance();
+                            break;
+                        }
+                        if (is_at_end()) {
+                            throw ScannerError(fmt::format("unterminated /* comment at line {}", curr_line));
+                            return;
+                        }
+                        if (peek_next() == '\n') {
+                            curr_line ++;
+                        }
+                        advance();
+                    }
+
                     break;
                 } else {
                     return;

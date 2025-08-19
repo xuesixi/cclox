@@ -6,6 +6,8 @@
 #include <optional>
 #include <string>
 
+#include "error.h"
+
 enum class TokenType {
     // Single-character tokens.
     LEFT_PAREN, RIGHT_PAREN,
@@ -71,6 +73,10 @@ public:
     Scanner(std::string &&file_content, int start_line): text(std::move(file_content)), start_index(0), next_index(0), curr_line(start_line) {
     };
 
+    /**
+     * 返回下一个token。
+     * @throws ScannerError 如果出现扫描错误
+     */
     Token scan_token();
 
     bool has_more() {
@@ -121,10 +127,10 @@ private:
     }
 
     /**
-     * 是否到达文本的末尾。实际上是测试 next_index 是否为text.size()
+     * 是否到达文本的末尾。实际上是测试 next_index+n 是否大于等于text.size()
      */
-    bool is_at_end() {
-        return next_index == text.size();
+    bool is_at_end(int n = 0) {
+        return next_index + n >= text.size();
     }
 
     /* 返回next_index指向的字符，并自增之 */

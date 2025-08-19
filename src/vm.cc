@@ -22,15 +22,21 @@ VM::VM() {
 }
 
 InterpreterResult VM::interpret(std::string &&source) {
-    Compiler compiler;
-    auto f = compiler.compile(std::move(source));
-    auto closure = Runtime::allocate_as<LoxClosure>(f);
-    Runtime::record_allocation(closure);
-    if (f) {
-        frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
-        push(closure);
-        return run();
-    } else {
+    try {
+        Compiler compiler;
+        auto f = compiler.compile(std::move(source));
+        auto closure = Runtime::allocate_as<LoxClosure>(f);
+        Runtime::record_allocation(closure);
+        if (f && !Flag::not_run) {
+            frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
+            push(closure);
+            return run();
+        } else {
+            return InterpreterResult::CompileError;
+        }
+
+    } catch (ScannerError &error) {
+        std::cerr << error.what() << std::endl;
         return InterpreterResult::CompileError;
     }
 }
