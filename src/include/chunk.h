@@ -35,9 +35,9 @@ enum class Opcode: uint8_t {
     Print, // ；弹出并打印栈顶的值，自带换行符。如果设置了Flag::print_color，则打印绿色
     Pop, // ； 弹出栈顶的值
     PopN, // n: operand1 ；弹出栈顶的n个值
-    DefineGlobal, // key: operand2 ；弹出栈顶的值，创建一个名为key所对应的标识符的全局变量，将其值设置为刚才弹出的那个值
-    LoadGlobal, // key: operand2 ；将名为key所对应的标识符的全局变量置入栈顶
-    SetGlobal, // key: operand2 ； 将名为key所对应的标识符的全局变量设置为栈顶的值
+    DefineGlobal, // string_id: operand2 ；弹出栈顶的值，创建一个名为string_id所对应的标识符的全局变量，将其值设置为刚才弹出的那个值
+    LoadGlobal, // string_id: operand2 ；将名为string_id所对应的标识符的全局变量置入栈顶
+    SetGlobal, // string_id: operand2 ； 将名为string_id所对应的标识符的全局变量设置为栈顶的值
     LoadLocal, // index: operand1 ；将帧栈中本地索引为index的那个本地变量的值置入栈顶
     SetLocal, // index: operand1 ； 将栈帧中本地索引为index的那个本地变量设置为栈顶的值
     SetCaptured, // index: operand1 ；将当前栈帧closure的captured[index]的值设置为当前栈顶的值
@@ -50,11 +50,11 @@ enum class Opcode: uint8_t {
     MakeClosure, // captured_count: operand1, [is_local: operand1, index: operand1]... ； captured_count标识后面有多少个捕获值。进行捕获
     Recur, // arg_count: operand1 ； 将栈顶的arg_count个值移动到当前栈帧的前arg_count个本地参数的位置，弹出此后的其他值。重置pc为0
     StringConcat, // str_count: operand1 ； 弹出栈顶的str_count个值，将它们合成一个字符串，置于栈顶。
-    MakeClass, // key: operand2, num_field: operand1, num_method: operand1 ; 此时栈顶的num_method个值都是该类的method，将它们全部弹出，生成一个class，置于栈顶
+    MakeClass, // string_id: operand2, num_field: operand1, num_method: operand1 ; 此时栈顶的num_method个值都是该类的method，将它们全部弹出，生成一个class，置于栈顶
     LoadField, // index: operand1 ；以stack[fp]为instance，将其索引为index的字段置入栈顶
     SetField, // index: operand1 ；以stack[fp]为instance，设置instance的索引为index的字段
-    MethodBind, // key: operand2, cache_index: operand1 ； 此时，栈顶是方法的接受者。根据cache_index查找对应的方法，如果缓存失效，改为使用标识符查询。将获取到的closure绑定到接受者上，弹出接受者，置入method
-    MethodInvoke, // key: operand2, cache_index: operand1, arg_count: operand1； 此时，栈顶是方法的接受者。根据cache_index查找对应的方法，如果缓存失效，改为使用标识符查询。用查询到的closure创建新的栈帧。
+    MethodBind, // string_id: operand2 ； 此时，栈顶是方法的接受者。在其类中查找对应的方法closure。将获取到的closure绑定到接受者上，弹出接受者，置入method
+    MethodInvoke, // string_id: operand2, arg_count: operand1； 此时，栈顶是方法的接受者, 在其类中查找对应的方法closure。用查询到的closure创建新的栈帧。
 };
 
 using OperandSize = uint16_t;
@@ -105,19 +105,6 @@ public:
      */
     OperandSize add_constant(Value &&value);
 
-    // /**
-    //  * 获取str在标识符中的键。如果已存在，则直接返回键。否则，向标识符池中增加一个值
-    //  * @throws IdentifierPoolOverFlowError 如果标识符池的元素数量无法用uint16表示
-    //  */
-    // OperandSize add_identifier(const std::string &str);
-
-    // /**
-    //  * 读取key所代表的标识符字符串
-    //  */
-    // std::string read_identifier(OperandSize key) const {
-    //     return identifiers.at(key);
-    // }
-
     /**
      * 对于一个Value，如果它属于立即数，返回其立即数索引，否则返回nullopt
      */
@@ -160,24 +147,6 @@ public:
     }
 
     /**
-     * 往方法缓存池中添加一个占位符，返回其索引
-     * @return 索引
-     * @throws Uint8OperandOverflowError 如果索引超出uint8
-     */
-    uint8_t add_method_cache() {
-        method_caches.push_back({});
-        if (within<uint8_t>(method_caches.size())) {
-            return method_caches.size() - 1;
-        } else {
-            throw Uint8OperandOverflowError("method cache overflow");
-        }
-    }
-
-    MethodCache &read_cache(uint8_t cache_index) {
-        return method_caches.at(cache_index);
-    }
-
-    /**
      * 尝试将chunk的各个vector的capacity缩减为size。然后估测本chunk的容器的所占用的内存。但不包括chunk自身的内存。
      * @return 估算的内存占用
      */
@@ -185,9 +154,8 @@ public:
         code.shrink_to_fit();
         constants.shrink_to_fit();
         lines.shrink_to_fit();
-        method_caches.shrink_to_fit();
         size_t sum = sizeof(uint8_t) * code.capacity() + sizeof(Value) * constants.capacity()
-        + sizeof(int) * lines.capacity() + sizeof(MethodCache) * method_caches.size();
+        + sizeof(int) * lines.capacity() ;
         return sum;
     }
 
@@ -199,10 +167,6 @@ private:
     std::vector<Value> constants;
     // 与字节码一一对应的行数记录
     std::vector<int> lines;
-    // 标识符池
-    // std::vector<std::string> identifiers;
-
-    std::vector<MethodCache> method_caches;
 };
 
 #endif //CCLOX_CHUNK_H

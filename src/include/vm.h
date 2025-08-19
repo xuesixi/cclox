@@ -108,20 +108,6 @@ private:
         return chunk().constant_at(index);
     }
 
-    // // 读取下两个操作数作为uint16索引，从标识符池中读取对应的标识符
-    // std::string read_identifier() {
-    //     uint16_t key = read_operand_2();
-    //     return chunk().read_identifier(key);
-    // }
-
-    /**
-     * 读取下一个操作数作为cache的索引，从缓存池中读取对应的缓存
-     */
-    Chunk::MethodCache &read_cache() {
-        auto index = read_operand_1();
-        return chunk().read_cache(index);
-    }
-
     std::shared_ptr<LoxClosure> &closure() {
         return frames.back().closure;
     }
@@ -202,16 +188,16 @@ private:
     void recur_call(size_t arg_count);
 
     /**
-     * 查找一个closure，该函数会先试图使用缓存，如果失败，则用哈希表查找并更新缓存
+     * 从该接收者的类中查找对应的方法
      * @param receiver 该方法要绑定的接受者
-     * @param identifier_key 如果缓存失效，使用该key进行标识符查询。
+     * @param string_id 方法名的string id
      */
-    std::shared_ptr<LoxClosure> method_lookup(const Value &receiver, OperandSize identifier_key);
+    std::shared_ptr<LoxClosure> method_lookup(const Value &receiver, OperandSize string_id);
 
     /**
      * 查找一个closure，根据arg_count计算新的fp，创建对应的栈帧。将新栈帧的底部替换为接受者
      */
-    void method_invoke(OperandSize identifier_key, uint8_t arg_count);
+    void method_invoke(OperandSize string_id, uint8_t arg_count);
 
     std::vector<CallFrame> frames;
     std::vector<Value> stack; // 栈

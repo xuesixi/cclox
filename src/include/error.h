@@ -72,11 +72,6 @@ public:
     using CompilerError::CompilerError;
 };
 
-class IdentifierPoolOverFlowError : public CompilerError {
-public:
-    using CompilerError::CompilerError;
-};
-
 class DuplicateNameVariableError : public CompilerError {
 public:
     using CompilerError::CompilerError;

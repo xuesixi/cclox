@@ -285,19 +285,15 @@ void Compiler::dot_expr(bool can_assign) {
     // a.b().c()
 
     consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
-    // auto key = current_chunk().add_identifier(curr.get_lexeme());
-    auto key = StringIntern::resolve_string(curr.get_lexeme());
-    auto cache_index = current_chunk().add_method_cache();
+    auto string_id = StringIntern::resolve_string(curr.get_lexeme());
     if (match(TokenType::LEFT_PAREN)) {
         auto arg_count = argument_list();
         emit_opcode(Opcode::MethodInvoke);
-        emit_operand_2(key);
-        // emit_operand_1(cache_index);
+        emit_operand_2(string_id);
         emit_operand_1(arg_count);
     } else {
         emit_opcode(Opcode::MethodBind);
-        emit_operand_2(key);
-        // emit_operand_1(cache_index);
+        emit_operand_2(string_id);
     }
 }
 
@@ -484,8 +480,7 @@ void Compiler::variable_expr(bool can_assign) {
     }
 
     // 都没找到，则认为是全局变量
-    // OperandSize key = current_chunk().add_identifier(curr.lexeme);
-    OperandSize key = StringIntern::resolve_string(curr.lexeme);
+    OperandSize string_id = StringIntern::resolve_string(curr.lexeme);
     if (match(TokenType::EQUAL)) {
         if (can_assign) {
             compile_precedence_at_least(Precedence::ASSIGNMENT);
@@ -496,7 +491,7 @@ void Compiler::variable_expr(bool can_assign) {
     } else {
         emit_opcode(Opcode::LoadGlobal);
     }
-    emit_operand_2(key);
+    emit_operand_2(string_id);
 }
 
 void Compiler::this_expr(bool can_assign) {
@@ -520,8 +515,6 @@ void Compiler::this_expr(bool can_assign) {
                 // 写入
                 if (can_assign) {
                     // 允许赋值
-                    // emit_opcode(Opcode::LoadLocal);
-                    // emit_operand_1(0);
                     compile_precedence_at_least(get_higher_precedence(Precedence::ASSIGNMENT));
                     emit_opcode(Opcode::SetField);
                     emit_operand_1(field_found.value());
@@ -531,8 +524,6 @@ void Compiler::this_expr(bool can_assign) {
                 }
             } else {
                 // 读取
-                // emit_opcode(Opcode::LoadLocal);
-                // emit_operand_1(0);
                 emit_opcode(Opcode::LoadField);
                 emit_operand_1(field_found.value());
             }
@@ -541,19 +532,15 @@ void Compiler::this_expr(bool can_assign) {
             emit_operand_1(0);
 
             // 没有找到字段，则判断是方法
-            // auto key = current_chunk().add_identifier(curr.get_lexeme());
-            auto key = StringIntern::resolve_string(curr.get_lexeme());
-            auto cache_index = current_chunk().add_method_cache();
+            auto string_id = StringIntern::resolve_string(curr.get_lexeme());
             if (match(TokenType::LEFT_PAREN)) {
                 uint8_t arg_count = argument_list();
                 emit_opcode(Opcode::MethodInvoke);
-                emit_operand_2(key);
-                // emit_operand_1(cache_index);
+                emit_operand_2(string_id);
                 emit_operand_1(arg_count);
             } else {
                 emit_opcode(Opcode::MethodBind);
-                emit_operand_2(key);
-                // emit_operand_1(cache_index);
+                emit_operand_2(string_id);
             }
         }
     } else {
@@ -720,20 +707,19 @@ void Compiler::block_statement() {
 
 OperandSize Compiler::resolve_global_identifier() {
     consume(TokenType::IDENTIFIER, "expect an identifier here");
-    // return current_chunk().add_identifier(curr.lexeme);
     return StringIntern::resolve_string(curr.get_lexeme());
 }
 
 void Compiler::fun_statement() {
     if (scope->is_global_scope()) {
-        OperandSize key = resolve_global_identifier();
+        OperandSize string_id = resolve_global_identifier();
 
         auto [fun, fun_scope] = parse_function(FunctionType::Function);
 
         emit_make_closure(fun, fun_scope);
 
         emit_opcode(Opcode::DefineGlobal);
-        emit_operand_2(key);
+        emit_operand_2(string_id);
     } else {
         consume(TokenType::IDENTIFIER, "expect an identifier for the function");
 
@@ -747,10 +733,10 @@ void Compiler::fun_statement() {
 
 void Compiler::class_statement() {
     if (scope->is_global_scope()) {
-        OperandSize key = resolve_global_identifier();
+        OperandSize string_id = resolve_global_identifier();
         parse_class();
         emit_opcode(Opcode::DefineGlobal);
-        emit_operand_2(key);
+        emit_operand_2(string_id);
     } else {
         consume(TokenType::IDENTIFIER, "expect an identifier as the class name");
         scope->add_local(curr);
@@ -764,7 +750,7 @@ void Compiler::var_statement() {
     try {
         if (scope->is_global_scope()) {
             // 全局变量
-            OperandSize key = resolve_global_identifier();
+            OperandSize str_id = resolve_global_identifier();
             if (match(TokenType::EQUAL)) {
                 compile_expression();
             } else {
@@ -772,7 +758,7 @@ void Compiler::var_statement() {
             }
             consume();
             emit_opcode(Opcode::DefineGlobal);
-            emit_operand_2(key);
+            emit_operand_2(str_id);
         } else {
             // 本地变量
             consume(TokenType::IDENTIFIER, "expect an identifier here");
@@ -809,8 +795,7 @@ void Compiler::method_statement(bool is_static) {
 
 void Compiler::parse_class() {
     std::string class_name = curr.get_lexeme();
-    // auto key = current_chunk().add_identifier(class_name);
-    auto key = StringIntern::resolve_string(class_name);
+    auto string_id = StringIntern::resolve_string(class_name);
     consume(TokenType::LEFT_BRACE, "expect a '{' after the class name");
     class_scope = ClassScope{};
     bool field_finished = false; // 方法都必须写在所有的field后面
@@ -847,7 +832,7 @@ void Compiler::parse_class() {
     }
     // consume(TokenType::RIGHT_BRACE, "expect a '}' to end the class definition");
     emit_opcode(Opcode::MakeClass);
-    emit_operand_2(key);
+    emit_operand_2(string_id);
     emit_operand_1(class_scope->member_fields.size());
     emit_operand_1(class_scope->method_count);
 
