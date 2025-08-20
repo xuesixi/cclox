@@ -5,12 +5,17 @@
 #ifndef CCLOX_VALUE_H
 #define CCLOX_VALUE_H
 #include <any>
+#include <thread>
 #include <variant>
 #include <memory>
 #include "object.h"
+#include "nativeobjects/loxconcurrent.h"
 
-using NativeReference = std::shared_ptr<std::any>;
-using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference>;
+using NativeObject = std::variant<std::thread, LoxMutex, LoxCondition>;
+using NativePair = std::pair<uint16_t, NativeObject>;
+using NativeReference = std::shared_ptr<NativePair>;
+
+using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference, NativeReference>;
 
 namespace LoxValue {
 

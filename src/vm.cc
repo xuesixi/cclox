@@ -7,29 +7,23 @@
 #include <iostream>
 #include <string>
 #include <variant>
-#include <variant>
 
 #include "objects/loxstring.h"
 #include "objects/loxclass.h"
-#include <variant>
 
 #include "stringintern.h"
 #include "objects/loxinstance.h"
 #include "objects/loxnative.h"
 
-VM::VM() {
-    // globals = std::make_shared<std::unordered_map<std::string, Value> >();
-}
-
 InterpreterResult VM::interpret(std::string &&source) {
     try {
         Compiler compiler;
         auto f = compiler.compile(std::move(source));
-        auto closure = Runtime::allocate_as<LoxClosure>(f);
-        Runtime::record_allocation(closure);
+        auto cl = Runtime::allocate_as<LoxClosure>(f);
+        Runtime::record_allocation(cl);
         if (f && !Flag::not_run) {
-            frames.push_back({closure, 0, 0}); // 栈底部的第一个元素是main
-            push(closure);
+            setup_frame(cl, 0);
+            push(cl);
             return run();
         } else {
             return InterpreterResult::CompileError;
@@ -43,11 +37,11 @@ InterpreterResult VM::interpret(std::string &&source) {
 
 void VM::show_stack() {
     print_with_color(fmt::format(" heap: {}  ", Runtime::allocated_size.load()), Color::MAGENTA);
-    for (size_t i = 0; i < stack.size(); i++) {
+    for (size_t i = 0; i < stack_.size(); i++) {
         if (i == frames.back().fp) {
-            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack.at(i))), Color::RED);
+            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::RED);
         } else {
-            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack.at(i))), Color::BLUE);
+            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::BLUE);
         }
     }
     std::cout << std::endl;
@@ -82,11 +76,12 @@ InterpreterResult VM::run() {
 
                     frames.pop_back();
                     if (frames.empty()) {
-                        stack.pop_back(); // 弹出main
+                        stack_.pop_back();
+                        // 如果是main的话，此后栈中就空了。但如果是其他线程，那么这里仍然有一些其他的本地变量，不过这也没什么问题。
                         return InterpreterResult::OK;
                     }
-                    stack.resize(last_frame.fp);
-                    stack.push_back(return_value);
+                    stack_.resize(last_frame.fp);
+                    stack_.push_back(return_value);
                     break;
                 }
                 case Opcode::LoadConstant: {
@@ -190,14 +185,14 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::DefineGlobal: {
                     Value value = pop_and_get();
-                    // std::string identifier = read_identifier();
                     uint16_t str_id = read_operand_2();
+                    std::lock_guard<std::mutex> lock(Runtime::globals_access_mutex);
                     Runtime::globals[str_id] = value;
                     break;
                 }
                 case Opcode::LoadGlobal: {
-                    // std::string identifier = read_identifier();
                     auto str_id = read_operand_2();
+                    std::lock_guard<std::mutex> lock(Runtime::globals_access_mutex);
                     auto found = Runtime::globals.find(str_id);
                     if (found != Runtime::globals.end()) {
                         push(found->second);
@@ -212,13 +207,13 @@ InterpreterResult VM::run() {
                     break;
                 }
                 case Opcode::SetGlobal: {
-                    // std::string identifier = read_identifier();
                     auto str_id = read_operand_2();
+                    std::lock_guard<std::mutex> lock(Runtime::globals_access_mutex);
                     auto found = Runtime::globals.find(str_id);
                     if (found == Runtime::globals.end()) {
                         throw LoxNameError(fmt::format("the variable: {} is not found", StringIntern::read_from_id(str_id)));
                     } else {
-                        Value v = stack.back();
+                        Value v = stack_.back();
                         Runtime::globals[str_id] = v;
                     }
                     break;
@@ -230,12 +225,14 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::SetLocal: {
                     auto index = read_operand_1();
-                    frame_at(index) = stack.back();
+                    frame_at(index) = stack_.back();
                     break;
                 }
-                case Opcode::PopN: {
+                case Opcode::ClearN: {
                     auto amount = read_operand_1();
-                    stack.resize(stack.size() - amount);
+                    // a, b, c
+                    escape_above(stack().size() - amount);
+                    stack_.resize(stack_.size() - amount);
                     break;
                 }
                 case Opcode::Jump: {
@@ -252,7 +249,7 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::JumpIfFalse: {
                     auto distance = read_operand_2();
-                    if (!LoxValue::to_bool(stack.back())) {
+                    if (!LoxValue::to_bool(stack_.back())) {
                         pc() += distance;
                     }
                     break;
@@ -296,7 +293,7 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::SetCaptured: {
                     auto index = read_operand_1();
-                    closure()->captureds.at(index)->value() = stack.back();
+                    closure()->captureds.at(index)->value() = stack_.back();
                     break;
                 }
                 case Opcode::Recur: {
@@ -309,10 +306,10 @@ InterpreterResult VM::run() {
                     std::stringstream s;
                     for (uint8_t i = 0; i < count; i++) {
                         // a, b, c, x
-                        Value v = stack.at(stack.size() - count + i);
+                        Value v = stack_.at(stack_.size() - count + i);
                         s << LoxValue::to_string(v);
                     }
-                    stack.resize(stack.size() - count);
+                    stack_.resize(stack_.size() - count);
                     LoxReference result = Runtime::allocate_as_ref<LoxString>(s.str());
                     Runtime::record_allocation(result);
                     push(result);
@@ -376,9 +373,9 @@ InterpreterResult VM::run() {
         std::cerr << error.what() << std::endl;
         std::cerr << backtrace();
         return InterpreterResult::RuntimeError;
-    } catch (CompilerError &error) {
-        std::cerr << error.what() << std::endl;
-        return InterpreterResult::RuntimeError;
+    // } catch (CompilerError &error) {
+    //     std::cerr << error.what() << std::endl;
+    //     return InterpreterResult::RuntimeError;
     }
 }
 
@@ -396,8 +393,8 @@ void VM::call_value(size_t arg_count) {
     if (frames.size() == Configuration::frame_max) {
         throw LoxStackOverflowError("stack overflow");
     }
-    size_t fp = stack.size() - 1 - arg_count;
-    Value callable = stack.at(fp);
+    size_t fp = stack_.size() - 1 - arg_count;
+    Value callable = stack_.at(fp);
 
     if (!std::holds_alternative<LoxReference>(callable)) {
         throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
@@ -421,32 +418,30 @@ void VM::call_value(size_t arg_count) {
 }
 
 void VM::call_closure(size_t arg_count) {
-    size_t fp = stack.size() - 1 - arg_count;
-    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack.at(fp));
+    size_t fp = stack_.size() - 1 - arg_count;
+    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack_.at(fp));
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
                                       cl->function->arity(), arg_count));
     }
-    CallFrame frame{cl, 0, fp};
-    frames.push_back(frame);
+    setup_frame(cl, fp);
 }
 
 void VM::call_method(size_t arg_count) {
-    size_t fp = stack.size() - 1 - arg_count;
-    auto method = LoxValue::to_reference_unsafe<LoxMethod>(stack.at(fp));
+    size_t fp = stack_.size() - 1 - arg_count;
+    auto method = LoxValue::to_reference_unsafe<LoxMethod>(stack_.at(fp));
     auto &cl = method->closure();
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
                                       cl->function->arity(), arg_count));
     }
-    CallFrame frame{cl, 0, fp};
-    frames.push_back(frame);
-    stack.at(fp) = method->receiver(); // 将帧底替换为receiver
+    setup_frame(cl, fp);
+    stack_.at(fp) = method->receiver(); // 将帧底替换为receiver
 }
 
 void VM::call_class(size_t arg_count) {
-    size_t fp = stack.size() - 1 - arg_count;
-    auto a_class = LoxValue::to_reference_unsafe<LoxClass>(stack.at(fp));
+    size_t fp = stack_.size() - 1 - arg_count;
+    auto a_class = LoxValue::to_reference_unsafe<LoxClass>(stack_.at(fp));
     auto &constructor = a_class->constructor();
     if (constructor == nullptr) {
         // 无构造函数
@@ -455,7 +450,7 @@ void VM::call_class(size_t arg_count) {
         } else {
             // 默认构造
             LoxReference v = Runtime::allocate_as_ref<LoxInstance>(a_class, a_class->get_num_fields());
-            stack.resize(stack.size() - 1 - arg_count);
+            stack_.resize(stack_.size() - 1 - arg_count);
             Runtime::record_allocation(v);
             push(v);
         }
@@ -466,23 +461,22 @@ void VM::call_class(size_t arg_count) {
                                           arg_count));
         } else {
             LoxReference v = Runtime::allocate_as_ref<LoxInstance>(a_class, a_class->get_num_fields());
-            stack.at(fp) = v;
-            CallFrame frame{constructor, 0, fp};
-            frames.push_back(frame);
+            stack_.at(fp) = v;
+            setup_frame(constructor, fp);
             Runtime::record_allocation(v);
         }
     }
 }
 
 void VM::call_native(size_t arg_count) {
-    size_t fp = stack.size() - 1 - arg_count;
-    auto native = LoxValue::to_reference_unsafe<LoxNative>(stack.at(fp));
+    size_t fp = stack_.size() - 1 - arg_count;
+    auto native = LoxValue::to_reference_unsafe<LoxNative>(stack_.at(fp));
     if (arg_count != native->get_arity()) {
         throw LoxArgError(fmt::format("the native function {} expect {} arguments, but got {}", native->get_name(),
                                       native->get_arity(), arg_count));
     }
     auto impl = native->get_impl();
-    impl(stack, fp);
+    impl(*this, fp);
 }
 
 void VM::recur_call(size_t arg_count) {
@@ -491,9 +485,9 @@ void VM::recur_call(size_t arg_count) {
                                       closure()->function->arity(), arg_count));
     }
     for (uint8_t i = 0; i < arg_count; i++) {
-        frame_at(1 + i) = stack.at(stack.size() - arg_count + i);
+        frame_at(1 + i) = stack_.at(stack_.size() - arg_count + i);
     }
-    stack.resize(frame().fp + arg_count + 1);
+    stack_.resize(frame().fp + arg_count + 1);
     pc() = 0;
 }
 
@@ -516,12 +510,12 @@ std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize
 
 void VM::method_invoke(OperandSize string_id, uint8_t arg_count) {
     // receiver, arg1, arg2, arg3
-    size_t fp = stack.size() - arg_count - 1;
-    Value receiver = stack.at(fp);
+    size_t fp = stack_.size() - arg_count - 1;
+    Value receiver = stack_.at(fp);
     auto cl = method_lookup(receiver, string_id);
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the method {} expects {} arguments, but got {}", cl->to_string(), cl->function->arity(), arg_count));
     }
-    frames.push_back({cl, 0, fp});
-    stack.at(fp) = receiver;
+    setup_frame(cl, fp);
+    stack_.at(fp) = receiver; // 修改栈底的接收者
 }

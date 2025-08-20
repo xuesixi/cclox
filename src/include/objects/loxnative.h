@@ -8,13 +8,15 @@
 #include "value.h"
 #include "runtime.h"
 
+class VM;
+
 class LoxNative: public LoxObject {
 public:
     /**
      * 该函数没有返回值。如果逻辑上有返回值，直接在函数内部置入栈中即可
      * 该函数的调用时，fp位置是LoxNative。该函数会负责弹出它。
      */
-    typedef void (*NativeImpl)(std::vector<Value> &stack, size_t fp);
+    typedef void (*NativeImpl)(VM &vm, size_t fp);
 
     explicit LoxNative(NativeImpl impl, const std::string &name, int arity): impl_(impl), name_(name), arity_(arity) {
 

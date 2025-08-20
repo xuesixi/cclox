@@ -31,7 +31,11 @@ struct CallFrame {
 
 class VM {
 public:
-    explicit VM();
+    explicit VM() = default;
+
+    ~VM() {
+        // std::cout << fmt::format("sizes: {}, {}, {}", frames.size(), stack_.size(), open_captured.size()) << std::endl;
+    }
 
     VM(const VM &other) = delete;
 
@@ -50,33 +54,74 @@ public:
     InterpreterResult interpret(std::string &&source);
 
     /**
-     * 打印展示当前的栈状态
-     */
-    void show_stack();
-
-private:
-    /**
-     * 根据栈来执行指令。运行直到帧栈为空
+     * 根据栈来执行指令。运行直到帧栈为空。该函数内部会捕获LoxError
      * @return 运行结果
      */
     InterpreterResult run();
 
+    /**
+     * 打印展示当前的栈状态
+     */
+    void show_stack();
+
+    std::shared_ptr<LoxClosure> &closure() {
+        return frames.back().closure;
+    }
+
+    CallFrame &frame() {
+        return frames.back();
+    }
+
+    Chunk &chunk() {
+        return frame().closure->function->get_chunk();
+    }
+
+    size_t &pc() {
+        return frame().pc;
+    }
+
+    uint8_t next() {
+        return chunk().code_at(pc()++);
+    }
+
+    std::vector<Value> &stack() {
+        return stack_;
+    }
+
+    /**
+     * 返回相对于本栈帧底距离为index的值
+     */
+    Value &frame_at(uint8_t index) {
+        return stack_.at(frame().fp + index);
+    }
+
+    /**
+     * 用指定的closure创建一个新的栈帧。
+     * @param cl 新的栈帧的内容函数
+     * @param fp 新的栈帧的栈底位置
+     */
+    void setup_frame(const std::shared_ptr<LoxClosure> &cl, size_t fp) {
+        frames.push_back({cl, 0, fp});
+    }
+
+private:
+
     void push(Value &&value) {
-        stack.push_back(std::move(value));
+        stack_.push_back(std::move(value));
     }
 
     void push(const Value &value) {
-        stack.push_back(value);
+        stack_.push_back(value);
     }
 
     [[nodiscard]] Value pop_and_get() {
-        Value value = stack.back();
-        stack.pop_back();
+        Value value = stack_.back();
+        stack_.pop_back();
         return value;
     }
 
     void pop() {
-        stack.pop_back();
+        stack_.pop_back();
     }
 
     // 读取下一个指令
@@ -108,40 +153,13 @@ private:
         return chunk().constant_at(index);
     }
 
-    std::shared_ptr<LoxClosure> &closure() {
-        return frames.back().closure;
-    }
-
-    CallFrame &frame() {
-        return frames.back();
-    }
-
-    Chunk &chunk() {
-        return frame().closure->function->get_chunk();
-    }
-
-    size_t &pc() {
-        return frame().pc;
-    }
-
-    uint8_t next() {
-        return chunk().code_at(pc()++);
-    }
-
-    /**
-     * 返回相对于本栈帧底距离为index的值
-     */
-    Value &frame_at(uint8_t index) {
-        return stack.at(frame().fp + index);
-    }
-
     /**
      * 捕获栈上位于local_index上的那个本地变量，将其添加到open_captured中
      * @param local_index 被捕获的本地变量的本地索引
      * @return 新生成的捕获值
      */
     std::shared_ptr<Captured> capture_value(uint8_t local_index) {
-        auto new_captured = std::make_shared<Captured>(stack, frame().fp + local_index);
+        auto new_captured = std::make_shared<Captured>(stack_, frame().fp + local_index);
         open_captured.push_back(new_captured);
         return new_captured;
     }
@@ -200,7 +218,7 @@ private:
     void method_invoke(OperandSize string_id, uint8_t arg_count);
 
     std::vector<CallFrame> frames;
-    std::vector<Value> stack; // 栈
+    std::vector<Value> stack_; // 栈
     std::vector<std::shared_ptr<Captured> > open_captured; // 仍然存在于栈上的捕获值
 };
 

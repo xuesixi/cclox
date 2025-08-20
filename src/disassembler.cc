@@ -38,7 +38,7 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::SetLocal, "SetLocal"},
     {Opcode::LoadCaptured, "LoadCaptured"},
     {Opcode::SetCaptured, "SetCaptured"},
-    {Opcode::PopN, "PopN"},
+    {Opcode::ClearN, "ClearN"},
     {Opcode::Jump, "Jump"},
     {Opcode::JumpIfPopFalse, "JumpIfPopFalse"},
     {Opcode::JumpBack, "JumpBack"},
@@ -107,7 +107,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case Opcode::Print:
         case Opcode::Pop:
             return instruction_operand_0(instruction, offset);
-        case Opcode::PopN:
+        case Opcode::ClearN:
         case Opcode::Call:
         case Opcode::SetCaptured:
         case Opcode::LoadCaptured:
@@ -210,18 +210,16 @@ size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
 size_t Disassembler::instruction_method_bind(Opcode instruction, size_t offset) {
     uint16_t stringd_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = StringIntern::read_from_id(stringd_id);
-    uint8_t cache_index = chunk->code.at(offset + 3);
-    cout << fmt::format("{:18} {} method: {}; cache index {}\n", opcode_names.at(instruction), spaces_4, identifier, cache_index);
-    return offset + 4;
+    cout << fmt::format("{:18} {} method: {}\n", opcode_names.at(instruction), spaces_4, identifier);
+    return offset + 3;
 }
 
 size_t Disassembler::instruction_method_invoke(Opcode instruction, size_t offset) {
     uint16_t stringd_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = StringIntern::read_from_id(stringd_id);
-    uint8_t cache_index = chunk->code.at(offset + 3);
-    uint8_t arg_count = chunk->code.at(offset + 4);
-    cout << fmt::format("{:18} {} method: {}; cache index {}, arg count {}\n", opcode_names.at(instruction), spaces_4, identifier, cache_index, arg_count);
-    return offset + 5;
+    uint8_t arg_count = chunk->code.at(offset + 3);
+    cout << fmt::format("{:18} {} method: {}; arg count {}\n", opcode_names.at(instruction), spaces_4, identifier, arg_count);
+    return offset + 4;
 }
 
 

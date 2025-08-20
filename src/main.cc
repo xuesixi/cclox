@@ -56,7 +56,21 @@ void run_file(const std::string &path) {
     VM vm;
     try {
         std::string source = read_file(path);
-        vm.interpret(std::move(source));
+        auto result = vm.interpret(std::move(source));
+        switch (result) {
+            case InterpreterResult::CompileError: {
+                print_with_color("== Compile Error ==\n", Color::RED);
+                break;
+            }
+            case InterpreterResult::RuntimeError: {
+                print_with_color("== Runtime Error ==\n", Color::RED);
+                break;
+            }
+            case InterpreterResult::OK: {
+                print_with_color("== Execution Finished ==\n", Color::GREEN);
+                break;
+            }
+        }
     } catch (FileOpenFailureError &err) {
         std::cerr << err.what() << std::endl;
     }

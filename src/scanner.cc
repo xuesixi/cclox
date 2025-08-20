@@ -92,7 +92,7 @@ Token Scanner::scan_number() {
 }
 
 Token Scanner::scan_identifier() {
-    while (!is_at_end() && is_alpha_or_underscore(peek_next())) {
+    while (!is_at_end() && is_alpha_or_digit_or_underscore(peek_next())) {
         advance();
     }
     return make_token(get_identifier_type());

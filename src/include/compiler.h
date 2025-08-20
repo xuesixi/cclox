@@ -332,6 +332,8 @@ private:
      */
     void string_expr(bool can_assign);
 
+    void lambda_expr(bool can_assign);
+
     /**
      * 在已知curr是格式化字符串的时候调用
      * @throws Uint8OperandOverflowError 如果内嵌表达式数量大于uint8

@@ -99,6 +99,8 @@ Compiler::ParseFn Compiler::get_prefix(TokenType type) {
             return &Compiler::variable_expr;
         case TokenType::THIS:
             return &Compiler::this_expr;
+        case TokenType::FUN:
+            return &Compiler::lambda_expr;
         default:
             return nullptr;
     }
@@ -340,6 +342,11 @@ void Compiler::string_expr([[maybe_unused]] bool can_assign) {
     LoxReference value = Runtime::allocate_as_ref<LoxString>(curr.lexeme.substr(1, curr.lexeme.size() - 2));
     Runtime::record_allocation(value);
     emit_load_constant_flexible(std::move(value));
+}
+
+void Compiler::lambda_expr([[maybe_unused]] bool can_assign) {
+    auto [fun, fun_scope] =  parse_function(FunctionType::Lambda);
+    emit_make_closure(fun, fun_scope);
 }
 
 void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
@@ -678,7 +685,7 @@ void Compiler::break_statement() {
         return;
     }
     auto [dest, locals_size] = breakpoint.value();
-    emit_opcode(Opcode::PopN);
+    emit_opcode(Opcode::ClearN);
     emit_operand_1(scope->locals_size() - locals_size);
     emit_opcode(Opcode::LoadFalse);
     loop_back(dest);
@@ -691,7 +698,7 @@ void Compiler::continue_statement() {
         return;
     }
     auto [dest, locals_size] = continue_point.value();
-    emit_opcode(Opcode::PopN);
+    emit_opcode(Opcode::ClearN);
     emit_operand_1(scope->locals_size() - locals_size);
     loop_back(dest);
     consume();
@@ -847,7 +854,12 @@ void Compiler::expression_statement() {
 
 // ReSharper disable once CppDFAConstantParameter
 std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope> > Compiler::parse_function(FunctionType type) {
-    std::string fun_name = curr.get_lexeme();
+    std::string fun_name;
+    if (type != FunctionType::Lambda) {
+        fun_name = curr.get_lexeme();
+    } else {
+        fun_name = "$lambda";
+    }
 
     auto new_scope = std::make_shared<Scope>(scope, type);
 
@@ -907,7 +919,7 @@ void Compiler::statement() {
         auto old_size = scope->step_into();
         block_statement();
         auto amount_to_pop = scope->step_out(old_size);
-        emit_opcode(Opcode::PopN);
+        emit_opcode(Opcode::ClearN);
         emit_operand_1(amount_to_pop);
     } else if (match(TokenType::IF)) {
         if_statement();

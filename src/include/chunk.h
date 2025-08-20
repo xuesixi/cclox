@@ -34,7 +34,7 @@ enum class Opcode: uint8_t {
     Equal, // ；弹出栈顶的两个值 a, b，将 a == b 的结果置入栈顶
     Print, // ；弹出并打印栈顶的值，自带换行符。如果设置了Flag::print_color，则打印绿色
     Pop, // ； 弹出栈顶的值
-    PopN, // n: operand1 ；弹出栈顶的n个值
+    ClearN, // n: operand1 ；弹出栈顶的n个值，并进行捕获值逃逸
     DefineGlobal, // string_id: operand2 ；弹出栈顶的值，创建一个名为string_id所对应的标识符的全局变量，将其值设置为刚才弹出的那个值
     LoadGlobal, // string_id: operand2 ；将名为string_id所对应的标识符的全局变量置入栈顶
     SetGlobal, // string_id: operand2 ； 将名为string_id所对应的标识符的全局变量设置为栈顶的值

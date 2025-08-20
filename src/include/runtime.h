@@ -22,13 +22,20 @@ namespace Runtime {
 
     extern std::mutex gc_lock;
 
+    extern std::mutex globals_access_mutex;
+
+    bool need_gc();
+
     inline void register_object(const std::shared_ptr<LoxObject> &ptr) {
+        std::lock_guard<std::mutex> guard(gc_lock);
         weak_pool.push_back(std::weak_ptr{ptr});
     }
 
     extern std::atomic<size_t> allocated_size;
 
-    // bool need_gc();
+    void check_gc();
+
+    void gc();
 
     /**
      * 估算本对象的内存占用（包括本对象的本体，但不包括其他loxobject本体），使gc的内存分配记录增加合适的值。

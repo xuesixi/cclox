@@ -108,8 +108,8 @@ public:
 
 private:
     /* 判断字符是不是字母或者下划线*/
-    static bool is_alpha_or_underscore(char c) {
-        return isalpha(c) || c == '_';
+    static bool is_alpha_or_digit_or_underscore(char c) {
+        return isalpha(c) || c == '_' || isdigit(c);
     }
 
     /**

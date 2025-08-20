@@ -50,7 +50,8 @@ add_executable(cclox
         src/native.cc
         src/include/native.h
         src/stringintern.cc
-        src/include/stringintern.h)
+        src/include/stringintern.h
+        src/include/nativeobjects/LoxMutex.h)
 
 add_library(cclox_lib
         src/main.cc
@@ -89,6 +90,7 @@ add_library(cclox_lib
         src/include/native.h
         src/stringintern.cc
         src/include/stringintern.h
+        src/include/nativeobjects/LoxMutex.h
 )
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")

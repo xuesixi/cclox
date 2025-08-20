@@ -13,6 +13,7 @@
 #include <variant>
 
 #include "runtime.h"
+#include "stringintern.h"
 
 std::string LoxValue::to_string(const Value &value) {
     return std::visit([](auto &&arg) -> std::string {
@@ -21,6 +22,8 @@ std::string LoxValue::to_string(const Value &value) {
             return arg->to_string();
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
+        } else if constexpr (std::is_same_v<T, NativeReference>) {
+            return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
         } else {
             return fmt::format("{}", arg);
         }
@@ -34,6 +37,8 @@ std::string LoxValue::to_visual_string(const Value &value) {
             return arg->to_visual_string();
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
+        } else if constexpr (std::is_same_v<T, NativeReference>) {
+            return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
         } else {
             return fmt::format("{}", arg);
         }

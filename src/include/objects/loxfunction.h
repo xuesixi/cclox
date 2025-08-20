@@ -12,6 +12,7 @@ enum class FunctionType {
     Function,
     Method,
     Main,
+    Lambda,
 };
 
 class LoxFunction: public LoxObject {
