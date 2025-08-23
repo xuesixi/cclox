@@ -19,10 +19,10 @@ InterpreterResult VM::interpret(std::string &&source) {
         Compiler compiler;
         auto f = compiler.compile(std::move(source));
         auto cl = Runtime::allocate_as<LoxClosure>(f);
-        Runtime::record_allocation(cl);
         if (f && !Flag::not_run) {
             setup_frame(cl, 0);
             push(cl);
+            Runtime::record_allocation(cl);
             Runtime::allow_gc = true;
             return run();
         } else {
@@ -38,7 +38,7 @@ InterpreterResult VM::interpret(std::string &&source) {
 void VM::show_stack() {
     print_with_color(fmt::format(" heap: {}  ", Runtime::allocated_size.load()), Color::MAGENTA);
     for (size_t i = 0; i < stack_.size(); i++) {
-        if (i == frames.back().fp) {
+        if (i == frames_.back().fp) {
             print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::RED);
         } else {
             print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::BLUE);
@@ -70,12 +70,12 @@ InterpreterResult VM::run() {
                     // 弹出最后一个栈帧。如果此时没有任何栈帧，说明main已经执行完毕。则结束
                     // 否则，缩减栈（清除上一个栈帧中的本地变量），然后将返回值添加在原本栈帧的fp处。
                     Value return_value = pop_and_get();
-                    auto last_frame = frames.back();
+                    auto last_frame = frames_.back();
 
                     escape_above(last_frame.fp); // 逃逸该栈帧中的被捕获值
 
-                    frames.pop_back();
-                    if (frames.empty()) {
+                    frames_.pop_back();
+                    if (frames_.empty()) {
                         stack_.pop_back();
                         // 如果是main的话，此后栈中就空了。但如果是其他线程，那么这里仍然有一些其他的本地变量，不过这也没什么问题。
                         return InterpreterResult::OK;
@@ -270,6 +270,7 @@ InterpreterResult VM::run() {
                     auto fun = LoxValue::to_reference_unsafe<LoxFunction>(value);
                     auto new_closure = Runtime::allocate_as<LoxClosure>(fun);
                     uint8_t num_captures = read_operand_1();
+                    push(new_closure); // 先将closure入栈，否则捕获值在创建的过程中可能会被gc
                     for (uint8_t i = 0; i < num_captures; i++) {
                         auto is_local = read_operand_1();
                         auto index = read_operand_1();
@@ -282,7 +283,6 @@ InterpreterResult VM::run() {
                         }
                     }
                     Runtime::record_allocation(new_closure);
-                    push(new_closure);
                     break;
                 }
                 case Opcode::LoadCaptured: {
@@ -311,8 +311,8 @@ InterpreterResult VM::run() {
                     }
                     stack_.resize(stack_.size() - count);
                     LoxReference result = Runtime::allocate_as_ref<LoxString>(s.str());
-                    Runtime::record_allocation(result);
                     push(result);
+                    Runtime::record_allocation(result);
                     break;
                 }
                 case Opcode::MakeClass: {
@@ -337,8 +337,8 @@ InterpreterResult VM::run() {
                     // next();
                     auto cl = method_lookup(receiver, string_id);
                     auto method = Runtime::allocate_as_ref<LoxMethod>(cl, LoxValue::to_reference_unsafe<LoxInstance>(receiver));
-                    Runtime::record_allocation(method);
                     push(method);
+                    Runtime::record_allocation(method);
                     break;
                 }
                 case Opcode::MethodInvoke: {
@@ -390,7 +390,7 @@ void VM::check_gc() {
 
 std::string VM::backtrace() {
     std::stringstream result;
-    for (auto it = frames.rbegin(); it != frames.rend(); it++) {
+    for (auto it = frames_.rbegin(); it != frames_.rend(); it++) {
         auto call_frame = *it;
         auto line = call_frame.closure->function->get_chunk().get_line_num(call_frame.pc);
         result << fmt::format("{} at line {}\n", call_frame.closure->to_string(), line);
@@ -399,7 +399,7 @@ std::string VM::backtrace() {
 }
 
 void VM::call_value(size_t arg_count) {
-    if (frames.size() == Configuration::frame_max) {
+    if (frames_.size() == Configuration::frame_max) {
         throw LoxStackOverflowError("stack overflow");
     }
     size_t fp = stack_.size() - 1 - arg_count;
@@ -461,8 +461,8 @@ void VM::call_class(size_t arg_count) {
             // 默认构造
             LoxReference v = Runtime::allocate_as_ref<LoxInstance>(a_class, a_class->get_num_fields());
             stack_.resize(stack_.size() - 1 - arg_count);
-            Runtime::record_allocation(v);
             push(v);
+            Runtime::record_allocation(v);
         }
     } else {
         if (arg_count != constructor->function->arity()) {
@@ -497,7 +497,7 @@ void VM::recur_call(size_t arg_count) {
     for (uint8_t i = 0; i < arg_count; i++) {
         frame_at(1 + i) = stack_.at(stack_.size() - arg_count + i);
     }
-    stack_.resize(frame().fp + arg_count + 1);
+    stack_.resize(curr_frame().fp + arg_count + 1);
     pc() = 0;
 }
 

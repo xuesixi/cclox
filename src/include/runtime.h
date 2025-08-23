@@ -62,19 +62,20 @@ namespace Runtime {
     void check_gc();
 
     /**
-     * 标记所有根节点。包括全局变量池，以及所有现存的vm的栈空间
+     * 标记所有根节点。包括全局变量池，以及所有现存的vm的栈空间、帧栈函数
      * @return 将被标记的对象以一个queue返回。
      */
     std::queue<LoxReference> mark_roots();
 
     /**
-     * 估算本对象的内存占用（包括本对象的本体，但不包括其他loxobject本体），使gc的内存分配记录增加合适的值。
-     * 该函数应该在本对象的内存占用被固定之后才使用，且仅能使用一次。如果有container成员，那么应该尽可能将其capacity先缩减为size，减少冗余
+     * 估算本对象的内存占用（包括本对象的本体，但不包括其他loxobject本体），使gc的内存分配记录增加合适的值，并使其不再受到gc保护
+     * 该函数应该在本对象的内存占用被固定，且gc安全之后才使用，且仅能使用一次。如果有container成员，那么应该尽可能将其capacity先缩减为size，减少冗余
      */
     template <typename T>
     inline void record_allocation(const std::shared_ptr<T> &reference) {
         static_assert(std::is_base_of_v<LoxObject, T>);
         auto old = allocated_size.fetch_add(reference->compute_size());
+        reference->is_protected = false;
         if (Flag::show_heap) {
             print_with_color(fmt::format("[+] heap: {:^6} -> {:^6}; {}\n", old, old + reference->compute_size(), reference->to_visual_string()), Color::BRIGHT_YELLOW);
         }

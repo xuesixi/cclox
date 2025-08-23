@@ -74,7 +74,7 @@ namespace Runtime {
         // 清除
         for (auto & weak : weak_pool) {
             auto ptr = weak.lock();
-            if (ptr and !ptr->is_marked) {
+            if (ptr and !ptr->is_marked and !ptr->is_protected) {
                 ptr->clear_reference();
             }
         }
@@ -111,6 +111,9 @@ namespace Runtime {
         for (auto vm : vm_list) {
             for (auto & value : vm->stack()) {
                 LoxValue::mark_value(value, queue);
+            }
+            for (auto & frame : vm->frames()) {
+                LoxObject::mark(frame.closure, queue);
             }
         }
         return queue;

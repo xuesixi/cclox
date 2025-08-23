@@ -19,6 +19,7 @@ public:
     }
 
     void clear_reference() override {
+        std::cout << "closure cleared\n";
         captureds.clear();
         function = nullptr;
     }
@@ -40,6 +41,9 @@ public:
 
     void mark_reference(std::queue<LoxReference> &queue) override {
         mark(function, queue);
+        for (auto & captured : captureds) {
+            mark(captured, queue);
+        }
         // todo: 捕获值的gc
     }
 

@@ -71,19 +71,19 @@ public:
     void show_stack();
 
     std::shared_ptr<LoxClosure> &closure() {
-        return frames.back().closure;
+        return frames_.back().closure;
     }
 
-    CallFrame &frame() {
-        return frames.back();
+    CallFrame &curr_frame() {
+        return frames_.back();
     }
 
     Chunk &chunk() {
-        return frame().closure->function->get_chunk();
+        return curr_frame().closure->function->get_chunk();
     }
 
     size_t &pc() {
-        return frame().pc;
+        return curr_frame().pc;
     }
 
     uint8_t next() {
@@ -94,11 +94,15 @@ public:
         return stack_;
     }
 
+    std::vector<CallFrame> &frames() {
+        return frames_;
+    }
+
     /**
      * 返回相对于本栈帧底距离为index的值
      */
     Value &frame_at(uint8_t index) {
-        return stack_.at(frame().fp + index);
+        return stack_.at(curr_frame().fp + index);
     }
 
     /**
@@ -107,7 +111,7 @@ public:
      * @param fp 新的栈帧的栈底位置
      */
     void setup_frame(const std::shared_ptr<LoxClosure> &cl, size_t fp) {
-        frames.push_back({cl, 0, fp});
+        frames_.push_back({cl, 0, fp});
     }
 
 private:
@@ -165,7 +169,7 @@ private:
      * @return 新生成的捕获值
      */
     std::shared_ptr<Captured> capture_value(uint8_t local_index) {
-        auto new_captured = Runtime::allocate_as<Captured>(stack_, frame().fp + local_index);
+        auto new_captured = Runtime::allocate_as<Captured>(stack_, curr_frame().fp + local_index);
         Runtime::record_allocation(new_captured);
         open_captured.push_back(new_captured);
         return new_captured;
@@ -229,7 +233,7 @@ private:
      */
     void method_invoke(OperandSize string_id, uint8_t arg_count);
 
-    std::vector<CallFrame> frames;
+    std::vector<CallFrame> frames_;
     std::vector<Value> stack_; // 栈
     std::vector<std::shared_ptr<Captured> > open_captured; // 仍然存在于栈上的捕获值
     std::list<VM*>::iterator vm_list_it;

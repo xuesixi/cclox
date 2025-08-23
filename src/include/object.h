@@ -93,6 +93,7 @@ public:
     }
 
     bool is_marked = false; // 在gc中被标记过。会在入队列时被标记，避免重复进入队列。
+    bool is_protected = true; // 有此标记者，会被避免被gc。
 
 };
 
