@@ -6,7 +6,7 @@
 #define LOXCLOSURE_H
 
 #include "loxfunction.h"
-#include "captured.h"
+#include "loxcaptured.h"
 
 class LoxClosure: public LoxObject {
 public:
@@ -18,7 +18,10 @@ public:
         Runtime::record_free(*this);
     }
 
-    void clear_reference() override {};
+    void clear_reference() override {
+        captureds.clear();
+        function = nullptr;
+    }
 
     [[nodiscard]] std::string to_string() const override {
         if (function->name == "<main>") {
@@ -31,14 +34,18 @@ public:
         return function->name;
     }
 
-    std::vector<std::shared_ptr<Captured>> captureds;
-    std::shared_ptr<LoxFunction> function;
-
     LoxObjectType get_object_type() const override {
         return LoxObjectType::Closure;
     }
 
-private:
+    void mark_reference(std::queue<LoxReference> &queue) override {
+        mark(function, queue);
+        // todo: 捕获值的gc
+    }
+
+    std::vector<std::shared_ptr<Captured>> captureds;
+    std::shared_ptr<LoxFunction> function;
+
     size_t compute_size() override {
         return sizeof(LoxClosure) + sizeof(std::shared_ptr<Captured>) * captureds.capacity();
     }

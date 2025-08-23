@@ -2,8 +2,8 @@
 // Created by Yue Xue  on 8/17/25.
 //
 
-#include "objects/loxnative.h"
 #include "native.h"
+#include "vm.h"
 
 #include "runtime.h"
 #include <chrono>
@@ -11,8 +11,6 @@
 #include <any>
 
 #include "stringintern.h"
-
-void worker() {}
 
 namespace Native {
 
@@ -22,7 +20,7 @@ namespace Native {
      * 如果没问题，则返回T的引用。
      * @throws LoxTypeError
      */
-    template <typename  T>
+    template <typename T>
     T &test_native_object(Value &v, const std::string &expected) {
         if (std::holds_alternative<NativeReference>(v) == false) {
             throw LoxTypeError(fmt::format("invalid type of argument: {}, expect: <{}>", LoxValue::to_string(v), expected));
@@ -146,9 +144,8 @@ namespace Native {
     }
 }
 
-void add_native(const std::string &name, LoxNative::NativeImpl impl, int arity) {
-    auto native = Runtime::allocate_as_ref<LoxNative>(impl, name, arity);
-    Runtime::record_allocation(native);
+void add_native(const std::string &name, LoxNativeFunction::NativeImpl impl, int arity) {
+    auto native = std::make_shared<LoxNativeFunction>(impl, name, arity);
     auto str_id = StringIntern::resolve_string(name);
     Runtime::builtin.insert({str_id, native});
 }

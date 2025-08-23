@@ -24,7 +24,8 @@ public:
     }
 
     void clear_reference() override {
-
+        closure_ = nullptr;
+        receiver_ = nullptr;
     }
 
     [[nodiscard]] std::string to_string() const override {
@@ -41,6 +42,11 @@ public:
 
     LoxObjectType get_object_type() const override {
         return LoxObjectType::Method;
+    }
+
+    void mark_reference(std::queue<LoxReference> &queue) override {
+        mark(closure_, queue);
+        mark(receiver_, queue);
     }
 
 private:

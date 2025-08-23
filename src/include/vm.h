@@ -3,10 +3,11 @@
 #define CCLOX_VM_H
 
 #include "cclox_util.h"
-#include "captured.h"
+#include "objects/loxcaptured.h"
 #include "chunk.h"
 #include "value.h"
 #include <memory>
+#include <mutex>
 #include <vector>
 #include "runtime.h"
 #include "objects/loxfunction.h"
@@ -31,10 +32,15 @@ struct CallFrame {
 
 class VM {
 public:
-    explicit VM() = default;
+    explicit VM() {
+        std::lock_guard lock{Runtime::gc_mutex};
+        vm_list_it = Runtime::vm_list.insert(Runtime::vm_list.end(), this);
+    }
 
     ~VM() {
-        // std::cout << fmt::format("sizes: {}, {}, {}", frames.size(), stack_.size(), open_captured.size()) << std::endl;
+        check_gc();
+        std::lock_guard lock{Runtime::gc_mutex};
+        Runtime::vm_list.erase(vm_list_it);
     }
 
     VM(const VM &other) = delete;
@@ -47,7 +53,7 @@ public:
 
     /**
      * 用传入的源代码编译出一个closure对象，将其的对应栈帧置入栈中。然后开始运行。
-     * 全局变量是一个vm的成员，因此多次interpret时全局变量的信息会继承。
+     * 全局变量不属于单个vm的成员，因此多次interpret时全局变量的信息会继承。
      * @param source 要运行的源代码
      * @return 运行结果
      */
@@ -159,7 +165,8 @@ private:
      * @return 新生成的捕获值
      */
     std::shared_ptr<Captured> capture_value(uint8_t local_index) {
-        auto new_captured = std::make_shared<Captured>(stack_, frame().fp + local_index);
+        auto new_captured = Runtime::allocate_as<Captured>(stack_, frame().fp + local_index);
+        Runtime::record_allocation(new_captured);
         open_captured.push_back(new_captured);
         return new_captured;
     }
@@ -179,6 +186,11 @@ private:
             }
         }
     }
+
+    /**
+     * 在安全点执行该函数，检查是否要gc。
+     */
+    void check_gc();
 
     /**
      * @return 一个代表帧栈的字符串。新的栈帧会出现在字符串的前面。
@@ -220,6 +232,7 @@ private:
     std::vector<CallFrame> frames;
     std::vector<Value> stack_; // 栈
     std::vector<std::shared_ptr<Captured> > open_captured; // 仍然存在于栈上的捕获值
+    std::list<VM*>::iterator vm_list_it;
 };
 
 #endif

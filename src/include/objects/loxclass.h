@@ -31,7 +31,8 @@ public:
     }
 
     void clear_reference() override {
-
+        methods.clear();
+        constructor_ = nullptr;
     }
 
     [[nodiscard]] std::string to_string() const override {
@@ -72,6 +73,13 @@ public:
 
     LoxObjectType get_object_type() const override {
         return LoxObjectType::Class;
+    }
+
+    void mark_reference(std::queue<LoxReference> &queue) override {
+        mark(constructor_, queue);
+        for (auto &pair: methods) {
+            mark(pair.second, queue);
+        }
     }
 
 private:

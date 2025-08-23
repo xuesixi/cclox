@@ -49,6 +49,8 @@ public:
         return LoxObjectType::String;
     }
 
+    void mark_reference(std::queue<LoxReference> &queue) override {}
+
 private:
     const std::string str;
     size_t compute_size() override {

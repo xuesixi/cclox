@@ -13,7 +13,6 @@
 
 #include "stringintern.h"
 #include "objects/loxinstance.h"
-#include "objects/loxnative.h"
 
 InterpreterResult VM::interpret(std::string &&source) {
     try {
@@ -24,6 +23,7 @@ InterpreterResult VM::interpret(std::string &&source) {
         if (f && !Flag::not_run) {
             setup_frame(cl, 0);
             push(cl);
+            Runtime::allow_gc = true;
             return run();
         } else {
             return InterpreterResult::CompileError;
@@ -373,10 +373,19 @@ InterpreterResult VM::run() {
         std::cerr << error.what() << std::endl;
         std::cerr << backtrace();
         return InterpreterResult::RuntimeError;
-    // } catch (CompilerError &error) {
-    //     std::cerr << error.what() << std::endl;
-    //     return InterpreterResult::RuntimeError;
     }
+}
+
+
+void VM::check_gc() {
+    if (!Runtime::in_gc) {
+        return;
+    }
+    // 告诉gc线程，本线程已经停下了。
+    Runtime::pause_latch->arrive_and_wait();
+
+    // 等待gc线程的完成
+    Runtime::resume_latch->arrive_and_wait();
 }
 
 std::string VM::backtrace() {
@@ -396,6 +405,10 @@ void VM::call_value(size_t arg_count) {
     size_t fp = stack_.size() - 1 - arg_count;
     Value callable = stack_.at(fp);
 
+    if (std::holds_alternative<std::shared_ptr<LoxNativeFunction>>(callable)) {
+        call_native(arg_count);
+        return;
+    }
     if (!std::holds_alternative<LoxReference>(callable)) {
         throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
     }
@@ -408,9 +421,6 @@ void VM::call_value(size_t arg_count) {
             break;
         case LoxObjectType::Class:
             call_class(arg_count);
-            break;
-        case LoxObjectType::Native:
-            call_native(arg_count);
             break;
         default:
             throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
@@ -470,7 +480,7 @@ void VM::call_class(size_t arg_count) {
 
 void VM::call_native(size_t arg_count) {
     size_t fp = stack_.size() - 1 - arg_count;
-    auto native = LoxValue::to_reference_unsafe<LoxNative>(stack_.at(fp));
+    auto native = std::get<std::shared_ptr<LoxNativeFunction>>(stack().at(fp));
     if (arg_count != native->get_arity()) {
         throw LoxArgError(fmt::format("the native function {} expect {} arguments, but got {}", native->get_name(),
                                       native->get_arity(), arg_count));

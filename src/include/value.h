@@ -9,13 +9,14 @@
 #include <variant>
 #include <memory>
 #include "object.h"
+#include "native.h"
 #include "nativeobjects/loxconcurrent.h"
 
 using NativeObject = std::variant<std::thread, LoxMutex, LoxCondition>;
 using NativePair = std::pair<uint16_t, NativeObject>;
 using NativeReference = std::shared_ptr<NativePair>;
 
-using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference, NativeReference>;
+using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference, NativeReference, std::shared_ptr<LoxNativeFunction>>;
 
 namespace LoxValue {
 
@@ -50,6 +51,10 @@ namespace LoxValue {
         return std::static_pointer_cast<T>(std::get<LoxReference>(value));
     }
 
+    /**
+     * 如果给定的value是一个LoxReference，则对其进行mark。否则什么都不做。
+     */
+    void mark_value(Value &value, std::queue<LoxReference> &queue);
 }
 
 Value operator-(const Value &value);

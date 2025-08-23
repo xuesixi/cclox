@@ -24,11 +24,17 @@ public:
     }
 
     void clear_reference() override {
-
+        fields.clear();
+        the_class = nullptr;
     }
 
     [[nodiscard]] std::string to_string() const override {
-        return fmt::format("<obj: {}>", the_class->get_name());
+        if (the_class) {
+            return fmt::format("<obj: {}>", the_class->get_name());
+        } else {
+            // 在gc的clear_reference之后，类指针可能为null
+            return fmt::format("<obj: unknown>");
+        }
     }
 
     std::shared_ptr<LoxClass> &get_class() {
@@ -41,6 +47,13 @@ public:
 
     LoxObjectType get_object_type() const override {
         return LoxObjectType::Instance;
+    }
+
+    void mark_reference(std::queue<LoxReference> &queue) override {
+        for (auto & field : fields) {
+            LoxValue::mark_value(field, queue);
+        }
+        mark(the_class, queue);
     }
 
 private:

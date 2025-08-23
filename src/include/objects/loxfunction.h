@@ -23,7 +23,10 @@ public:
     ~LoxFunction() override {
         Runtime::record_free(*this);
     }
-    void clear_reference() override {};
+    void clear_reference() override {
+        std::cout << "fun clear\n";
+        chunk.constants.clear();
+    };
 
     std::string to_string() const override {
         if (name == "<main>") {
@@ -52,11 +55,11 @@ public:
         return LoxObjectType::Function;
     }
 
-private:
-    Chunk chunk;
-    std::string name;
-    int arity_ = 0 ;
-    size_t memory_size = 0;
+    void mark_reference(std::queue<LoxReference> &queue) override {
+        for (auto & constant : chunk.constants) {
+            LoxValue::mark_value(constant, queue);
+        }
+    }
 
     size_t compute_size() override {
         if (memory_size == 0) {
@@ -66,6 +69,12 @@ private:
             return memory_size;
         }
     }
+
+private:
+    Chunk chunk;
+    std::string name;
+    int arity_ = 0 ;
+    size_t memory_size = 0;
 };
 
 #endif //LOXFUNCTION_H

@@ -4,11 +4,17 @@
 
 #include "include/stringintern.h"
 
+#include "cclox_util.h"
+#include "error.h"
+
 uint16_t StringIntern::resolve_string(const std::string &name) {
     auto found = string_to_id.find(name);
     if (found == string_to_id.end()) {
         id_to_string.push_back(name);
-        uint8_t id = id_to_string.size() - 1;
+        size_t id = id_to_string.size() - 1;
+        if (within<uint16_t>(id) == false) {
+            throw StringInternOverflowError("String intern overflow");
+        }
         string_to_id.insert({name, id});
         return id;
     } else {

@@ -332,6 +332,9 @@ private:
      */
     void string_expr(bool can_assign);
 
+    /**
+     * 在已知curr是fun，且本处预期一个表达式的时候。作为匿名函数，next是(
+     */
     void lambda_expr(bool can_assign);
 
     /**

@@ -5,8 +5,44 @@
 #ifndef NATIVE_H
 #define NATIVE_H
 
-#include "objects/loxnative.h"
-#include "vm.h"
+#include <string>
+#include <fmt/core.h>
+
+class VM;
+
+class LoxNativeFunction {
+public:
+    /**
+     * 该函数没有返回值。如果逻辑上有返回值，直接在函数内部置入栈中即可
+     * 该函数的调用时，fp位置是LoxNative。该函数会负责弹出它。
+     */
+    typedef void (*NativeImpl)(VM &vm, size_t fp);
+
+    explicit LoxNativeFunction(NativeImpl impl, const std::string &name, int arity): impl_(impl), name_(name), arity_(arity) {
+
+    }
+
+    [[nodiscard]] std::string to_string() const {
+        return fmt::format("<native: {}>", name_);
+    }
+
+    std::string get_name() const {
+        return name_;
+    }
+
+    NativeImpl get_impl() const {
+        return impl_;
+    }
+
+    int get_arity() const {
+        return arity_;
+    }
+
+private:
+    const std::string name_;
+    const NativeImpl impl_;
+    const int arity_;
+};
 
 /**
  * 这个命名空间中是一系列NativeImpl，也就是LoxNative的核心。

@@ -5,12 +5,12 @@
 #ifndef CAPTURED_H
 #define CAPTURED_H
 
-#include "value.h"
+#include "../value.h"
 
 /**
  * 被捕获值。有两种状态：在栈上，或者已逃逸
  */
-class Captured {
+class Captured: public LoxObject{
 public:
     Captured() = default;
 
@@ -43,6 +43,26 @@ public:
         } else {
             return std::get<Value>(data);
         }
+    }
+
+    size_t compute_size() override {
+        return sizeof(Captured);
+    }
+
+    void mark_reference(std::queue<LoxReference> &queue) override {
+        LoxValue::mark_value(value(), queue);
+    }
+
+    void clear_reference() override {
+        data = Value{nullptr};
+    }
+
+    [[nodiscard]] std::string to_string() const override {
+        return "<captured>";
+    }
+
+    LoxObjectType get_object_type() const override {
+        return LoxObjectType::Captured;
     }
 
 private:

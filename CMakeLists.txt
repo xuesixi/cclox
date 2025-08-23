@@ -40,18 +40,16 @@ add_executable(cclox
         src/scope.cc
         src/include/scope.h
         src/include/objects/loxfunction.h
-        src/captured.cc
-        src/include/captured.h
+        src/include/objects/loxcaptured.h
         src/include/objects/loxclosure.h
         src/include/objects/loxclass.h
         src/include/objects/loxinstance.h
         src/include/objects/loxmethod.h
-        src/include/objects/loxnative.h
         src/native.cc
         src/include/native.h
         src/stringintern.cc
         src/include/stringintern.h
-        src/include/nativeobjects/LoxMutex.h)
+        src/include/nativeobjects/loxconcurrent.h)
 
 add_library(cclox_lib
         src/main.cc
@@ -79,18 +77,16 @@ add_library(cclox_lib
         src/scope.cc
         src/include/scope.h
         src/include/objects/loxfunction.h
-        src/captured.cc
-        src/include/captured.h
+        src/include/objects/loxcaptured.h
         src/include/objects/loxclosure.h
         src/include/objects/loxclass.h
         src/include/objects/loxinstance.h
         src/include/objects/loxmethod.h
-        src/include/objects/loxnative.h
         src/native.cc
         src/include/native.h
         src/stringintern.cc
         src/include/stringintern.h
-        src/include/nativeobjects/LoxMutex.h
+        src/include/nativeobjects/loxconcurrent.h
 )
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")

@@ -24,6 +24,8 @@ std::string LoxValue::to_string(const Value &value) {
             return "nil";
         } else if constexpr (std::is_same_v<T, NativeReference>) {
             return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
+        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction>>) {
+            return arg->get_name();
         } else {
             return fmt::format("{}", arg);
         }
@@ -39,10 +41,18 @@ std::string LoxValue::to_visual_string(const Value &value) {
             return "nil";
         } else if constexpr (std::is_same_v<T, NativeReference>) {
             return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
+        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction>>) {
+            return arg->get_name();
         } else {
             return fmt::format("{}", arg);
         }
     }, value);
+}
+
+void LoxValue::mark_value(Value &value, std::queue<LoxReference> &queue) {
+    if (std::holds_alternative<LoxReference>(value)) {
+        LoxObject::mark(std::get<LoxReference>(value), queue);
+    }
 }
 
 Value operator-(const Value &value) {
