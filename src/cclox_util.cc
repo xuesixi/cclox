@@ -2,6 +2,10 @@
 #include "error.h"
 #include <fmt/core.h>
 
+#include "common.h"
+
+const auto program_start = std::chrono::high_resolution_clock::now();
+
 std::string read_file(const std::string &path) {
     std::ifstream ifs(path);
     if (!ifs.is_open()) {
@@ -10,9 +14,33 @@ std::string read_file(const std::string &path) {
     return std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
 }
 
-void print_with_color(const std::string &content, Color color) {
-    std::string ansi_code;
+std::string timestamp_str() {
+    auto time = std::chrono::system_clock::now();
+    auto tt = std::chrono::system_clock::to_time_t(time);
+
+    std::ostringstream oss;
+    oss << std::put_time(std::localtime(&tt), "%Y%m%d_%H%M%S");
+    return oss.str();
+}
+
+std::string nanos_str() {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        now - program_start
+    ).count();
+    return fmt::format("{}", ns);
+}
+
+void print_to(std::ostream &out ,const std::string &content, Color color) {
+     std::string ansi_code;
+    if (Flag::print_color == false) {
+        out << content;
+        return;
+    }
     switch (color) {
+        case Color::None:
+            out << content;
+            return;
         case Color::BLACK: ansi_code = "\033[30m";
             break;
         case Color::RED: ansi_code = "\033[31m";
@@ -50,5 +78,5 @@ void print_with_color(const std::string &content, Color color) {
     // reset color
     const std::string reset_code = "\033[0m";
 
-    std::cout << ansi_code << content << reset_code;
+    out << ansi_code << content << reset_code;
 }

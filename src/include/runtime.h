@@ -44,6 +44,10 @@ namespace Runtime {
 
     extern std::atomic<bool> in_gc;
 
+    extern std::optional<std::ofstream> log_stream;
+
+    void print_log(const std::string &content, Color color);
+
     inline void register_object(const std::shared_ptr<LoxObject> &ptr) {
         std::lock_guard<std::mutex> guard(gc_mutex);
         weak_pool.push_back(std::weak_ptr{ptr});
@@ -77,7 +81,7 @@ namespace Runtime {
         auto old = allocated_size.fetch_add(reference->compute_size());
         reference->is_protected = false;
         if (Flag::show_heap) {
-            print_with_color(fmt::format("[+] heap: {:^6} -> {:^6}; {}\n", old, old + reference->compute_size(), reference->to_visual_string()), Color::BRIGHT_YELLOW);
+            print_log(fmt::format("@{} [+] heap: {:^6} -> {:^6}; {}\n", nanos_str(), old, old + reference->compute_size(), reference->to_visual_string()), Color::BRIGHT_YELLOW);
         }
     }
 
@@ -87,7 +91,7 @@ namespace Runtime {
     inline void record_free(LoxObject &lox_object) {
         auto old = allocated_size.fetch_sub(lox_object.compute_size());
         if (Flag::show_heap) {
-            print_with_color(fmt::format("[-] heap: {:^6} -> {:^6}; {}\n", old, old - lox_object.compute_size(), lox_object.to_visual_string()), Color::BRIGHT_YELLOW);
+            print_log(fmt::format("@{} [-] heap: {:^6} -> {:^6}; {}\n", nanos_str(), old, old - lox_object.compute_size(), lox_object.to_visual_string()), Color::BRIGHT_YELLOW);
         }
     }
 

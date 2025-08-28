@@ -32,15 +32,24 @@ struct CallFrame {
 
 class VM {
 public:
-    explicit VM() {
+    explicit VM(): vm_id(next_vm_id++) {
         std::lock_guard lock{Runtime::gc_mutex};
         vm_list_it = Runtime::vm_list.insert(Runtime::vm_list.end(), this);
+        if (Flag::log_output) {
+            log_stream = std::ofstream(fmt::format("tmp_{}_thread_{}.log", timestamp_str(), vm_id));
+        }
     }
 
     ~VM() {
-        check_gc();
-        std::lock_guard lock{Runtime::gc_mutex};
-        Runtime::vm_list.erase(vm_list_it);
+        std::unique_lock<std::mutex> lock{Runtime::gc_mutex, std::defer_lock};
+        while (true) {
+            if (lock.try_lock()) {
+                Runtime::vm_list.erase(vm_list_it);
+                break;
+            } else {
+                respond_gc();
+            }
+        }
     }
 
     VM(const VM &other) = delete;
@@ -113,6 +122,24 @@ public:
     void setup_frame(const std::shared_ptr<LoxClosure> &cl, size_t fp) {
         frames_.push_back({cl, 0, fp});
     }
+
+    bool is_active() const {
+        return active;
+    }
+
+    void set_active(bool act) {
+        active = act;
+    }
+
+    /**
+     * 当vm从阻塞状态结束后（例如系统调用、wait、join），调用该函数
+     */
+    void end_blocking();
+
+    /**
+     * 在安全点执行该函数，检查是否处在gc状态中，如果有，则回应之，这会导致线程暂停直到gc结束。
+     */
+    void respond_gc();
 
 private:
 
@@ -192,11 +219,6 @@ private:
     }
 
     /**
-     * 在安全点执行该函数，检查是否要gc。
-     */
-    void check_gc();
-
-    /**
      * @return 一个代表帧栈的字符串。新的栈帧会出现在字符串的前面。
      */
     std::string backtrace();
@@ -214,6 +236,11 @@ private:
     void call_class(size_t arg_count);
 
     void call_native(size_t arg_count);
+
+    /**
+     * 如果有指定的log输出流，就输出到其中。否则，输出到cout
+     */
+    void print_log(const std::string &content, Color color);
 
     /**
      * 将当前栈帧末尾的arg_count个参数移动到栈帧的开头，删除除了参数之外的其他本地变量，pc归零。
@@ -237,6 +264,11 @@ private:
     std::vector<Value> stack_; // 栈
     std::vector<std::shared_ptr<Captured> > open_captured; // 仍然存在于栈上的捕获值
     std::list<VM*>::iterator vm_list_it;
+    std::optional<std::ofstream> log_stream;
+    int vm_id;
+    int active = true; // 是否活跃。阻塞或者等待状态下设置为false。
+
+    static std::atomic<int> next_vm_id;
 };
 
 #endif

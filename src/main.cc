@@ -19,6 +19,7 @@ namespace Flag {
     bool show_heap = false;
     bool print_color = false;
     bool not_run = false;
+    bool log_output = false;
 }
 
 namespace Configuration {
@@ -59,15 +60,15 @@ void run_file(const std::string &path) {
         auto result = vm.interpret(std::move(source));
         switch (result) {
             case InterpreterResult::CompileError: {
-                print_with_color("== Compile Error ==\n", Color::RED);
+                print_to(std::cout, "== Compile Error ==\n", Color::RED);
                 break;
             }
             case InterpreterResult::RuntimeError: {
-                print_with_color("== Runtime Error ==\n", Color::RED);
+                print_to(std::cout, "== Runtime Error ==\n", Color::RED);
                 break;
             }
             case InterpreterResult::OK: {
-                print_with_color("== Execution Finished ==\n", Color::GREEN);
+                print_to(std::cout, "== Execution Finished ==\n", Color::GREEN);
                 break;
             }
         }
@@ -84,16 +85,6 @@ void test_scanner(const std::string &path) {
     }
 }
 
-void go(int argc, const char **args) {
-    if (argc == 1) {
-        repl();
-    } else if (argc == 2) {
-        run_file(args[1]);
-    } else {
-        std::cerr << "error: expect zero or more arguments\n";
-    }
-}
-
 int main(int argc, const char **args) {
     load_all_natives();
     CLI::App app{"cclox description"};
@@ -103,12 +94,20 @@ int main(int argc, const char **args) {
     app.add_option("--frame-max", Configuration::frame_max, "the max amount of stack frames when running the vm");
 
     app.add_flag("-t, --trace", Flag::trace, "trace each step");
+    app.add_flag("-l, --log", Flag::log_output, "each thread writes its output to a log file");
     app.add_flag("-H, --heap", Flag::show_heap, "show heap allocation info");
     app.add_flag("-T, --disassembly", Flag::disassembly, "disassemble the byte codes");
     app.add_flag("-n, --not-run", Flag::not_run, "don't run the code after the compilation");
     app.add_flag("-C, --color", Flag::print_color, "the result of print will be colored");
 
     CLI11_PARSE(app, argc, args);
+
+    if (Flag::log_output) {
+        Runtime::log_stream = std::ofstream("tmp_" + timestamp_str() + "_runtime.log");
+        if (!Runtime::log_stream->is_open()) {
+            throw FileOpenFailureError("cannot open the temporary runtime log file");
+        }
+    }
     if (filepath == "d") {
         // 默认的测试用文件, 以 cclox -f d 触发
         filepath = "/Users/yuexue/Codes/try/cclox/build/hello.lox";

@@ -8,15 +8,42 @@
 #include <string>
 #include <fstream>
 #include <limits>
+#include <sstream>
 #include <tuple>
 
 enum class Color {
+    None,
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,
     BRIGHT_BLACK, BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW,
     BRIGHT_BLUE, BRIGHT_MAGENTA, BRIGHT_CYAN, BRIGHT_WHITE
 };
 
-void print_with_color(const std::string &content, Color color);
+/**
+ * @return 一个yyyymmdd_HHMMSS格式的时间戳字符串
+ */
+std::string timestamp_str();
+
+std::string nanos_str();
+
+extern const std::chrono::time_point<std::chrono::steady_clock> program_start;
+
+/**
+ * 带颜色的输出
+ * @param out 输出流。一个文件流或者cout
+ * @param content 内容
+ * @param color 颜色。Color::None为无色。如果Flag::print_color为false，那么无论传入什么颜色，都不会打印颜色
+ */
+void print_to(std::ostream &out ,const std::string &content, Color color);
+
+//
+/**
+ * 打开指定路径的文件，并将其全部内容返回为一个string。
+ * @param path 路径
+ * @return 文件内容
+ * @throws FileOpenFailureError 文件打开异常
+ */
+std::string read_file(const std::string &path);
+
 
 /**
  * 返回值的第一个是high，第二个是low
@@ -108,15 +135,6 @@ size_t estimate_u16_map_size(std::unordered_map<uint16_t, A> map) {
     // }
     return total_bytes;
 }
-
-//
-/**
- * 打开指定路径的文件，并将其全部内容返回为一个string。
- * @param path 路径
- * @return 文件内容
- * @throws FileOpenFailureError 文件打开异常
- */
-std::string read_file(const std::string &path);
 
 
 

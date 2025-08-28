@@ -8,6 +8,7 @@ namespace Flag {
     extern bool show_heap; // 是否在分配和释放堆内存的时候进行日志输出
     extern bool print_color; // 打印时是否带颜色
     extern bool not_run; // 是否运行字节码（如果设置为false，仍然可以通过其他选项进行反汇编等非运行操作）
+    extern bool log_output; // 将运行过程输出到自动生成的日志文件中
 }
 
 namespace Configuration {

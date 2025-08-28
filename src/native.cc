@@ -11,6 +11,7 @@
 #include <any>
 
 #include "stringintern.h"
+#include "objects/loxstring.h"
 
 namespace Native {
 
@@ -32,6 +33,17 @@ namespace Native {
         return std::get<T>(ref->second);
     }
 
+    /**
+     * 打印日志。如果开启了文件日志选项，则会打印在runtime日志中。否则输出到cout。自动换行。
+     */
+    void log(VM &vm, size_t fp) {
+        Value v = vm.stack().back();
+        vm.stack().pop_back();
+        vm.stack().pop_back();
+        Runtime::print_log(fmt::format("@{} {}\n", nanos_str(), LoxValue::to_string(v)), Color::GREEN);
+        // Runtime::print_log(LoxValue::to_string(v) + "\n", Color::GREEN);
+        vm.stack().push_back(nullptr);
+    }
 
     /**
      * 获取当前的时间，单位为秒的浮点数
@@ -84,7 +96,9 @@ namespace Native {
         vm.stack().pop_back(); // 弹出该native
         auto &thrd = test_native_object<std::thread>(v, "std::thread");
         if (thrd.joinable()) {
+            vm.set_active(false);
             thrd.join();
+            vm.end_blocking();
         }
         vm.stack().push_back(nullptr); // 逻辑上返回nil。
     }
@@ -101,7 +115,9 @@ namespace Native {
         vm.stack().pop_back();
         vm.stack().pop_back();
         auto &mutex = test_native_object<LoxMutex>(arg, "LoxMutex");
+        vm.set_active(false);
         mutex.lock();
+        vm.end_blocking();
         vm.stack().push_back(nullptr);
     }
 
@@ -129,7 +145,9 @@ namespace Native {
         vm.stack().pop_back();
         auto &cv = test_native_object<LoxCondition>(arg1, "LoxCondition");
         auto &mutex = test_native_object<LoxMutex>(arg2, "LoxMutex");
+        vm.set_active(false);
         cv.wait(mutex);
+        vm.end_blocking();
         vm.stack().push_back(nullptr);
     }
 
@@ -152,6 +170,7 @@ void add_native(const std::string &name, LoxNativeFunction::NativeImpl impl, int
 
 void load_all_natives() {
     add_native("now", Native::now, 0);
+    add_native("log", Native::log, 1);
     add_native("thread_new", Native::thread_new, 1);
     add_native("thread_join", Native::thread_join, 1);
     add_native("mutex_new", Native::mutex_new, 0);

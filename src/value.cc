@@ -23,9 +23,10 @@ std::string LoxValue::to_string(const Value &value) {
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
         } else if constexpr (std::is_same_v<T, NativeReference>) {
-            return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
+            // return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
+            return StringIntern::read_from_id(arg->first);
         } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction>>) {
-            return arg->get_name();
+            return arg->to_string();
         } else {
             return fmt::format("{}", arg);
         }
@@ -40,9 +41,11 @@ std::string LoxValue::to_visual_string(const Value &value) {
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
         } else if constexpr (std::is_same_v<T, NativeReference>) {
-            return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
+            // return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
+            return StringIntern::read_from_id(arg->first);
         } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction>>) {
-            return arg->get_name();
+            // return arg->get_name();
+            return arg->to_string();
         } else {
             return fmt::format("{}", arg);
         }

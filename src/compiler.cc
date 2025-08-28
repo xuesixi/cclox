@@ -55,6 +55,11 @@ void Compiler::advance() {
 }
 
 std::shared_ptr<LoxFunction> Compiler::compile(std::string &&source) {
+    if (Runtime::log_stream.has_value()) {
+        disasm.set_out(&Runtime::log_stream.value());
+    } else {
+        disasm.set_out(&std::cout);
+    }
     scanner = std::make_unique<Scanner>(std::move(source));
     scope = std::make_shared<Scope>(nullptr, FunctionType::Main);
     advance();

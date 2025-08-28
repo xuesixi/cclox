@@ -14,6 +14,8 @@
 #include "stringintern.h"
 #include "objects/loxinstance.h"
 
+std::atomic<int> VM::next_vm_id = 0;
+
 InterpreterResult VM::interpret(std::string &&source) {
     try {
         Compiler compiler;
@@ -36,19 +38,25 @@ InterpreterResult VM::interpret(std::string &&source) {
 }
 
 void VM::show_stack() {
-    print_with_color(fmt::format(" heap: {}  ", Runtime::allocated_size.load()), Color::MAGENTA);
+    print_log(fmt::format("@{} [no.{}] heap: {}  ", nanos_str(), vm_id, Runtime::allocated_size.load()), Color::MAGENTA);
     for (size_t i = 0; i < stack_.size(); i++) {
         if (i == frames_.back().fp) {
-            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::RED);
+            print_log(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::RED);
         } else {
-            print_with_color(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::BLUE);
+            print_log(fmt::format("[{}] ", LoxValue::to_visual_string(stack_.at(i))), Color::BLUE);
         }
     }
-    std::cout << std::endl;
+    print_log("\n", Color::None);
+    // std::cout << std::endl;
 }
 
 InterpreterResult VM::run() {
     Disassembler disassembler;
+    if (log_stream.has_value()) {
+        disassembler.set_out(&log_stream.value());
+    } else {
+        disassembler.set_out(&std::cout);
+    }
 
     const bool trace = Flag::trace; // 据说保存为本地变量可以帮助编译器优化？
 
@@ -173,7 +181,7 @@ InterpreterResult VM::run() {
                 case Opcode::Print: {
                     Value v = pop_and_get();
                     if (Flag::print_color) {
-                        print_with_color(LoxValue::to_string(v) + "\n", Color::GREEN);
+                        print_log(LoxValue::to_string(v) + "\n", Color::GREEN);
                     } else {
                         std::cout << LoxValue::to_string(v) << std::endl;
                     }
@@ -377,15 +385,23 @@ InterpreterResult VM::run() {
 }
 
 
-void VM::check_gc() {
+void VM::respond_gc() {
     if (!Runtime::in_gc) {
         return;
+    }
+    if (Flag::show_heap) {
+        print_log(fmt::format("@{} --- thread {} has been paused for gc\n",nanos_str(), vm_id), Color::BRIGHT_BLUE);
+        Runtime::print_log(fmt::format("@{} --- thread {} has been paused for gc\n", nanos_str(), vm_id), Color::BRIGHT_BLUE);
     }
     // 告诉gc线程，本线程已经停下了。
     Runtime::pause_latch->arrive_and_wait();
 
     // 等待gc线程的完成
     Runtime::resume_latch->arrive_and_wait();
+    if (Flag::show_heap) {
+        print_log(fmt::format("@{} --- thread {} has resumed from gc\n", nanos_str(), vm_id), Color::BRIGHT_BLUE);
+        Runtime::print_log(fmt::format("@{} --- thread {} has resumed from gc\n", nanos_str(), vm_id), Color::BRIGHT_BLUE);
+    }
 }
 
 std::string VM::backtrace() {
@@ -489,6 +505,16 @@ void VM::call_native(size_t arg_count) {
     impl(*this, fp);
 }
 
+void VM::print_log(const std::string &content, Color color) {
+    if (log_stream.has_value()) {
+        print_to(log_stream.value(), content, color);
+        // print_to(log_stream.value(), fmt::format("[{}]: {}", nanos_str(), content), color);
+        log_stream.value().flush();
+    } else {
+        print_to(std::cout, content, color);
+    }
+}
+
 void VM::recur_call(size_t arg_count) {
     if (arg_count != closure()->function->arity()) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(closure()),
@@ -528,4 +554,10 @@ void VM::method_invoke(OperandSize string_id, uint8_t arg_count) {
     }
     setup_frame(cl, fp);
     stack_.at(fp) = receiver; // 修改栈底的接收者
+}
+
+void VM::end_blocking() {
+    // 获取gc锁，因此，如果gc正在进行，就会阻塞该线程，这正是我们想要的。
+    std::lock_guard lock{Runtime::gc_mutex};
+    set_active(true);
 }

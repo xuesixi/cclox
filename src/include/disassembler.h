@@ -32,11 +32,6 @@ public:
      */
     size_t instruction_constant_operand_1(Opcode instruction, size_t offset);
 
-    // /**
-    //  * 有一个用于标识本地变量索引的操作数
-    //  */
-    // size_t instruction_local(Opcode instruction, size_t offset);
-
     /**
      * 通用的单操作数指令
      */
@@ -67,8 +62,16 @@ public:
         this->chunk = the_chunk;
     }
 
+    /**
+     * 设置输出流
+     */
+    void set_out(std::ostream *o) {
+        out = o;
+    }
+
 private:
     const Chunk *chunk = nullptr;
+    std::ostream *out = nullptr; // 输出流，要么是cout，要么是日志文件
 };
 
 #endif

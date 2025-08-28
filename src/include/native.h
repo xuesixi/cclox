@@ -52,6 +52,7 @@ private:
  * - NativeImpl在形式上的返回值为void。如果该函数在逻辑上有返回值，那么将其置入栈顶。如果在逻辑上没有返回值，那么必须将Nil置入栈顶。
  */
 namespace Native {
+    void log(VM &vm, size_t fp);
     void now(VM &vm, size_t fp);
     void thread_new(VM &vm, size_t fp);
     void thread_join(VM &vm, size_t fp);
