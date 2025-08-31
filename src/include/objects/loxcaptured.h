@@ -5,6 +5,7 @@
 #ifndef CAPTURED_H
 #define CAPTURED_H
 
+#include "runtime.h"
 #include "../value.h"
 
 /**
@@ -15,6 +16,7 @@ public:
     Captured() = default;
 
     Captured(std::vector<Value> &stack, size_t index): data(OpenRef{&stack, index}) {
+        Runtime::record_free(*this);
     }
 
     /**

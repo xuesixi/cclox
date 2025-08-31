@@ -74,9 +74,14 @@ InterpreterResult VM::run() {
 
             switch (instruction) {
                 case Opcode::Return: {
+
+                    Runtime::wait_sync();
+                    Runtime::sync_flag.clear();
+
                     // 获取栈顶的值作为返回值。
                     // 弹出最后一个栈帧。如果此时没有任何栈帧，说明main已经执行完毕。则结束
                     // 否则，缩减栈（清除上一个栈帧中的本地变量），然后将返回值添加在原本栈帧的fp处。
+
                     Value return_value = pop_and_get();
                     auto last_frame = frames_.back();
 
@@ -341,8 +346,6 @@ InterpreterResult VM::run() {
                 case Opcode::MethodBind: {
                     auto receiver = pop_and_get();
                     auto string_id = read_operand_2();
-                    // Chunk::MethodCache &cache = read_cache();
-                    // next();
                     auto cl = method_lookup(receiver, string_id);
                     auto method = Runtime::allocate_as_ref<LoxMethod>(cl, LoxValue::to_reference_unsafe<LoxInstance>(receiver));
                     push(method);
@@ -351,8 +354,6 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::MethodInvoke: {
                     auto string_id = read_operand_2();
-                    // Chunk::MethodCache &cache = read_cache();
-                    // next();
                     uint8_t arg_count = read_operand_1();
                     method_invoke(string_id, arg_count);
                     break;
@@ -381,26 +382,6 @@ InterpreterResult VM::run() {
         std::cerr << error.what() << std::endl;
         std::cerr << backtrace();
         return InterpreterResult::RuntimeError;
-    }
-}
-
-
-void VM::respond_gc() {
-    if (!Runtime::in_gc) {
-        return;
-    }
-    if (Flag::show_heap) {
-        print_log(fmt::format("@{} --- thread {} has been paused for gc\n",nanos_str(), vm_id), Color::BRIGHT_BLUE);
-        Runtime::print_log(fmt::format("@{} --- thread {} has been paused for gc\n", nanos_str(), vm_id), Color::BRIGHT_BLUE);
-    }
-    // 告诉gc线程，本线程已经停下了。
-    Runtime::pause_latch->arrive_and_wait();
-
-    // 等待gc线程的完成
-    Runtime::resume_latch->arrive_and_wait();
-    if (Flag::show_heap) {
-        print_log(fmt::format("@{} --- thread {} has resumed from gc\n", nanos_str(), vm_id), Color::BRIGHT_BLUE);
-        Runtime::print_log(fmt::format("@{} --- thread {} has resumed from gc\n", nanos_str(), vm_id), Color::BRIGHT_BLUE);
     }
 }
 
@@ -508,10 +489,10 @@ void VM::call_native(size_t arg_count) {
 void VM::print_log(const std::string &content, Color color) {
     if (log_stream.has_value()) {
         print_to(log_stream.value(), content, color);
-        // print_to(log_stream.value(), fmt::format("[{}]: {}", nanos_str(), content), color);
         log_stream.value().flush();
     } else {
         print_to(std::cout, content, color);
+        std::cout.flush();
     }
 }
 
@@ -556,8 +537,21 @@ void VM::method_invoke(OperandSize string_id, uint8_t arg_count) {
     stack_.at(fp) = receiver; // 修改栈底的接收者
 }
 
+void VM::start_blocking() {
+    Runtime::wait_sync();
+    this->active = false;
+    if (Flag::show_heap) {
+        // Runtime::print_log(fmt::format("@{} vm {} starts blocking\n", nanos_str(), vm_id), Color::BLUE);
+    }
+    Runtime::sync_flag.clear();
+}
+
 void VM::end_blocking() {
-    // 获取gc锁，因此，如果gc正在进行，就会阻塞该线程，这正是我们想要的。
-    std::lock_guard lock{Runtime::gc_mutex};
-    set_active(true);
+    while (Runtime::sync_flag.test_and_set()) {
+    }
+    if (Flag::show_heap) {
+        // Runtime::print_log(fmt::format("@{} vm {} ends blocking\n", nanos_str(), vm_id), Color::BLUE);
+    }
+    this->active = true;
+    Runtime::sync_flag.clear();
 }

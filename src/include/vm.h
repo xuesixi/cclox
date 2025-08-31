@@ -33,7 +33,10 @@ struct CallFrame {
 class VM {
 public:
     explicit VM(): vm_id(next_vm_id++) {
-        std::lock_guard lock{Runtime::gc_mutex};
+        Runtime::thread_id = vm_id;
+        if (Flag::show_heap) {
+            Runtime::print_log(fmt::format("@{} vm {} just created\n", nanos_str(), vm_id), Color::YELLOW);
+        }
         vm_list_it = Runtime::vm_list.insert(Runtime::vm_list.end(), this);
         if (Flag::log_output) {
             log_stream = std::ofstream(fmt::format("tmp_{}_thread_{}.log", timestamp_str(), vm_id));
@@ -41,15 +44,12 @@ public:
     }
 
     ~VM() {
-        std::unique_lock<std::mutex> lock{Runtime::gc_mutex, std::defer_lock};
-        while (true) {
-            if (lock.try_lock()) {
-                Runtime::vm_list.erase(vm_list_it);
-                break;
-            } else {
-                respond_gc();
-            }
+        Runtime::wait_sync();
+        Runtime::vm_list.erase(vm_list_it);
+        if (Flag::show_heap) {
+            Runtime::print_log(fmt::format("@{} vm {} just destroyed\n", nanos_str(), vm_id), Color::YELLOW);
         }
+        Runtime::sync_flag.clear();
     }
 
     VM(const VM &other) = delete;
@@ -127,19 +127,19 @@ public:
         return active;
     }
 
-    void set_active(bool act) {
-        active = act;
-    }
+    /**
+     * 开始阻塞时调用
+     */
+    void start_blocking();
 
     /**
-     * 当vm从阻塞状态结束后（例如系统调用、wait、join），调用该函数
+     * 结束阻塞时调用
      */
     void end_blocking();
 
-    /**
-     * 在安全点执行该函数，检查是否处在gc状态中，如果有，则回应之，这会导致线程暂停直到gc结束。
-     */
-    void respond_gc();
+    int get_vm_id() {
+        return vm_id;
+    }
 
 private:
 

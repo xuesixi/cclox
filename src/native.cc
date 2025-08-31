@@ -40,8 +40,7 @@ namespace Native {
         Value v = vm.stack().back();
         vm.stack().pop_back();
         vm.stack().pop_back();
-        Runtime::print_log(fmt::format("@{} {}\n", nanos_str(), LoxValue::to_string(v)), Color::GREEN);
-        // Runtime::print_log(LoxValue::to_string(v) + "\n", Color::GREEN);
+        Runtime::print_log(fmt::format("@{} vm {}: {}\n", nanos_str(), vm.get_vm_id(), LoxValue::to_string(v)), Color::GREEN);
         vm.stack().push_back(nullptr);
     }
 
@@ -69,10 +68,12 @@ namespace Native {
 
         switch (callable->get_object_type()) {
             case LoxObjectType::Closure:{
+                Runtime::wait_sync();
                 NativeReference t = std::make_shared<NativePair>(name_id, std::thread([callable]() {
                     VM new_vm;
                     new_vm.stack().push_back(callable);
                     new_vm.setup_frame(std::static_pointer_cast<LoxClosure>(callable), 0);
+                    Runtime::sync_flag.clear();
                     new_vm.run();
                 }));
                 vm.stack().push_back(t);
@@ -96,7 +97,7 @@ namespace Native {
         vm.stack().pop_back(); // 弹出该native
         auto &thrd = test_native_object<std::thread>(v, "std::thread");
         if (thrd.joinable()) {
-            vm.set_active(false);
+            vm.start_blocking();
             thrd.join();
             vm.end_blocking();
         }
@@ -115,7 +116,7 @@ namespace Native {
         vm.stack().pop_back();
         vm.stack().pop_back();
         auto &mutex = test_native_object<LoxMutex>(arg, "LoxMutex");
-        vm.set_active(false);
+        vm.start_blocking();
         mutex.lock();
         vm.end_blocking();
         vm.stack().push_back(nullptr);
@@ -145,7 +146,7 @@ namespace Native {
         vm.stack().pop_back();
         auto &cv = test_native_object<LoxCondition>(arg1, "LoxCondition");
         auto &mutex = test_native_object<LoxMutex>(arg2, "LoxMutex");
-        vm.set_active(false);
+        vm.start_blocking();
         cv.wait(mutex);
         vm.end_blocking();
         vm.stack().push_back(nullptr);
