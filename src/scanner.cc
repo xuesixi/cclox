@@ -122,7 +122,14 @@ Token Scanner::scan_token() {
         case ';': return make_token(TokenType::SEMICOLON);
         case ',': return make_token(TokenType::COMMA);
         case '.': return make_token(TokenType::DOT);
-        case '-': return make_token(TokenType::MINUS);
+        case '|': return make_token(TokenType::BAR);
+        case '&': return make_token(TokenType::AMPERSAND);
+        case '[': return make_token(TokenType::LEFT_BRACKET);
+        case ']': return make_token(TokenType::RIGHT_BRACKET);
+        case '-': {
+            if (match('>')) return make_token(TokenType::DASH_GREATER);
+            return make_token(TokenType::MINUS);
+        }
         case '+': return make_token(TokenType::PLUS);
         case '/': return make_token(TokenType::SLASH);
         case '*': {

@@ -24,7 +24,6 @@ public:
         Runtime::record_free(*this);
     }
     void clear_reference() override {
-        std::cout << "fun clear\n";
         chunk.constants.clear();
     };
 

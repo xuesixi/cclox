@@ -18,7 +18,7 @@ enum class TokenType {
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
     GREATER, GREATER_EQUAL,
-    LESS, LESS_EQUAL,
+    LESS, LESS_EQUAL, DASH_GREATER, BAR, AMPERSAND, LEFT_BRACKET, RIGHT_BRACKET,
     // Literals.
     IDENTIFIER, STRING, FLOAT, INTEGER, FMT_STRING,
 
@@ -39,6 +39,7 @@ class Token {
 public:
     friend class Scanner;
     friend class Compiler;
+    friend class TypeParser;
 
     Token(): lexeme(), type(TokenType::ERROR), line(-1) {
     };
