@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 9/3/25.
 //
 
-#include "../include/typechecker/typechecker.h"
+#include "../include/typechecker/typeparser.h"
 
 std::unordered_map<std::string, size_t> LoxType::typename_to_id;
 std::vector<std::string> LoxType::id_to_typename;
@@ -108,13 +108,12 @@ TypePtr TypeParser::parse_tuple() {
 }
 
 TypePtr TypeParser::parse_array() {
-    auto first = parse_primary();
-    if (match(TokenType::LEFT_BRACKET)) {
+    auto curr = parse_primary();
+    while (match(TokenType::LEFT_BRACKET)) {
         consume(TokenType::RIGHT_BRACKET, "expect a ']' to declare an array");
-        return std::make_shared<ArrayType>(std::move(first));
-    } else {
-        return first;
+        curr = std::make_shared<ArrayType>(std::move(curr));
     }
+    return curr;
 }
 
 TypePtr TypeParser::parse_primary() {
