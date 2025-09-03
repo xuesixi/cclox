@@ -6,14 +6,6 @@
 #include "typechecker/typeparser.h"
 #include <catch2/catch_test_macros.hpp>
 
-std::string read_file(const std::string &path) {
-    std::ifstream ifs(path);
-    if (!ifs.is_open()) {
-        throw FileOpenFailureError(fmt::format("the file: {} cannot be opened", path));
-    }
-    return std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-}
-
 TEST_CASE("basic primary") {
     TypeParser parser("int");
     auto type = parser.parse_type();
@@ -255,12 +247,3 @@ TEST_CASE("complex nested everything") {
     auto type = parser.parse_type();
     REQUIRE(type->to_string() == input);
 }
-
-
-
-// int main() {
-//     std::string src = read_file("/Users/yuexue/Codes/try/cclox/build/lox/type.lox");
-//     TypeParser ast_builder(std::move(src));
-//     auto type = ast_builder.parse_type();
-//     std::cout << type->to_string();
-// }
