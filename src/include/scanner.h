@@ -40,6 +40,8 @@ public:
     friend class Scanner;
     friend class Compiler;
     friend class TypeParser;
+    friend class ExpressionParser;
+    friend class TokenHolder;
 
     Token(): lexeme(), type(TokenType::ERROR), line(-1) {
     };

@@ -8,6 +8,8 @@ add_executable(tc_test
         ../include/typechecker/typeparser.h
         tc_test.cc
         expression.cc
+        ../include/typechecker/expression.h
+        ../include/typechecker/tokenholder.h
 )
 
 target_include_directories(tc_test PRIVATE ../include)

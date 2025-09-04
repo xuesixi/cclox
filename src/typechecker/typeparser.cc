@@ -32,18 +32,18 @@ TypePtr TypeParser::parse_type() {
 }
 
 TypePtr TypeParser::parse_function() {
-    size_t save = next;
-    if (match(TokenType::LEFT_PAREN)) {
+    size_t save = tokens->save_position();
+    if (tokens->match(TokenType::LEFT_PAREN)) {
         std::vector<LoxType::TypePtr> parameters;
-        if (!match(TokenType::RIGHT_PAREN)) {
+        if (!tokens->match(TokenType::RIGHT_PAREN)) {
             do {
                 parameters.push_back(parse_type());
-            } while (match(TokenType::COMMA));
-            consume(TokenType::RIGHT_PAREN, "expect a ')' for function");
+            } while (tokens->match(TokenType::COMMA));
+            tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' for function");
         }
-        if (!match(TokenType::DASH_GREATER)) {
+        if (!tokens->match(TokenType::DASH_GREATER)) {
             // 发现不是函数，于是返回save点
-            next = save;
+            tokens->rewind(save);
             return parse_union();
         }
 
@@ -58,12 +58,12 @@ TypePtr TypeParser::parse_function() {
 
 LoxType::TypePtr TypeParser::parse_union() {
     auto first = parse_intersection();
-    if (match(TokenType::BAR)) {
+    if (tokens->match(TokenType::BAR)) {
         std::vector<TypePtr> unions;
         unions.push_back(first);
         do {
             unions.push_back(parse_intersection());
-        } while (match(TokenType::BAR));
+        } while (tokens->match(TokenType::BAR));
         return std::make_shared<UnionType>(std::move(unions));
     } else {
         return first;
@@ -72,12 +72,12 @@ LoxType::TypePtr TypeParser::parse_union() {
 
 TypePtr TypeParser::parse_intersection() {
     auto first = parse_tuple();
-    if (match(TokenType::AMPERSAND)) {
+    if (tokens->match(TokenType::AMPERSAND)) {
         std::vector<TypePtr> intersections;
         intersections.push_back(first);
         do {
             intersections.push_back(parse_tuple());
-        } while (match(TokenType::AMPERSAND));
+        } while (tokens->match(TokenType::AMPERSAND));
         return std::make_shared<IntersectionType>(std::move(intersections));
     } else {
         return first;
@@ -85,21 +85,21 @@ TypePtr TypeParser::parse_intersection() {
 }
 
 TypePtr TypeParser::parse_tuple() {
-    size_t save = next;
-    if (match(TokenType::LEFT_PAREN)) {
+    size_t save = tokens->save_position();
+    if (tokens->match(TokenType::LEFT_PAREN)) {
         // (a, b, c)
         std::vector<TypePtr> tuple;
-        if (match(TokenType::RIGHT_PAREN) == false) {
+        if (tokens->match(TokenType::RIGHT_PAREN) == false) {
             do {
                 tuple.push_back(parse_type());
-            } while (match(TokenType::COMMA));
-            consume(TokenType::RIGHT_PAREN, "expect a ')' for tuple");
+            } while (tokens->match(TokenType::COMMA));
+            tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' for tuple");
         }
 
         if (tuple.size() > 1) {
             return std::make_shared<TupleType>(std::move(tuple));
         } else {
-            next = save;
+            tokens->rewind(save);
             return parse_array();
         }
     } else {
@@ -109,22 +109,22 @@ TypePtr TypeParser::parse_tuple() {
 
 TypePtr TypeParser::parse_array() {
     auto curr = parse_primary();
-    while (match(TokenType::LEFT_BRACKET)) {
-        consume(TokenType::RIGHT_BRACKET, "expect a ']' to declare an array");
+    while (tokens->match(TokenType::LEFT_BRACKET)) {
+        tokens->consume(TokenType::RIGHT_BRACKET, "expect a ']' to declare an array");
         curr = std::make_shared<ArrayType>(std::move(curr));
     }
     return curr;
 }
 
 TypePtr TypeParser::parse_primary() {
-    if (match(TokenType::LEFT_PAREN)) {
+    if (tokens->match(TokenType::LEFT_PAREN)) {
         auto t = parse_type();
         t->parenthesized = true;
-        consume(TokenType::RIGHT_PAREN, "expect a ')' to end the primary");
+        tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' to end the primary");
         return t;
     } else {
-        consume(TokenType::IDENTIFIER, "expect a identifier as type name here");
-        Token &token = tokens.at(next - 1);
+        tokens->consume(TokenType::IDENTIFIER, "expect a identifier as type name here");
+        Token &token = tokens->last_token();
         auto primary = std::make_shared<PrimaryType>(token);
         return primary;
     }

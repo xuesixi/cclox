@@ -52,7 +52,9 @@ add_executable(cclox
         src/include/nativeobjects/loxconcurrent.h
         src/typechecker/typeparser.cc
         src/include/typechecker/typeparser.h
-        src/typechecker/expression.cc)
+        src/typechecker/expression.cc
+        src/include/typechecker/expression.h
+        src/include/typechecker/tokenholder.h)
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 target_link_libraries(cclox m readline fmt )

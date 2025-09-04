@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 #include "../scanner.h"
+#include "tokenholder.h"
 
 class LoxType {
 public:
@@ -139,12 +140,11 @@ private:
 
 class TypeParser {
 public:
-    TypeParser(std::string &&src) {
-        Scanner scanner{std::move(src)};
-        while (scanner.has_more()) {
-            tokens.push_back(scanner.scan_token());
-        }
+    explicit TypeParser(std::string &&src) {
+        tokens = std::make_shared<TokenHolder>(std::move(src));
     }
+
+    explicit TypeParser(std::shared_ptr<TokenHolder> &th): tokens(th) {}
 
     TypePtr parse_type();
     TypePtr parse_primary();
@@ -155,38 +155,7 @@ public:
     TypePtr parse_function();
 
 private:
-    Token &last_token() {
-        if (next == 0) {
-            implementation_error("next is 0, you should not call last_token now");
-        }
-        return tokens.at(next - 1);
-    }
-    Token &next_token() {
-        if (next >= tokens.size()) {
-            throw std::out_of_range("token exhausted");
-        }
-        return tokens.at(next++);
-    }
-    bool match(TokenType token_type) {
-        if (next >= tokens.size()) {
-            return false;
-        }
-        if (tokens.at(next).type == token_type) {
-            next ++;
-            return true;
-        }
-        return false;
-    }
-    void consume(TokenType token_type, const std::string &message) {
-        if (!match(token_type)) {
-            error_at(last_token(), message);
-        }
-    }
-    void error_at(const Token &token, const std::string &message) {
-        throw ExpectedTokenNotFoundError(fmt::format("line {}: {}", token.line, message));
-    }
-    std::vector<Token> tokens;
-    size_t next = 0;
+    std::shared_ptr<TokenHolder> tokens;
 };
 
 #endif //CCLOX_TYPECHECKER_H
