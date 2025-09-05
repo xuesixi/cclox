@@ -55,6 +55,10 @@ public:
 
     std::string to_string() const;
 
+    TokenType get_type() const {
+        return type;
+    }
+
     const std::string &get_lexeme() const {
         return lexeme;
     }

@@ -7,6 +7,10 @@
 
 #include "scanner.h"
 
+/**
+ * 该类管理一个token列表。
+ * 由于TypeParser, ExpressionParser, StatementParser需要共用同一个token列表来进行解析，它们都使用该类
+ */
 class TokenHolder {
 public:
     explicit TokenHolder(std::string &&src) {
@@ -47,7 +51,7 @@ public:
             return false;
         }
         if (tokens.at(next).type == token_type) {
-            next ++;
+            next++;
             return true;
         }
         return false;
@@ -59,7 +63,7 @@ public:
      * @return 如果任意一个匹配成功，则消费之，返回true。否则返回false
      */
     bool match_one_of(std::initializer_list<TokenType> candidates) {
-        for (auto token : candidates) {
+        for (auto token: candidates) {
             if (match(token)) {
                 return true;
             }

@@ -68,6 +68,7 @@ declare_error(JumpDistanceOverflowError, CompilerError);
 declare_error(FmtStringUnbalancedError, CompilerError);
 declare_error(ExpectedTokenNotFoundError, CompilerError);
 declare_error(EmptyTupleError, CompilerError);
+declare_error(MismatchedTypeError, CompilerError);
 
 
 #undef declare_error

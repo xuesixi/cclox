@@ -54,13 +54,21 @@ add_executable(cclox
         src/include/typechecker/typeparser.h
         src/typechecker/expression.cc
         src/include/typechecker/expression.h
-        src/include/typechecker/tokenholder.h)
+        src/include/typechecker/tokenholder.h
+        src/typechecker/statement.cc
+        src/include/typechecker/statement.h
+        src/include/typechecker/types/class_type.h
+        src/include/typechecker/types/primitive_type.h
+        src/include/typechecker/types/intersection_type.h
+        src/include/typechecker/types/union_type.h
+        src/include/typechecker/types/tuple_type.h
+        src/include/typechecker/types/array_type.h
+        src/include/typechecker/types/function_type.h
+        src/include/typechecker/types/lox_type.h
+)
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
-target_link_libraries(cclox m readline fmt )
-
-#target_include_directories(cclox_lib PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
-#target_link_libraries(cclox_lib PUBLIC m fmt::fmt)
+target_link_libraries(cclox m readline fmt)
 
 enable_testing()
 add_subdirectory(src/typechecker)
