@@ -5,7 +5,7 @@
 #ifndef CCLOX_INTERSECTION_TYPE_H
 #define CCLOX_INTERSECTION_TYPE_H
 
-#include "lox_type.h"
+#include "../lox_type.h"
 
 class IntersectionType : public LoxType {
 public:

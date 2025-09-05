@@ -155,7 +155,7 @@ ExprPtr ExpressionParser::parse_primary() {
         return expr;
     }
     if (tokens->match_one_of({
-        TokenType::INTEGER, TokenType::FLOAT, TokenType::NIL, TokenType::TRUE, TokenType::FALSE, TokenType::STRING, TokenType::FMT_STRING, TokenType::IDENTIFIER
+        TokenType::INTEGER, TokenType::FLOAT, TokenType::Nil, TokenType::True, TokenType::False, TokenType::STRING, TokenType::FMT_STRING, TokenType::IDENTIFIER
     })) {
         return std::make_unique<PrimaryExpression>(tokens->last_token());
     } else {
@@ -263,7 +263,7 @@ ExprPtr ExpressionParser::parse_equality() {
 ExprPtr ExpressionParser::parse_and() {
     // a and b and c
     auto left = parse_equality();
-    if (tokens->match(TokenType::AND)) {
+    if (tokens->match(TokenType::And)) {
         auto right = parse_and();
         return std::make_unique<AndExpression>(std::move(left), std::move(right));
     }
@@ -272,7 +272,7 @@ ExprPtr ExpressionParser::parse_and() {
 
 ExprPtr ExpressionParser::parse_or() {
     auto left = parse_and();
-    if (tokens->match(TokenType::OR)) {
+    if (tokens->match(TokenType::Or)) {
         auto right = parse_or();
         return std::make_unique<OrExpression>(std::move(left), std::move(right));
     }

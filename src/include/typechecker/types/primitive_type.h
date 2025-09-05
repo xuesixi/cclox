@@ -5,7 +5,7 @@
 #ifndef CCLOX_PRIMITIVETYPE_H
 #define CCLOX_PRIMITIVETYPE_H
 
-#include "lox_type.h"
+#include "../lox_type.h"
 
 /**
  * 特殊类型，包括内建的int, float, bool, String，any, 以及用于解释器的unspecified, mismatched

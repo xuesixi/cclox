@@ -66,9 +66,15 @@ declare_error(UsingUninitializedLocalError, CompilerError);
 declare_error(Uint8OperandOverflowError, CompilerError);
 declare_error(JumpDistanceOverflowError, CompilerError);
 declare_error(FmtStringUnbalancedError, CompilerError);
+
 declare_error(ExpectedTokenNotFoundError, CompilerError);
 declare_error(EmptyTupleError, CompilerError);
 declare_error(MismatchedTypeError, CompilerError);
+
+/**
+ * var、fun、class, method, field 出现在不合适的位置
+ */
+declare_error(DefinitionPositionError, CompilerError);
 
 
 #undef declare_error

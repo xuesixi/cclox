@@ -5,7 +5,7 @@
 #ifndef CCLOX_TUPLE_TYPE_H
 #define CCLOX_TUPLE_TYPE_H
 
-#include "lox_type.h"
+#include "../lox_type.h"
 
 class TupleType : public LoxType {
 public:

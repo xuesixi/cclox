@@ -11,11 +11,6 @@
 #include <sstream>
 #include <unordered_set>
 
-#define answer_yes_to_any(other) \
-    if ((other)->type_enum == LoxTypeEnum::Any) {\
-        return true;\
-    }\
-
 enum class LoxTypeEnum {
     Unspecified,
     Mismatched,

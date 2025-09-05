@@ -5,7 +5,7 @@
 #ifndef CCLOX_FUNCTION_TYPE_H
 #define CCLOX_FUNCTION_TYPE_H
 
-#include "lox_type.h"
+#include "../lox_type.h"
 
 class FunctionType : public LoxType {
 public:

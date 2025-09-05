@@ -139,6 +139,9 @@ public:
 
     ExprPtr parse_expression();
 
+private:
+    std::shared_ptr<TokenHolder> tokens;
+
     ExprPtr parse_primary();
 
     ExprPtr parse_call();
@@ -160,9 +163,6 @@ public:
     ExprPtr parse_or();
 
     ExprPtr parse_assignment();
-
-private:
-    std::shared_ptr<TokenHolder> tokens;
 };
 
 #endif //CCLOX_EXPRESSION_H

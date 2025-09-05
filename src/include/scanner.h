@@ -13,7 +13,7 @@ enum class TokenType {
     LEFT_PAREN, RIGHT_PAREN,
     LEFT_BRACE, RIGHT_BRACE,
     COMMA, DOT, MINUS, PLUS,
-    SEMICOLON, SLASH, STAR, STAR_STAR,
+    SEMICOLON, SLASH, STAR, STAR_STAR, COLON,
     // One or two character tokens.
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
@@ -23,13 +23,13 @@ enum class TokenType {
     IDENTIFIER, STRING, FLOAT, INTEGER, FMT_STRING,
 
     // Keywords.
-    AND, CLASS, ELSE, FALSE,
-    FOR, FUN, IF, NIL, OR,
-    PRINT, RETURN, SUPER, THIS,
-    TRUE, VAR, WHILE,
+    And, Class, Else, False,
+    For, Fun, If, Nil, Or,
+    Print, Return, Super, This,
+    True, Var, While,
 
     // extension
-    BREAK, CONTINUE, RECUR, Field, Method, Static, Public, Export, Import, As, Try, Catch, Throw,
+    Break, Continue, Recur, Field, Method, Static, Public, Export, Import, As, Try, Catch, Throw, Const,
 
     ERROR, END_OF_FILE // EOF被内置宏占用了
 };

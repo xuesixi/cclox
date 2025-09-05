@@ -9,7 +9,7 @@
 #include <sstream>
 #include "../scanner.h"
 #include "tokenholder.h"
-#include "types/lox_type.h"
+#include "lox_type.h"
 
 
 class TypeParser {
@@ -23,6 +23,9 @@ public:
 
     TypePtr parse_type();
 
+private:
+    std::shared_ptr<TokenHolder> tokens;
+
     TypePtr parse_primary();
 
     TypePtr parse_union();
@@ -34,9 +37,6 @@ public:
     TypePtr parse_array();
 
     TypePtr parse_function();
-
-private:
-    std::shared_ptr<TokenHolder> tokens;
 };
 
 #endif //CCLOX_TYPECHECKER_H

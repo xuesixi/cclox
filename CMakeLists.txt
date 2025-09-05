@@ -64,7 +64,13 @@ add_executable(cclox
         src/include/typechecker/types/tuple_type.h
         src/include/typechecker/types/array_type.h
         src/include/typechecker/types/function_type.h
-        src/include/typechecker/types/lox_type.h
+        src/include/typechecker/lox_type.h
+        src/include/typechecker/ast.h
+        src/typechecker/ast.cc
+        src/include/typechecker/statements/var_statement.h
+        src/include/typechecker/statements/print_statement.h
+        src/include/typechecker/statements/fun_statement.h
+        src/include/typechecker/statements/expression_statement.h
 )
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")

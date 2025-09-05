@@ -19,7 +19,13 @@ add_executable(tc_test
         ../include/typechecker/types/tuple_type.h
         ../include/typechecker/types/array_type.h
         ../include/typechecker/types/function_type.h
-        ../include/typechecker/types/lox_type.h
+        ../include/typechecker/lox_type.h
+        ../include/typechecker/ast.h
+        ast.cc
+        ../include/typechecker/statements/var_statement.h
+        ../include/typechecker/statements/print_statement.h
+        ../include/typechecker/statements/fun_statement.h
+        ../include/typechecker/statements/expression_statement.h
 )
 
 target_include_directories(tc_test PRIVATE ../include)

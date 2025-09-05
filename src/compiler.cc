@@ -92,9 +92,9 @@ Compiler::ParseFn Compiler::get_prefix(TokenType type) {
             return &Compiler::integer_expr;
         case TokenType::FLOAT:
             return &Compiler::float_expr;
-        case TokenType::NIL:
-        case TokenType::TRUE:
-        case TokenType::FALSE:
+        case TokenType::Nil:
+        case TokenType::True:
+        case TokenType::False:
             return &Compiler::literal_expr;
         case TokenType::STRING:
             return &Compiler::string_expr;
@@ -102,9 +102,9 @@ Compiler::ParseFn Compiler::get_prefix(TokenType type) {
             return &Compiler::fmt_string_expr;
         case TokenType::IDENTIFIER:
             return &Compiler::variable_expr;
-        case TokenType::THIS:
+        case TokenType::This:
             return &Compiler::this_expr;
-        case TokenType::FUN:
+        case TokenType::Fun:
             return &Compiler::lambda_expr;
         default:
             return nullptr;
@@ -125,9 +125,9 @@ auto Compiler::get_infix(TokenType type) -> Compiler::ParseFn {
         case TokenType::LESS_EQUAL:
         case TokenType::GREATER_EQUAL:
             return &Compiler::binary_expr;
-        case TokenType::AND:
+        case TokenType::And:
             return &Compiler::and_expr;
-        case TokenType::OR:
+        case TokenType::Or:
             return &Compiler::or_expr;
         case TokenType::LEFT_PAREN:
             return &Compiler::call_expr;
@@ -165,9 +165,9 @@ auto Compiler::get_precedence(TokenType type) -> Precedence {
         // case TokenType::FMT_STRING:
         // case TokenType::IDENTIFIER:
         //     return Precedence::PRIMARY;
-        case TokenType::AND:
+        case TokenType::And:
             return Precedence::AND;
-        case TokenType::OR:
+        case TokenType::Or:
             return Precedence::OR;
         case TokenType::LEFT_PAREN:
         case TokenType::DOT:
@@ -329,13 +329,13 @@ void Compiler::or_expr([[maybe_unused]] bool can_assign) {
 void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
     TokenType type = curr.type;
     switch (type) {
-        case TokenType::NIL:
+        case TokenType::Nil:
             emit_opcode(Opcode::LoadNil);
             break;
-        case TokenType::TRUE:
+        case TokenType::True:
             emit_opcode(Opcode::LoadTrue);
             break;
-        case TokenType::FALSE:
+        case TokenType::False:
             emit_opcode(Opcode::LoadFalse);
             break;
         default:
@@ -586,14 +586,14 @@ void Compiler::synchronize() {
             return;
         }
         switch (next.type) {
-            case TokenType::CLASS:
-            case TokenType::FUN:
-            case TokenType::VAR:
-            case TokenType::FOR:
-            case TokenType::WHILE:
-            case TokenType::IF:
-            case TokenType::PRINT:
-            case TokenType::RETURN:
+            case TokenType::Class:
+            case TokenType::Fun:
+            case TokenType::Var:
+            case TokenType::For:
+            case TokenType::While:
+            case TokenType::If:
+            case TokenType::Print:
+            case TokenType::Return:
             case TokenType::END_OF_FILE:
                 return;
             default:
@@ -651,7 +651,7 @@ void Compiler::if_statement() {
     // then_statement
     statement();
 
-    if (match(TokenType::ELSE)) {
+    if (match(TokenType::Else)) {
         // jump -> end
         auto to_end = emit_jump(Opcode::Jump);
 
@@ -918,7 +918,7 @@ after_param_list:
 }
 
 void Compiler::statement() {
-    if (match(TokenType::PRINT)) {
+    if (match(TokenType::Print)) {
         print_statement();
     } else if (match(TokenType::LEFT_BRACE)) {
         auto old_size = scope->step_into();
@@ -926,17 +926,17 @@ void Compiler::statement() {
         auto amount_to_pop = scope->step_out(old_size);
         emit_opcode(Opcode::ClearN);
         emit_operand_1(amount_to_pop);
-    } else if (match(TokenType::IF)) {
+    } else if (match(TokenType::If)) {
         if_statement();
-    } else if (match(TokenType::WHILE)) {
+    } else if (match(TokenType::While)) {
         while_statement();
-    } else if (match(TokenType::BREAK)) {
+    } else if (match(TokenType::Break)) {
         break_statement();
-    } else if (match(TokenType::CONTINUE)) {
+    } else if (match(TokenType::Continue)) {
         continue_statement();
-    } else if (match(TokenType::RETURN)) {
+    } else if (match(TokenType::Return)) {
         return_statement();
-    } else if (match(TokenType::RECUR)) {
+    } else if (match(TokenType::Recur)) {
         recur_statement();
     } else {
         expression_statement();
@@ -948,11 +948,11 @@ void Compiler::declaration() {
         synchronize();
     }
     try {
-        if (match(TokenType::VAR)) {
+        if (match(TokenType::Var)) {
             var_statement();
-        } else if (match(TokenType::FUN)) {
+        } else if (match(TokenType::Fun)) {
             fun_statement();
-        } else if (match(TokenType::CLASS)) {
+        } else if (match(TokenType::Class)) {
             class_statement();
         } else {
             statement();

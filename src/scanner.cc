@@ -5,25 +5,25 @@
 #include "error.h"
 
 static std::unordered_map<std::string, TokenType> keyword_map{
-    {"and", TokenType::AND},
-    {"class", TokenType::CLASS},
-    {"else", TokenType::ELSE},
-    {"false", TokenType::FALSE},
-    {"for", TokenType::FOR},
-    {"fun", TokenType::FUN},
-    {"if", TokenType::IF},
-    {"nil", TokenType::NIL},
-    {"or", TokenType::OR},
-    {"print", TokenType::PRINT},
-    {"return", TokenType::RETURN},
-    {"super", TokenType::SUPER},
-    {"this", TokenType::THIS},
-    {"true", TokenType::TRUE},
-    {"var", TokenType::VAR},
-    {"while", TokenType::WHILE},
-    {"break", TokenType::BREAK},
-    {"continue", TokenType::CONTINUE},
-    {"recur", TokenType::RECUR},
+    {"and", TokenType::And},
+    {"class", TokenType::Class},
+    {"else", TokenType::Else},
+    {"false", TokenType::False},
+    {"for", TokenType::For},
+    {"fun", TokenType::Fun},
+    {"if", TokenType::If},
+    {"nil", TokenType::Nil},
+    {"or", TokenType::Or},
+    {"print", TokenType::Print},
+    {"return", TokenType::Return},
+    {"super", TokenType::Super},
+    {"this", TokenType::This},
+    {"true", TokenType::True},
+    {"var", TokenType::Var},
+    {"while", TokenType::While},
+    {"break", TokenType::Break},
+    {"continue", TokenType::Continue},
+    {"recur", TokenType::Recur},
     {"field", TokenType::Field},
     {"method", TokenType::Method},
     {"public", TokenType::Public},
@@ -34,6 +34,7 @@ static std::unordered_map<std::string, TokenType> keyword_map{
     {"throw", TokenType::Throw},
     {"try", TokenType::Try},
     {"catch", TokenType::Catch},
+    {"const", TokenType::Const},
 
 };
 
@@ -122,6 +123,7 @@ Token Scanner::scan_token() {
         case ';': return make_token(TokenType::SEMICOLON);
         case ',': return make_token(TokenType::COMMA);
         case '.': return make_token(TokenType::DOT);
+        case ':': return make_token(TokenType::COLON);
         case '|': return make_token(TokenType::BAR);
         case '&': return make_token(TokenType::AMPERSAND);
         case '[': return make_token(TokenType::LEFT_BRACKET);

@@ -5,7 +5,7 @@
 #ifndef CCLOX_UNION_TYPE_H
 #define CCLOX_UNION_TYPE_H
 
-#include "lox_type.h"
+#include "../lox_type.h"
 
 class UnionType : public LoxType {
 public:
