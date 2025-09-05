@@ -81,10 +81,10 @@ TypePtr TypeParser::parse_function() {
 TypePtr TypeParser::parse_union() {
     auto first = parse_intersection();
     if (tokens->match(TokenType::BAR)) {
-        TypeSet unions;
-        unions.insert(first);
+        std::vector<TypePtr> unions;
+        unions.push_back(first);
         do {
-            unions.insert(parse_intersection());
+            unions.push_back(parse_intersection());
         } while (tokens->match(TokenType::BAR));
         return std::make_shared<UnionType>(std::move(unions));
     } else {
@@ -95,10 +95,10 @@ TypePtr TypeParser::parse_union() {
 TypePtr TypeParser::parse_intersection() {
     auto first = parse_tuple();
     if (tokens->match(TokenType::AMPERSAND)) {
-        TypeSet intersections;
-        intersections.insert(first);
+        std::vector<TypePtr> intersections;
+        intersections.push_back(first);
         do {
-            intersections.insert(parse_tuple());
+            intersections.push_back(parse_tuple());
         } while (tokens->match(TokenType::AMPERSAND));
         return std::make_shared<IntersectionType>(std::move(intersections));
     } else {

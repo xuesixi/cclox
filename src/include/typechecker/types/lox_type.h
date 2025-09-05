@@ -50,9 +50,9 @@ public:
     }
 
     /**
-     * 判断本类型是否属于other的子类型
+     * 判断本类型是否接受other作为一个适配的类型
      */
-    virtual bool is_subtype_of(TypePtr other) const = 0;
+    virtual bool accept(TypePtr other) const = 0;
 
     /**
      * 获取一个name对应的typeid

@@ -14,9 +14,28 @@ public:
         type_enum = LoxTypeEnum::Union;
     }
 
-    std::vector<TypePtr> unions;
-
-    bool is_subtype_of(TypePtr other) const override;
+    /**
+     * 本union是否覆盖了other的类型
+     */
+    bool accept(TypePtr other) const override{
+        // 如果other是一个普通类型，那么一一比对
+        if (other->type_enum != LoxTypeEnum::Union) {
+            for (auto & type : unions) {
+                if (type->accept(other)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        // 如果other也是一个union，则本union必须完全包括其所有元素
+        auto other_union = std::static_pointer_cast<UnionType>(other);
+        for (auto & type : other_union->unions) {
+            if (accept(type) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 private:
     std::string to_no_parenthesis_string() override {
@@ -32,7 +51,7 @@ private:
         return ss.str();
     }
 
-    size_t cached_hash = 1;
+    std::vector<TypePtr> unions;
 };
 
 #endif //CCLOX_UNION_TYPE_H

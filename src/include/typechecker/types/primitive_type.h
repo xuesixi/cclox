@@ -13,6 +13,7 @@
 class PrimitiveType : public LoxType {
 public:
     PrimitiveType(LoxTypeEnum type_enum) {
+        static_assert(!std::is_abstract_v<PrimitiveType>);
         this->type_enum = type_enum;
     }
 
@@ -31,8 +32,10 @@ public:
         }
     }
 
-    bool is_subtype_of(TypePtr other) override {
-        answer_yes_to_any(other);
+    bool accept(TypePtr other) const override {
+        if (type_enum == LoxTypeEnum::Any) {
+            return true;
+        }
         return other->type_enum == type_enum;
     }
 

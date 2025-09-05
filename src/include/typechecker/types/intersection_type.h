@@ -14,12 +14,27 @@ public:
         type_enum = LoxTypeEnum::Intersection;
     }
 
-    std::vector<TypePtr> intersections;
-
-    bool is_subtype_of(TypePtr other) const override {
-        answer_yes_to_any(other);
+    /**
+     * 判断other是否是自身的子集
+     */
+    bool accept(TypePtr other) const override {
+        // 如果是普通类型，检查是否全部符合
+        if (other->type_enum != LoxTypeEnum::Intersection) {
+            for (auto & type : intersections) {
+                if (type->accept(other) == false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        // 如果也是交集，则检查other是否包含了自身的所有元素
         auto other_inter = std::static_pointer_cast<IntersectionType>(other);
-        // todo
+        for (auto & type : intersections) {
+            if (other_inter->accept(type) == false) {
+                return false;
+            }
+        }
+        return true;
     }
 
 private:
@@ -35,7 +50,7 @@ private:
         }
         return ss.str();
     }
-    size_t cached_hash = 1;
+    std::vector<TypePtr> intersections;
 };
 
 #endif //CCLOX_INTERSECTION_TYPE_H

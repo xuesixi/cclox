@@ -13,16 +13,19 @@ public:
         type_enum = LoxTypeEnum::Array;
     }
 
-    TypePtr element_type;
-
-    bool is_subtype_of(TypePtr other) const override {
-
+    bool accept(TypePtr other) const override {
+        if (other->type_enum != LoxTypeEnum::Array) {
+            return false;
+        }
+        auto other_arr = std::static_pointer_cast<ArrayType>(other);
+        return element_type->accept(other_arr->element_type);
     }
 
 private:
     std::string to_no_parenthesis_string() override {
         return fmt::format("{}[]", element_type->to_string());
     }
+    TypePtr element_type;
 };
 
 #endif //CCLOX_ARRAY_TYPE_H
