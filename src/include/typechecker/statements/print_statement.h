@@ -9,6 +9,7 @@
 
 class PrintStatement: public Statement {
 public:
+    friend class AstCompiler;
     PrintStatement(ExprPtr expr): expr(std::move(expr)) {
 
     }

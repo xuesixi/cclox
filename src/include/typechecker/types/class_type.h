@@ -18,11 +18,18 @@ public:
     }
 
     bool accept(TypePtr other) const override {
+        if (other->type_enum == LoxTypeEnum::Nil) {
+            return true;
+        }
         if (other->type_enum != LoxTypeEnum::Class) {
             return false;
         }
         std::shared_ptr<ClassType> other_class = std::static_pointer_cast<ClassType>(other);
         return type_id == other_class->type_id;
+    }
+
+    size_t get_type_id() const {
+        return type_id;
     }
 
 private:

@@ -9,6 +9,7 @@
 
 class ExpressionStatement: public Statement {
 public:
+    friend class AstCompiler;
     ExpressionStatement(ExprPtr expr): expr(std::move(expr)) {}
 private:
     ExprPtr expr;

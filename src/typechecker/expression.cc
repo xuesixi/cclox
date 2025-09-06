@@ -4,6 +4,8 @@
 
 #include "typechecker/expression.h"
 
+#include "typechecker/types/class_type.h"
+
 /**
  *
  * assignment
@@ -141,6 +143,35 @@ TypePtr CallExpression::resolve_type() {
         }
     }
     return callable->return_type;
+}
+
+TypePtr DotExpression::resolve_type() {
+    auto target_type = target->resolve_type();
+    if (target_type->type_enum != LoxTypeEnum::Class) {
+        throw TypeError(fmt::format("cannot access member of type {}", target_type->to_string()));
+    }
+    auto instance_class = std::static_pointer_cast<ClassType>(target_type);
+    return LoxType::find_class_member(instance_class->get_type_id(), target_field.get_lexeme());
+}
+
+TypePtr PrimaryExpression::resolve_type() {
+    switch (value_token.get_type()) {
+        case TokenType::INTEGER:
+            return PrimitiveType::IntType;
+        case TokenType::FLOAT:
+            return PrimitiveType::FloatType;
+        case TokenType::True:
+        case TokenType::False:
+            return PrimitiveType::BoolType;
+        case TokenType::STRING:
+        case TokenType::FMT_STRING:
+            return PrimitiveType::StringType;
+        case TokenType::Nil:
+            return PrimitiveType::NilType;
+        default:
+            implementation_error("unknown primary expr type");
+            return PrimitiveType::MismatchedType;
+    }
 }
 
 ExprPtr ExpressionParser::parse_expression() {

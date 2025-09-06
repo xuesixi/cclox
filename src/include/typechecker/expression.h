@@ -18,7 +18,7 @@ public:
 
     /**
      * 检查并返回该表达式的返回值类型。
-     * 如果出现了问题，则返回Unspecified
+     * 如果出现了问题，抛出异常
      * @return 该表达式的返回值类型
      */
     virtual TypePtr resolve_type() = 0;

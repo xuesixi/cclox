@@ -25,6 +25,7 @@ public:
             case LoxTypeEnum::Int: return "int";
             case LoxTypeEnum::Float: return "float";
             case LoxTypeEnum::Bool: return "bool";
+            case LoxTypeEnum::Nil: return "nil";
             case LoxTypeEnum::String: return "String";
             default:
                 implementation_error("Unknown primitive type");
@@ -46,6 +47,7 @@ public:
     static TypePtr StringType;
     static TypePtr MismatchedType;
     static TypePtr UnspecifiedType;
+    static TypePtr NilType;
 };
 
 #endif //CCLOX_PRIMITIVETYPE_H

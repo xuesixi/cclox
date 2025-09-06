@@ -9,6 +9,7 @@
 
 class VarStatement: public Statement {
 public:
+    friend class AstCompiler;
     VarStatement(const Token &name, TypePtr &type, ExprPtr initializer): name(name), type(type), initializer(std::move(initializer)) {}
 private:
     Token name;

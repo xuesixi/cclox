@@ -9,6 +9,7 @@
 
 class FunStatement: public Statement {
 public:
+    friend class AstCompiler;
     FunStatement(const Token &fun_name, std::vector<std::pair<Token, TypePtr>> &&params, TypePtr &type, std::vector<StmtPtr> &&body)
     : fun_name(fun_name), return_type(type), parameters(std::move(params)), body(std::move(body)) {}
 private:

@@ -8,6 +8,7 @@
 #include "typechecker/statements/fun_statement.h"
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/var_statement.h"
+#include "typechecker/statements/block_statement.h"
 
 StmtPtr StatementParser::parse_statement() {
     // todo
@@ -20,9 +21,20 @@ StmtPtr StatementParser::parse_statement() {
     if (tokens->match(TokenType::Fun)) {
         return parse_fun();
     }
+    if (tokens->match(TokenType::LEFT_BRACE)) {
+        return parse_block();
+    }
 
     return parse_expression_statement();
 
+}
+
+StmtPtr StatementParser::parse_block() {
+    std::vector<StmtPtr> body;
+    while (tokens->match(TokenType::RIGHT_BRACE) == false) {
+        body.push_back(parse_statement());
+    }
+    return std::make_unique<BlockStatement>(std::move(body));
 }
 
 StmtPtr StatementParser::parse_print() {
@@ -31,10 +43,10 @@ StmtPtr StatementParser::parse_print() {
 }
 
 StmtPtr StatementParser::parse_var() {
-    if (depth == 0) {
-        throw DefinitionPositionError("cannot use var to define variables in the global scope");
-    }
     Token &name = tokens->consume(TokenType::IDENTIFIER, "expect an identifier as the variable name");
+    if (depth == 0) {
+        throw DefinitionPositionError(fmt::format("cannot use var to define variables in the global scope: {}", name.get_lexeme()));
+    }
     TypePtr var_type;
     ExprPtr initializer;
     if (tokens->match(TokenType::COLON)) {
@@ -55,7 +67,12 @@ StmtPtr StatementParser::parse_var() {
 
 StmtPtr StatementParser::parse_fun() {
     // fun hey(age: int, word: String) -> int {}
+
     Token &fun_name = tokens->consume(TokenType::IDENTIFIER, "expect an identifier as the function name");
+    if (depth > 0) {
+        throw DefinitionPositionError(fmt::format("can only define function in the global scope: {}", fun_name.get_lexeme()));
+    }
+
     tokens->consume(TokenType::LEFT_PAREN, "expect a '(' to start the function parameter list");
     std::vector<std::pair<Token, TypePtr> > parameters;
     if (tokens->match(TokenType::RIGHT_PAREN) == false) {
@@ -72,6 +89,10 @@ StmtPtr StatementParser::parse_fun() {
     } else {
         return_type = PrimitiveType::UnspecifiedType; // 默认为 void
     }
+
+    // 将这个函数添加到解析名字中
+    LoxType::record_function(fun_name.get_lexeme(), return_type);
+
     tokens->consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");
 
     std::vector<StmtPtr> body;

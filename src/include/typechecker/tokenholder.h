@@ -20,6 +20,10 @@ public:
         }
     }
 
+    bool is_end() {
+        return next >= tokens.size();
+    }
+
     /**
      * @return 上一次解析的token
      */

@@ -18,6 +18,10 @@ TypePtr PrimitiveType::AnyType  = std::make_shared<PrimitiveType>(LoxTypeEnum::A
 TypePtr PrimitiveType::StringType = std::make_shared<PrimitiveType>(LoxTypeEnum::String);
 TypePtr PrimitiveType::MismatchedType = std::make_shared<PrimitiveType>(LoxTypeEnum::Mismatched);
 TypePtr PrimitiveType::UnspecifiedType = std::make_shared<PrimitiveType>(LoxTypeEnum::Unspecified);
+TypePtr PrimitiveType::NilType = std::make_shared<PrimitiveType>(LoxTypeEnum::Nil);
+
+std::unordered_map<std::string, TypePtr> LoxType::global_functions;
+std::unordered_map<std::string, LoxType::ClassRecord> LoxType::global_classes;
 
 std::unordered_map<std::string, size_t> LoxType::typename_to_id;
 std::vector<std::string> LoxType::id_to_typename;

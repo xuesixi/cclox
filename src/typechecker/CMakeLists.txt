@@ -26,6 +26,7 @@ add_executable(tc_test
         ../include/typechecker/statements/print_statement.h
         ../include/typechecker/statements/fun_statement.h
         ../include/typechecker/statements/expression_statement.h
+        ../include/typechecker/statements/block_statement.h
 )
 
 target_include_directories(tc_test PRIVATE ../include)

@@ -71,6 +71,7 @@ add_executable(cclox
         src/include/typechecker/statements/print_statement.h
         src/include/typechecker/statements/fun_statement.h
         src/include/typechecker/statements/expression_statement.h
+        src/include/typechecker/statements/block_statement.h
 )
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
