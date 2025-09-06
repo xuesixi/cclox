@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 9/5/25.
 //
 #include "typechecker/ast.h"
-#include "typechecker/expressions/unaray_expression.h"
+#include "typechecker/expressions/unary_expression.h"
 
 void AstCompiler::visit_unary_expr(UnaryExpression *expression) {
     auto type = expression->resolve_type();

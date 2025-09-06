@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 9/5/25.
 //
 
-#include "typechecker/expressions/unaray_expression.h"
+#include "typechecker/expressions/unary_expression.h"
 
 #include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"

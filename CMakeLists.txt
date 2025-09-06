@@ -85,8 +85,8 @@ add_executable(cclox
         include/typechecker/expressions/and_expression.h
         src/typechecker/expressions/binary_expression.cc
         include/typechecker/expressions/binary_expression.h
-        src/typechecker/expressions/unaray_expression.cc
-        include/typechecker/expressions/unaray_expression.h
+        src/typechecker/expressions/unary_expression.cc
+        include/typechecker/expressions/unary_expression.h
         src/typechecker/expressions/call_expression.cc
         include/typechecker/expressions/call_expression.h
         src/typechecker/expressions/dot_expression.cc

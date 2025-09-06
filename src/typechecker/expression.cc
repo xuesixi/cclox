@@ -11,7 +11,7 @@
 #include "typechecker/expressions/dot_expression.h"
 #include "typechecker/expressions/or_expression.h"
 #include "typechecker/expressions/primary_expression.h"
-#include "typechecker/expressions/unaray_expression.h"
+#include "typechecker/expressions/unary_expression.h"
 
 #include "typechecker/types/class_type.h"
 

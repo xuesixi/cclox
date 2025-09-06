@@ -40,8 +40,8 @@ add_executable(tc_test
         ../../include/typechecker/expressions/and_expression.h
         expressions/binary_expression.cc
         ../../include/typechecker/expressions/binary_expression.h
-        expressions/unaray_expression.cc
-        ../../include/typechecker/expressions/unaray_expression.h
+        expressions/unary_expression.cc
+        ../../include/typechecker/expressions/unary_expression.h
         expressions/call_expression.cc
         ../../include/typechecker/expressions/call_expression.h
         expressions/dot_expression.cc
