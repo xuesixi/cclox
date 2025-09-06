@@ -17,7 +17,7 @@ using NativeObject = std::variant<std::thread, LoxMutex, LoxCondition>;
 using NativePair = std::pair<uint16_t, NativeObject>;
 using NativeReference = std::shared_ptr<NativePair>;
 
-using Value = std::variant<long, double, bool, std::nullptr_t, LoxReference, NativeReference, std::shared_ptr<LoxNativeFunction>>;
+using Value = std::variant<int64_t, double, bool, std::nullptr_t, LoxReference, NativeReference, std::shared_ptr<LoxNativeFunction>>;
 
 namespace LoxValue {
 

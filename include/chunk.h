@@ -115,7 +115,7 @@ public:
      */
     static inline Value read_immediate(uint8_t index) {
         if (index <= 240) {
-            return static_cast<long>(index);
+            return static_cast<int64_t>(index);
         }
 
         switch (index) {

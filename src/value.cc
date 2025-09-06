@@ -59,8 +59,8 @@ void LoxValue::mark_value(Value &value, std::queue<LoxReference> &queue) {
 }
 
 Value operator-(const Value &value) {
-    if (std::holds_alternative<long>(value)) {
-        return -std::get<long>(value);
+    if (std::holds_alternative<int64_t>(value)) {
+        return -std::get<int64_t>(value);
     } else if (std::holds_alternative<double>(value)) {
         return -std::get<double>(value);
     } else {

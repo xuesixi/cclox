@@ -5,10 +5,10 @@
 #include "chunk.h"
 
 std::optional<uint8_t> Chunk::to_immediate(Value value) {
-    if (std::holds_alternative<long>(value)) {
-        long l = std::get<long>(value);
+    if (std::holds_alternative<int64_t>(value)) {
+        int64_t l = std::get<int64_t>(value);
         if (l <= 240) {
-            return static_cast<int>(l);
+            return static_cast<int64_t>(l);
         }
     } else if (std::holds_alternative<double>(value)) {
         double d = std::get<double>(value);

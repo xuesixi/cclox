@@ -208,7 +208,7 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
 }
 
 void Compiler::integer_expr([[maybe_unused]] bool) {
-    long integer = std::stol(curr.lexeme);
+    int64_t integer = std::stoll(curr.lexeme);
     auto opt_index = Chunk::to_immediate(integer);
     if (!opt_index) {
         emit_load_constant_flexible(integer);
