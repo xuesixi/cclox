@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 9/3/25.
 //
 
-#include "../include/typechecker/typeparser.h"
+#include "typechecker/typeparser.h"
 #include "typechecker/types/array_type.h"
 #include "typechecker/types/class_type.h"
 #include "typechecker/types/function_type.h"
@@ -11,14 +11,6 @@
 #include "typechecker/types/tuple_type.h"
 #include "typechecker/types/union_type.h"
 
-TypePtr PrimitiveType::IntType = std::make_shared<PrimitiveType>(LoxTypeEnum::Int);
-TypePtr PrimitiveType::FloatType = std::make_shared<PrimitiveType>(LoxTypeEnum::Float);
-TypePtr PrimitiveType::BoolType = std::make_shared<PrimitiveType>(LoxTypeEnum::Bool);
-TypePtr PrimitiveType::AnyType  = std::make_shared<PrimitiveType>(LoxTypeEnum::Any);
-TypePtr PrimitiveType::StringType = std::make_shared<PrimitiveType>(LoxTypeEnum::String);
-TypePtr PrimitiveType::MismatchedType = std::make_shared<PrimitiveType>(LoxTypeEnum::Mismatched);
-TypePtr PrimitiveType::UnspecifiedType = std::make_shared<PrimitiveType>(LoxTypeEnum::Unspecified);
-TypePtr PrimitiveType::NilType = std::make_shared<PrimitiveType>(LoxTypeEnum::Nil);
 
 std::unordered_map<std::string, TypePtr> LoxType::global_functions;
 std::unordered_map<std::string, LoxType::ClassRecord> LoxType::global_classes;

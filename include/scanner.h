@@ -2,9 +2,8 @@
 #ifndef CCLOX_SCANNER_H
 #define CCLOX_SCANNER_H
 
-#include <cstddef>
+#include "common.h"
 #include <optional>
-#include <string>
 
 #include "error.h"
 

@@ -5,10 +5,9 @@
 #ifndef CCLOX_ERROR_H
 #define CCLOX_ERROR_H
 
+#include "common.h"
 #include <iostream>
 #include <stdexcept>
-#include <fmt/core.h>
-#include <string>
 
 using std::runtime_error;
 

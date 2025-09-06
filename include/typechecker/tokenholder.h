@@ -5,6 +5,7 @@
 #ifndef CCLOX_TOKENHOLDER_H
 #define CCLOX_TOKENHOLDER_H
 
+#include "common.h"
 #include "scanner.h"
 
 /**

@@ -2,13 +2,13 @@
 #ifndef CCLOX_VM_H
 #define CCLOX_VM_H
 
+#include "common.h"
 #include "cclox_util.h"
 #include "objects/loxcaptured.h"
 #include "chunk.h"
 #include "value.h"
 #include <memory>
 #include <mutex>
-#include <vector>
 #include "runtime.h"
 #include "objects/loxfunction.h"
 #include "objects/loxclosure.h"

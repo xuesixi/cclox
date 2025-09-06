@@ -48,6 +48,13 @@ add_executable(tc_test
         ../../include/typechecker/expressions/dot_expression.h
         expressions/primary_expression.cc
         ../../include/typechecker/expressions/primary_expression.h
+        types/array_type.cc
+        types/class_type.cc
+        types/function_type.cc
+        types/intersection_type.cc
+        types/primitive_type.cc
+        types/tuple_type.cc
+        types/union_type.cc
 )
 
 target_include_directories(tc_test PRIVATE ../../include)

@@ -5,7 +5,8 @@
 #ifndef CCLOX_CLASSTYPE_H
 #define CCLOX_CLASSTYPE_H
 
-#include "../lox_type.h"
+#include "typechecker/lox_type.h"
+#include "scanner.h"
 
 class ClassType : public LoxType {
 public:
@@ -16,25 +17,13 @@ public:
         type_enum = LoxTypeEnum::Class;
     }
 
-    bool accept(TypePtr other) const override {
-        if (other->type_enum == LoxTypeEnum::Nil) {
-            return true;
-        }
-        if (other->type_enum != LoxTypeEnum::Class) {
-            return false;
-        }
-        std::shared_ptr<ClassType> other_class = std::static_pointer_cast<ClassType>(other);
-        return type_id == other_class->type_id;
-    }
+    bool accept(TypePtr other) const override;
 
-    size_t get_type_id() const {
-        return type_id;
-    }
+    size_t get_type_id() const;
 
 private:
-    std::string to_no_parenthesis_string() override {
-        return read_typename_from_id(type_id);
-    }
+    std::string to_no_parenthesis_string() override;
+
     size_t type_id;
 };
 

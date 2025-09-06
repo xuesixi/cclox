@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 9/5/25.
 //
 
-#include "../../../include/typechecker/expressions/and_expression.h"
+#include "typechecker/expressions/and_expression.h"
 
 #include "typechecker/ast.h"
 #include "typechecker/types/primitive_type.h"

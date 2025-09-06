@@ -4,7 +4,7 @@
 
 #ifndef CCLOX_ARRAY_TYPE_H
 #define CCLOX_ARRAY_TYPE_H
-#include "../lox_type.h"
+#include "typechecker/lox_type.h"
 
 class ArrayType : public LoxType {
 public:
@@ -13,18 +13,11 @@ public:
         type_enum = LoxTypeEnum::Array;
     }
 
-    bool accept(TypePtr other) const override {
-        if (other->type_enum != LoxTypeEnum::Array) {
-            return false;
-        }
-        auto other_arr = std::static_pointer_cast<ArrayType>(other);
-        return element_type->accept(other_arr->element_type);
-    }
+    bool accept(TypePtr other) const override;
 
 private:
-    std::string to_no_parenthesis_string() override {
-        return fmt::format("{}[]", element_type->to_string());
-    }
+    std::string to_no_parenthesis_string() override;
+
     TypePtr element_type;
 };
 

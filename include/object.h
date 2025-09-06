@@ -7,10 +7,8 @@
 
 #include <iostream>
 #include <queue>
-#include <string>
 
 #include "common.h"
-#include "fmt/core.h"
 
 class LoxObject;
 

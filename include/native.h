@@ -5,8 +5,8 @@
 #ifndef NATIVE_H
 #define NATIVE_H
 
-#include <string>
-#include <fmt/core.h>
+
+#include "common.h"
 
 class VM;
 

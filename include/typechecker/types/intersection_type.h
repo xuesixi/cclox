@@ -5,7 +5,7 @@
 #ifndef CCLOX_INTERSECTION_TYPE_H
 #define CCLOX_INTERSECTION_TYPE_H
 
-#include "../lox_type.h"
+#include "typechecker/lox_type.h"
 
 class IntersectionType : public LoxType {
 public:
@@ -17,39 +17,11 @@ public:
     /**
      * 判断other是否是自身的子集
      */
-    bool accept(TypePtr other) const override {
-        // 如果是普通类型，检查是否全部符合
-        if (other->type_enum != LoxTypeEnum::Intersection) {
-            for (auto & type : intersections) {
-                if (type->accept(other) == false) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // 如果也是交集，则检查other是否包含了自身的所有元素
-        auto other_inter = std::static_pointer_cast<IntersectionType>(other);
-        for (auto & type : intersections) {
-            if (other_inter->accept(type) == false) {
-                return false;
-            }
-        }
-        return true;
-    }
+    bool accept(TypePtr other) const override;
 
 private:
-    std::string to_no_parenthesis_string() override {
-        std::stringstream ss;
-        size_t i = 0;
-        for (auto & type : intersections) {
-            ss << type->to_string();
-            if (i != intersections.size() - 1) {
-                ss << " & ";
-            }
-            i ++;
-        }
-        return ss.str();
-    }
+    std::string to_no_parenthesis_string() override;
+
     std::vector<TypePtr> intersections;
 };
 

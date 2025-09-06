@@ -5,7 +5,7 @@
 #ifndef CCLOX_CHUNK_H
 #define CCLOX_CHUNK_H
 
-#include <vector>
+#include "common.h"
 #include "value.h"
 #include "cclox_util.h"
 #include "error.h"

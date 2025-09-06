@@ -5,8 +5,8 @@
 #ifndef CCLOX_EXPRESSION_H
 #define CCLOX_EXPRESSION_H
 
-#include "tokenholder.h"
-#include "lox_type.h"
+#include "typechecker/tokenholder.h"
+#include "typechecker/lox_type.h"
 
 class AstCompiler;
 class Expression;

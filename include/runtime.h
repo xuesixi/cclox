@@ -4,12 +4,12 @@
 
 #ifndef CCLOX_RUNTIME_H
 #define CCLOX_RUNTIME_H
+
+#include "common.h"
 #include <barrier>
 #include <latch>
 #include <list>
-#include <memory>
 #include <unordered_set>
-#include <vector>
 #include "object.h"
 #include "value.h"
 #include "cclox_util.h"

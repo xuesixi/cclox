@@ -5,7 +5,8 @@
 #ifndef CCLOX_STATEMENT_H
 #define CCLOX_STATEMENT_H
 
-#include "tokenholder.h"
+#include "common.h"
+#include "typechecker/tokenholder.h"
 #include "typechecker/expression.h"
 #include "typechecker/typeparser.h"
 

@@ -5,11 +5,8 @@
 #ifndef CCLOX_LOX_TYPE_H
 #define CCLOX_LOX_TYPE_H
 
-#include <memory>
-#include <string>
+#include "common.h"
 #include "error.h"
-#include <sstream>
-#include <unordered_set>
 
 enum class LoxTypeEnum {
     Unspecified,
@@ -162,6 +159,7 @@ public:
     static TypePtr find_function(const std::string &fun_name) {
         // todo
         // auto found
+        implementation_error("not implemented yet");
         return nullptr;
     }
 

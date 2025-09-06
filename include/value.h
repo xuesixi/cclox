@@ -4,10 +4,11 @@
 
 #ifndef CCLOX_VALUE_H
 #define CCLOX_VALUE_H
+
+#include "common.h"
 #include <any>
 #include <thread>
 #include <variant>
-#include <memory>
 #include "object.h"
 #include "native.h"
 #include "nativeobjects/loxconcurrent.h"

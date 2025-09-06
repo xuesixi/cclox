@@ -1,6 +1,14 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <memory>
+#include <cstddef>
+#include <string>
+#include <vector>
+#include <utility>
+#include <fmt/core.h>
+#include <unordered_map>
+
 namespace Flag {
     extern bool trace;// 是否一步步打印虚拟机的运行过程
     extern bool disassembly;// 是否在编译后对字节码进行反汇编输出

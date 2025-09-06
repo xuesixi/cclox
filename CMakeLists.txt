@@ -93,6 +93,13 @@ add_executable(cclox
         include/typechecker/expressions/dot_expression.h
         src/typechecker/expressions/primary_expression.cc
         include/typechecker/expressions/primary_expression.h
+        src/typechecker/types/array_type.cc
+        src/typechecker/types/class_type.cc
+        src/typechecker/types/function_type.cc
+        src/typechecker/types/intersection_type.cc
+        src/typechecker/types/primitive_type.cc
+        src/typechecker/types/tuple_type.cc
+        src/typechecker/types/union_type.cc
 )
 
 target_include_directories(cclox PRIVATE "include")

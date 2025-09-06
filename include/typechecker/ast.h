@@ -6,6 +6,7 @@
 #define CCLOX_AST_H
 
 #include "error.h"
+#include "common.h"
 
 #include "typechecker/statement.h"
 

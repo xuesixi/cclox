@@ -5,7 +5,7 @@
 #ifndef CCLOX_CCLOX_UTIL_H
 #define CCLOX_CCLOX_UTIL_H
 
-#include <string>
+#include "common.h"
 #include <fstream>
 #include <limits>
 #include <sstream>

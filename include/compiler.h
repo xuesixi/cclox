@@ -1,13 +1,11 @@
 #ifndef CCLOX_COMPILER_H
 #define CCLOX_COMPILER_H
 
+
 #include "chunk.h"
 #include "common.h"
 #include "scanner.h"
 #include "scope.h"
-#include <memory>
-#include <string>
-#include <utility>
 #include "disassembler.h"
 
 enum class Precedence {

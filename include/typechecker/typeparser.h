@@ -5,8 +5,9 @@
 #ifndef CCLOX_TYPECHECKER_H
 #define CCLOX_TYPECHECKER_H
 
-#include "tokenholder.h"
-#include "lox_type.h"
+#include "typechecker/tokenholder.h"
+#include "typechecker/lox_type.h"
+#include "common.h"
 
 
 class TypeParser {

@@ -5,9 +5,7 @@
 #ifndef STRINGINTERN_H
 #define STRINGINTERN_H
 
-#include <vector>
-#include <string>
-#include <unordered_map>
+#include "common.h"
 
 namespace StringIntern {
     /**
