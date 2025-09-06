@@ -16,86 +16,86 @@ FetchContent_MakeAvailable(fmt)
 
 add_executable(cclox
         src/main.cc
-        src/include/error.h
-        src/include/common.h
-        src/include/chunk.h
+        include/error.h
+        include/common.h
+        include/chunk.h
         src/chunk.cc
-        src/include/value.h
+        include/value.h
         src/value.cc
-        src/include/disassembler.h
+        include/disassembler.h
         src/disassembler.cc
-        src/include/vm.h
+        include/vm.h
         src/vm.cc
-        src/include/compiler.h
+        include/compiler.h
         src/compiler.cc
-        src/include/scanner.h
+        include/scanner.h
         src/scanner.cc
-        src/include/cclox_util.h
+        include/cclox_util.h
         src/cclox_util.cc
         src/object.cc
-        src/include/object.h
+        include/object.h
         src/runtime.cc
-        src/include/runtime.h
-        src/include/objects/loxstring.h
+        include/runtime.h
+        include/objects/loxstring.h
         src/scope.cc
-        src/include/scope.h
-        src/include/objects/loxfunction.h
-        src/include/objects/loxcaptured.h
-        src/include/objects/loxclosure.h
-        src/include/objects/loxclass.h
-        src/include/objects/loxinstance.h
-        src/include/objects/loxmethod.h
+        include/scope.h
+        include/objects/loxfunction.h
+        include/objects/loxcaptured.h
+        include/objects/loxclosure.h
+        include/objects/loxclass.h
+        include/objects/loxinstance.h
+        include/objects/loxmethod.h
         src/native.cc
-        src/include/native.h
+        include/native.h
         src/stringintern.cc
-        src/include/stringintern.h
-        src/include/nativeobjects/loxconcurrent.h
+        include/stringintern.h
+        include/nativeobjects/loxconcurrent.h
         src/typechecker/typeparser.cc
-        src/include/typechecker/typeparser.h
+        include/typechecker/typeparser.h
         src/typechecker/expression.cc
-        src/include/typechecker/expression.h
-        src/include/typechecker/tokenholder.h
+        include/typechecker/expression.h
+        include/typechecker/tokenholder.h
         src/typechecker/statement.cc
-        src/include/typechecker/statement.h
-        src/include/typechecker/types/class_type.h
-        src/include/typechecker/types/primitive_type.h
-        src/include/typechecker/types/intersection_type.h
-        src/include/typechecker/types/union_type.h
-        src/include/typechecker/types/tuple_type.h
-        src/include/typechecker/types/array_type.h
-        src/include/typechecker/types/function_type.h
-        src/include/typechecker/lox_type.h
-        src/include/typechecker/ast.h
+        include/typechecker/statement.h
+        include/typechecker/types/class_type.h
+        include/typechecker/types/primitive_type.h
+        include/typechecker/types/intersection_type.h
+        include/typechecker/types/union_type.h
+        include/typechecker/types/tuple_type.h
+        include/typechecker/types/array_type.h
+        include/typechecker/types/function_type.h
+        include/typechecker/lox_type.h
+        include/typechecker/ast.h
         src/typechecker/ast.cc
-        src/include/typechecker/statements/var_statement.h
-        src/include/typechecker/statements/print_statement.h
-        src/include/typechecker/statements/fun_statement.h
-        src/include/typechecker/statements/expression_statement.h
-        src/include/typechecker/statements/block_statement.h
+        include/typechecker/statements/var_statement.h
+        include/typechecker/statements/print_statement.h
+        include/typechecker/statements/fun_statement.h
+        include/typechecker/statements/expression_statement.h
+        include/typechecker/statements/block_statement.h
         src/typechecker/statements/block_statement.cc
         src/typechecker/statements/expression_statement.cc
         src/typechecker/statements/fun_statement.cc
         src/typechecker/statements/print_statement.cc
         src/typechecker/statements/var_statement.cc
         src/typechecker/expressions/assignment_expression.cc
-        src/include/typechecker/expressions/assignment_expression.h
+        include/typechecker/expressions/assignment_expression.h
         src/typechecker/expressions/or_expression.cc
-        src/include/typechecker/expressions/or_expression.h
+        include/typechecker/expressions/or_expression.h
         src/typechecker/expressions/and_expression.cc
-        src/include/typechecker/expressions/and_expression.h
+        include/typechecker/expressions/and_expression.h
         src/typechecker/expressions/binary_expression.cc
-        src/include/typechecker/expressions/binary_expression.h
+        include/typechecker/expressions/binary_expression.h
         src/typechecker/expressions/unaray_expression.cc
-        src/include/typechecker/expressions/unaray_expression.h
+        include/typechecker/expressions/unaray_expression.h
         src/typechecker/expressions/call_expression.cc
-        src/include/typechecker/expressions/call_expression.h
+        include/typechecker/expressions/call_expression.h
         src/typechecker/expressions/dot_expression.cc
-        src/include/typechecker/expressions/dot_expression.h
+        include/typechecker/expressions/dot_expression.h
         src/typechecker/expressions/primary_expression.cc
-        src/include/typechecker/expressions/primary_expression.h
+        include/typechecker/expressions/primary_expression.h
 )
 
-target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
+target_include_directories(cclox PRIVATE "include")
 target_link_libraries(cclox m readline fmt)
 
 enable_testing()

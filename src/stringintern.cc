@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 8/17/25.
 //
 
-#include "include/stringintern.h"
+#include "stringintern.h"
 
 #include "cclox_util.h"
 #include "error.h"

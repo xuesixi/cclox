@@ -2,7 +2,7 @@
 // Created by Yue Xue  on 9/5/25.
 //
 
-#include "../../include/typechecker/expressions/assignment_expression.h"
+#include "typechecker/expressions/assignment_expression.h"
 
 #include "typechecker/ast.h"
 

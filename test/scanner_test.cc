@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fmt/core.h>
 
-#include "../src/include/scanner.h"
+#include "scanner.h"
 #include <sstream>
 
 using Result = std::tuple<bool, size_t, size_t>;
