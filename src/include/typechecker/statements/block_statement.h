@@ -11,7 +11,10 @@ class BlockStatement : public Statement {
 public:
     friend class AstCompiler;
     explicit BlockStatement(std::vector<StmtPtr> &&body) : body(std::move(body)) {
+        static_assert(!std::is_abstract_v<BlockStatement>);
     }
+
+    void accept(AstCompiler &compiler) override;
 
 private:
     std::vector<StmtPtr> body;

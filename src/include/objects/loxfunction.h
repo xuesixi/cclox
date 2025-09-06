@@ -8,7 +8,7 @@
 #include "object.h"
 #include "runtime.h"
 
-enum class FunctionType {
+enum class FunctionTypeEnum {
     Function,
     Method,
     Main,

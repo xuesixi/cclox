@@ -8,11 +8,25 @@
 #include <error.h>
 #include <memory>
 #include "typechecker/statement.h"
-#include "chunk.h"
-#include "common.h"
-#include "scanner.h"
-#include "scope.h"
-#include "statements/print_statement.h"
+// #include "chunk.h"
+// #include "common.h"
+// #include "scope.h"
+
+class BlockStatement;
+class PrintStatement;
+class VarStatement;
+class ExpressionStatement;
+class FunStatement;
+class LoxFunction;
+
+class AndExpression;
+class AssignmentExpression;
+class BinaryExpression;
+class CallExpression;
+class DotExpression;
+class OrExpression;
+class PrimaryExpression;
+class UnaryExpression;
 
 class AstCompiler {
 public:
@@ -21,17 +35,70 @@ public:
         statements = parser.parse_all();
     }
 
-    void produce_statement(StmtPtr stmt) {
+    void visit_statement(Statement *stmt) {
+        stmt->accept(*this);
+    }
+
+    void visit_expression(Expression *expr) {
+        expr->accept(*this);
+    }
+
+    void visit_block_statement(BlockStatement *block_statement) {
 
     }
 
-    void produce_print(std::unique_ptr<PrintStatement> print_statement) {
+    void visit_expression_statement(ExpressionStatement *expression_statement) {
+
+    }
+
+    void visit_fun_statement(FunStatement *fun_statement) {
+
+    }
+
+    void visit_var_statement(VarStatement *var_statement) {
+
+    }
+
+    void visit_print_statement(PrintStatement *print_statement) {
+
+    }
+
+    void visit_and_expr(AndExpression *expression) {
+
+    }
+
+    void visit_assignment_expr(AssignmentExpression *expression) {
+
+    }
+
+    void visit_binary_expr(BinaryExpression *expression) {
+
+    }
+
+    void visit_call_expr(CallExpression *expression) {
+
+    }
+
+    void visit_dot_expr(DotExpression *expression) {
+
+    }
+
+    void visit_or_expr(OrExpression *expression) {
+
+    }
+
+    void visit_primary_expr(PrimaryExpression *expression) {
+
+    }
+
+    void visit_unary_expr(UnaryExpression *expression) {
 
     }
 
     void produce_expression();
 
 private:
+
     std::vector<StmtPtr> statements;
 };
 

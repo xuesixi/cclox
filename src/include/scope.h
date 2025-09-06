@@ -56,9 +56,9 @@ public:
     /**
      * 创建一个新的scope，分配一个新的loxfunction（但还没有调用fix_size），添加第一个本地变量为占地符。
      */
-    explicit Scope(std::shared_ptr<Scope> outer, FunctionType function_type):outer_(outer), function_type_(function_type) {
+    explicit Scope(std::shared_ptr<Scope> outer, FunctionTypeEnum function_type):outer_(outer), function_type_(function_type) {
         function_ = std::static_pointer_cast<LoxFunction>(Runtime::allocate_as_ref<LoxFunction>());
-        if (function_type == FunctionType::Main) {
+        if (function_type == FunctionTypeEnum::Main) {
             function_->set_name("<main>");
         }
         locals.push_back({});// 第一个本地变量有特殊用处
@@ -153,7 +153,7 @@ private:
     std::vector<Local> locals;
     std::vector<Upvalue> upvalues; // 本层级捕获的外层变量
     int depth = 0;
-    FunctionType function_type_;
+    FunctionTypeEnum function_type_;
     std::shared_ptr<LoxFunction> function_;
     std::shared_ptr<Scope> outer_;
 };

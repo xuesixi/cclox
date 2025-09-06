@@ -250,7 +250,7 @@ private:
      * @param type 函数类型
      * @return 解析到的函数, 函数的scope
      */
-    std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> parse_function(FunctionType type);
+    std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope>> parse_function(FunctionTypeEnum type);
 
     /*
      * 所有下面这些表达式解析函数，在运行后，curr的token已经被解析，下一个待解析的token是next，因此，一般在调用后，会再调用advance()

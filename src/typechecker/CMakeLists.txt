@@ -27,6 +27,27 @@ add_executable(tc_test
         ../include/typechecker/statements/fun_statement.h
         ../include/typechecker/statements/expression_statement.h
         ../include/typechecker/statements/block_statement.h
+        statements/block_statement.cc
+        statements/expression_statement.cc
+        statements/fun_statement.cc
+        statements/print_statement.cc
+        statements/var_statement.cc
+        expressions/assignment_expression.cc
+        ../include/typechecker/expressions/assignment_expression.h
+        expressions/or_expression.cc
+        ../include/typechecker/expressions/or_expression.h
+        expressions/and_expression.cc
+        ../include/typechecker/expressions/and_expression.h
+        expressions/binary_expression.cc
+        ../include/typechecker/expressions/binary_expression.h
+        expressions/unaray_expression.cc
+        ../include/typechecker/expressions/unaray_expression.h
+        expressions/call_expression.cc
+        ../include/typechecker/expressions/call_expression.h
+        expressions/dot_expression.cc
+        ../include/typechecker/expressions/dot_expression.h
+        expressions/primary_expression.cc
+        ../include/typechecker/expressions/primary_expression.h
 )
 
 target_include_directories(tc_test PRIVATE ../include)

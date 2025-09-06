@@ -10,7 +10,12 @@
 class ExpressionStatement: public Statement {
 public:
     friend class AstCompiler;
-    ExpressionStatement(ExprPtr expr): expr(std::move(expr)) {}
+    ExpressionStatement(ExprPtr expr): expr(std::move(expr)) {
+        static_assert(!std::is_abstract_v<ExpressionStatement>);
+    }
+
+    void accept(AstCompiler &compiler) override;
+
 private:
     ExprPtr expr;
 };

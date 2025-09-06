@@ -61,7 +61,7 @@ std::shared_ptr<LoxFunction> Compiler::compile(std::string &&source) {
         disasm.set_out(&std::cout);
     }
     scanner = std::make_unique<Scanner>(std::move(source));
-    scope = std::make_shared<Scope>(nullptr, FunctionType::Main);
+    scope = std::make_shared<Scope>(nullptr, FunctionTypeEnum::Main);
     advance();
     while (!check(TokenType::END_OF_FILE)) {
         declaration();
@@ -350,7 +350,7 @@ void Compiler::string_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::lambda_expr([[maybe_unused]] bool can_assign) {
-    auto [fun, fun_scope] =  parse_function(FunctionType::Lambda);
+    auto [fun, fun_scope] =  parse_function(FunctionTypeEnum::Lambda);
     emit_make_closure(fun, fun_scope);
 }
 
@@ -446,7 +446,7 @@ void Compiler::variable_expr(bool can_assign) {
         return;
     }
 
-    if (scope->function_type_ == FunctionType::Method) {
+    if (scope->function_type_ == FunctionTypeEnum::Method) {
         // 如果在方法内部，则还可能是对象字段。
         auto field_found = class_scope->resolve_field(curr.get_lexeme());
         if (field_found) {
@@ -512,7 +512,7 @@ void Compiler::this_expr(bool can_assign) {
     // var age = this.num = 4;
     // var age = this.num;
 
-    if (scope->function_type_ != FunctionType::Method) {
+    if (scope->function_type_ != FunctionTypeEnum::Method) {
         error_at(curr, "'this' can only be used inside of a class method");
         return;
     }
@@ -726,7 +726,7 @@ void Compiler::fun_statement() {
     if (scope->is_global_scope()) {
         OperandSize string_id = resolve_global_identifier();
 
-        auto [fun, fun_scope] = parse_function(FunctionType::Function);
+        auto [fun, fun_scope] = parse_function(FunctionTypeEnum::Function);
 
         emit_make_closure(fun, fun_scope);
 
@@ -737,7 +737,7 @@ void Compiler::fun_statement() {
 
         scope->add_local(curr);
         scope->initialize();
-        auto [fun, fun_scope] = parse_function(FunctionType::Function);
+        auto [fun, fun_scope] = parse_function(FunctionTypeEnum::Function);
 
         emit_make_closure(fun, fun_scope);
     }
@@ -801,7 +801,7 @@ void Compiler::field_statement(bool is_static) {
 
 void Compiler::method_statement(bool is_static) {
     consume(TokenType::IDENTIFIER, "expect the method name here");
-    auto [fun, fun_scope] = parse_function(FunctionType::Method);
+    auto [fun, fun_scope] = parse_function(FunctionTypeEnum::Method);
     emit_make_closure(fun, fun_scope);
 }
 
@@ -858,9 +858,9 @@ void Compiler::expression_statement() {
 }
 
 // ReSharper disable once CppDFAConstantParameter
-std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope> > Compiler::parse_function(FunctionType type) {
+std::pair<std::shared_ptr<LoxFunction>, std::shared_ptr<Scope> > Compiler::parse_function(FunctionTypeEnum type) {
     std::string fun_name;
-    if (type != FunctionType::Lambda) {
+    if (type != FunctionTypeEnum::Lambda) {
         fun_name = curr.get_lexeme();
     } else {
         fun_name = "$lambda";
@@ -893,7 +893,7 @@ after_param_list:
     // 这里不需要退出层级的操作，因为函数调用后，整个栈帧都会被废弃，栈vector会resize至前一个栈帧的尺寸
     // 所有本栈帧的本地变量自然也就被销毁了
 
-    if (fun_name == "init" and type == FunctionType::Method) {
+    if (fun_name == "init" and type == FunctionTypeEnum::Method) {
         emit_opcode(Opcode::LoadLocal); // 构造函数返回this
         emit_operand_1(0);
     } else {

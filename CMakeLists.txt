@@ -72,6 +72,27 @@ add_executable(cclox
         src/include/typechecker/statements/fun_statement.h
         src/include/typechecker/statements/expression_statement.h
         src/include/typechecker/statements/block_statement.h
+        src/typechecker/statements/block_statement.cc
+        src/typechecker/statements/expression_statement.cc
+        src/typechecker/statements/fun_statement.cc
+        src/typechecker/statements/print_statement.cc
+        src/typechecker/statements/var_statement.cc
+        src/typechecker/expressions/assignment_expression.cc
+        src/include/typechecker/expressions/assignment_expression.h
+        src/typechecker/expressions/or_expression.cc
+        src/include/typechecker/expressions/or_expression.h
+        src/typechecker/expressions/and_expression.cc
+        src/include/typechecker/expressions/and_expression.h
+        src/typechecker/expressions/binary_expression.cc
+        src/include/typechecker/expressions/binary_expression.h
+        src/typechecker/expressions/unaray_expression.cc
+        src/include/typechecker/expressions/unaray_expression.h
+        src/typechecker/expressions/call_expression.cc
+        src/include/typechecker/expressions/call_expression.h
+        src/typechecker/expressions/dot_expression.cc
+        src/include/typechecker/expressions/dot_expression.h
+        src/typechecker/expressions/primary_expression.cc
+        src/include/typechecker/expressions/primary_expression.h
 )
 
 target_include_directories(cclox PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")

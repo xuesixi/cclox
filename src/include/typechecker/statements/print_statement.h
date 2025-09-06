@@ -12,7 +12,11 @@ public:
     friend class AstCompiler;
     PrintStatement(ExprPtr expr): expr(std::move(expr)) {
 
+        static_assert(!std::is_abstract_v<PrintStatement>);
     }
+
+    void accept(AstCompiler &compiler) override;
+
 private:
     ExprPtr expr;
 };

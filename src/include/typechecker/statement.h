@@ -9,6 +9,8 @@
 #include "typechecker/expression.h"
 #include "typechecker/typeparser.h"
 
+class AstCompiler;
+
 class Statement {
 public:
     virtual ~Statement() {
@@ -22,6 +24,8 @@ public:
     virtual TypePtr resolve_return_type() {
         return PrimitiveType::UnspecifiedType;
     }
+
+    virtual void accept(AstCompiler &compiler) = 0;
 
 };
 
