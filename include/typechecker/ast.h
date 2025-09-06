@@ -8,6 +8,8 @@
 #include "error.h"
 #include "common.h"
 
+#include "scope.h"
+
 #include "typechecker/statement.h"
 
 class BlockStatement;
@@ -28,10 +30,7 @@ class UnaryExpression;
 
 class AstCompiler {
 public:
-    std::shared_ptr<LoxFunction> compile(std::string &&source) {
-        StatementParser parser(std::move(source));
-        statements = parser.parse_all();
-    }
+    std::shared_ptr<LoxFunction> compile(std::string &&source);
 
     void visit_statement(Statement *stmt) {
         stmt->accept(*this);
@@ -94,6 +93,7 @@ public:
 private:
 
     std::vector<StmtPtr> statements;
+    std::shared_ptr<Scope> scope;
 };
 
 #endif //CCLOX_AST_H

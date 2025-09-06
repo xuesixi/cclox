@@ -14,6 +14,7 @@
 class ClassScope {
 public:
     friend class Compiler;
+    friend class AstCompiler;
 
     void add_field(const std::string &name) {
         if (member_fields.size() == UINT8_MAX) {
@@ -52,6 +53,7 @@ class Scope {
 public:
 
     friend class Compiler;
+    friend class AstCompiler;
 
     /**
      * 创建一个新的scope，分配一个新的loxfunction（但还没有调用fix_size），添加第一个本地变量为占地符。

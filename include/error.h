@@ -21,7 +21,12 @@ public:\
  * 调用该函数来表示某处出现了预想之外的情况（实现错误）。例如，本不应该到达的语句被运行了。该函数会输出错误信息，然后abort
  */
 inline void implementation_error(const std::string &message) {
-    std::cerr << fmt::format("there is an implementation: {}", message) << std::endl;
+    std::cerr << fmt::format("there is an implementation error at file {}:{}: {}", __FILE__, __LINE__, message) << std::endl;
+    std::abort();
+}
+
+inline void not_implemented() {
+    std::cerr << fmt::format("not implemented at file {}:{}", __FILE__, __LINE__) << std::endl;
     std::abort();
 }
 
