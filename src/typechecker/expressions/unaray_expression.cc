@@ -4,6 +4,7 @@
 
 #include "../../include/typechecker/expressions/unaray_expression.h"
 
+#include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"
 
 TypePtr UnaryExpression::resolve_type() {

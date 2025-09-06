@@ -15,6 +15,10 @@ public:
     }
 
     Token value_token;
+
+    /**
+     * @copydoc Expression::resolve_type
+     */
     TypePtr resolve_type() override;
 
     void accept(AstCompiler &compiler) override;

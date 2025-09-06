@@ -21,9 +21,7 @@ public:
      * 例如说，函数的定义语句会判断自己标注的返回值和实际的返回值是否匹配。
      * 如果出现错误，返回 mismatched
      */
-    virtual TypePtr resolve_return_type() {
-        return PrimitiveType::UnspecifiedType;
-    }
+    virtual TypePtr resolve_return_type();
 
     virtual void accept(AstCompiler &compiler) = 0;
 

@@ -9,6 +9,11 @@
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/var_statement.h"
 #include "typechecker/statements/block_statement.h"
+#include "typechecker/types/primitive_type.h"
+
+TypePtr Statement::resolve_return_type() {
+    return PrimitiveType::UnspecifiedType;
+}
 
 StmtPtr StatementParser::parse_statement() {
     // todo

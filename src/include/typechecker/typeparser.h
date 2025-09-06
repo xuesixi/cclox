@@ -4,10 +4,7 @@
 
 #ifndef CCLOX_TYPECHECKER_H
 #define CCLOX_TYPECHECKER_H
-#include <memory>
-#include <vector>
-#include <sstream>
-#include "../scanner.h"
+
 #include "tokenholder.h"
 #include "lox_type.h"
 

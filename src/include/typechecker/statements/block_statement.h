@@ -24,15 +24,7 @@ public:
     /**
      * 按顺序遍历，如果有任何一个语句返回，那么本语句的返回值与之相同。如果都没有，也是 unspecified
      */
-    TypePtr resolve_return_type() override {
-        for (auto &statement: body) {
-            auto statement_return_type = statement->resolve_return_type();
-            if (statement_return_type->type_enum != LoxTypeEnum::Unspecified) {
-                return statement_return_type;
-            }
-        }
-        return PrimitiveType::UnspecifiedType;
-    }
+    TypePtr resolve_return_type() override;
 };
 
 #endif //CCLOX_BLOCK_STATEMENT_H

@@ -5,12 +5,13 @@
 #ifndef CCLOX_EXPRESSION_H
 #define CCLOX_EXPRESSION_H
 
-#include "typechecker/typeparser.h"
 #include "tokenholder.h"
-#include "typechecker/types/primitive_type.h"
-#include "types/function_type.h"
+#include "lox_type.h"
 
 class AstCompiler;
+class Expression;
+
+using ExprPtr = std::unique_ptr<Expression>;
 
 class Expression {
 public:
@@ -26,8 +27,6 @@ public:
 
     virtual void accept(AstCompiler &compiler) = 0;
 };
-
-using ExprPtr = std::unique_ptr<Expression>;
 
 
 class ExpressionParser {

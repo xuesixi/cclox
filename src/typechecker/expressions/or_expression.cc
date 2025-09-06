@@ -3,6 +3,7 @@
 //
 
 #include "../../include/typechecker/expressions/or_expression.h"
+#include "typechecker/types/primitive_type.h"
 
 #include "typechecker/ast.h"
 

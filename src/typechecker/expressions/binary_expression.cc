@@ -5,6 +5,7 @@
 #include "../../include/typechecker/expressions/binary_expression.h"
 
 #include "typechecker/ast.h"
+#include "typechecker/types/primitive_type.h"
 
 TypePtr BinaryExpression::resolve_type() {
     auto left_type = left->resolve_type();

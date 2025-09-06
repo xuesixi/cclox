@@ -4,6 +4,7 @@
 
 #include "../../include/typechecker/expressions/primary_expression.h"
 
+#include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"
 
 TypePtr PrimaryExpression::resolve_type() {

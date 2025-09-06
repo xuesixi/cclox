@@ -6,7 +6,6 @@
 #define CCLOX_CLASSTYPE_H
 
 #include "../lox_type.h"
-#include "scanner.h"
 
 class ClassType : public LoxType {
 public:

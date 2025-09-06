@@ -5,12 +5,9 @@
 #ifndef CCLOX_AST_H
 #define CCLOX_AST_H
 
-#include <error.h>
-#include <memory>
+#include "error.h"
+
 #include "typechecker/statement.h"
-// #include "chunk.h"
-// #include "common.h"
-// #include "scope.h"
 
 class BlockStatement;
 class PrintStatement;
@@ -91,11 +88,7 @@ public:
 
     }
 
-    void visit_unary_expr(UnaryExpression *expression) {
-
-    }
-
-    void produce_expression();
+    void visit_unary_expr(UnaryExpression *expression);
 
 private:
 

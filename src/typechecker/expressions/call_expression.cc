@@ -3,6 +3,7 @@
 //
 
 #include "../../include/typechecker/expressions/call_expression.h"
+#include "typechecker/types/function_type.h"
 
 #include "typechecker/ast.h"
 
