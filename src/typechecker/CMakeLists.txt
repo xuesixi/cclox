@@ -1,12 +1,12 @@
 find_package(Catch2 3 REQUIRED)
 
 add_executable(tc_test
+        ../../test/type_parsing_test.cc
         ../../include/error.h
         ../scanner.cc
         ../../include/scanner.h
         typeparser.cc
         ../../include/typechecker/typeparser.h
-        tc_test.cc
         expression.cc
         ../../include/typechecker/expression.h
         ../../include/typechecker/tokenholder.h
@@ -55,10 +55,22 @@ add_executable(tc_test
         types/primitive_type.cc
         types/tuple_type.cc
         types/union_type.cc
+
 )
 
 target_include_directories(tc_test PRIVATE ../../include)
 
+target_link_libraries(tc_test fmt Catch2::Catch2WithMain)
+
+#aux_source_directory(../../src/typechecker src_typechcker)
+#aux_source_directory(../../include/typechecker header_typechecker)
+#
+#add_executable(stlox
+#        ${src_typechecker}
+#        ${header_typechecker}
+#)
+#
+#target_include_directories(stlox PRIVATE ../../include)
 target_link_libraries(tc_test fmt Catch2::Catch2WithMain)
 
 include(CTest)

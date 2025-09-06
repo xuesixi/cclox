@@ -106,5 +106,4 @@ target_include_directories(cclox PRIVATE "include")
 target_link_libraries(cclox m readline fmt)
 
 enable_testing()
-add_subdirectory(src/typechecker)
 add_subdirectory(test)

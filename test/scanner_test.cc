@@ -9,6 +9,10 @@
 #include "scanner.h"
 #include <sstream>
 
+/**
+ * 测试 fmt—string 是否能够正确地分割{}
+ */
+
 using Result = std::tuple<bool, size_t, size_t>;
 
 std::string show(std::vector<Result> v) {

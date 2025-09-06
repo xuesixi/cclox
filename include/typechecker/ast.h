@@ -7,11 +7,11 @@
 
 #include "error.h"
 #include "common.h"
-
-#include "scope.h"
+#include "chunk.h"
 
 #include "typechecker/statement.h"
 
+class Scope;
 class BlockStatement;
 class PrintStatement;
 class VarStatement;
@@ -90,7 +90,32 @@ public:
 
     void visit_unary_expr(UnaryExpression *expression);
 
+    Chunk &current_chunk();
+
 private:
+
+    // /**
+    //  * 将目标opcode写入字节码中
+    //  */
+    // void emit_opcode(Opcode op_code, int line);
+    //
+    // /**
+    //  * 将目标操作数写入字节码中，根据operand的值写入一个或者两个字节。
+    //  * @pre operand处在uint16范围内
+    //  */
+    // void emit_operand_flexible(size_t operand, int line);
+    //
+    // /**
+    //  * 将目标操作数写入字节码中，只写入一个字节。调用者需要保证参数是uint8。
+    //  * @pre operand处在uint8范围内
+    //  */
+    // void emit_operand_1(size_t operand, int line);
+    //
+    // /**
+    //  * 将目标操作数写入字节码中，无论operand的值，总是写入两个字节。超出uint16则是实现错误
+    //  * @pre operand 处在uint16范围内
+    //  */
+    // void emit_operand_2(size_t operand, int line);
 
     std::vector<StmtPtr> statements;
     std::shared_ptr<Scope> scope;

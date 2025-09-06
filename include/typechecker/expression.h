@@ -26,6 +26,8 @@ public:
     virtual TypePtr resolve_type() = 0;
 
     virtual void accept(AstCompiler &compiler) = 0;
+
+    int line = 0;
 };
 
 
