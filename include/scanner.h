@@ -62,6 +62,10 @@ public:
         return lexeme;
     }
 
+    int get_line() const {
+        return line;
+    }
+
 private:
     std::string lexeme;
     TokenType type;

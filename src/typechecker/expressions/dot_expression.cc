@@ -9,6 +9,7 @@
 
 TypePtr DotExpression::resolve_type() {
     auto target_type = target->resolve_type();
+    this->line = target->get_line();
     if (target_type->type_enum != LoxTypeEnum::Class) {
         throw TypeError(fmt::format("cannot access member of type {}", target_type->to_string()));
     }

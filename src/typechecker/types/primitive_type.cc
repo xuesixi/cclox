@@ -15,8 +15,7 @@ std::string PrimitiveType::to_no_parenthesis_string() {
         case LoxTypeEnum::Nil: return "nil";
         case LoxTypeEnum::String: return "String";
         default:
-            implementation_error("Unknown primitive type");
-            return "<bad type, something is wrong>";
+            ASSERT_UNREACHABLE();
     }
 }
 

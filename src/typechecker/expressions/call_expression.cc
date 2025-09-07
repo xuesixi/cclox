@@ -9,6 +9,7 @@
 
 TypePtr CallExpression::resolve_type() {
     auto type = callee->resolve_type();
+    this->line = callee->get_line();
     if (type->type_enum != LoxTypeEnum::Function) {
         throw MismatchedTypeError(fmt::format("expect a callable but got {}", type->to_string()));
     }

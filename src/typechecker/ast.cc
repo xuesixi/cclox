@@ -16,7 +16,11 @@ void AstCompiler::visit_unary_expr(UnaryExpression *expression) {
     auto type = expression->resolve_type();
     visit_expression(expression->operand.get());
     if (expression->op.get_type() == TokenType::MINUS) {
-
+        emit_opcode(Opcode::Negate, expression->get_line());
+    } else if (expression->op.get_type() == TokenType::BANG) {
+        emit_opcode(Opcode::Not, expression->get_line());
+    } else {
+       NOT_IMPLEMENTED()
     }
 }
 
@@ -24,21 +28,21 @@ Chunk & AstCompiler::current_chunk() {
     return scope->function_->get_chunk();
 }
 
-// void AstCompiler::emit_opcode(Opcode op_code, int line) {
-//     current_chunk().write_opcode(op_code, line);
-// }
-//
-// void AstCompiler::emit_operand_flexible(size_t operand, int line) {
-//     DEBUG_ASSERT(within<uint16_t>(operand), "size overflow");
-//     current_chunk().write_operand(operand, line);
-// }
-//
-// void AstCompiler::emit_operand_1(size_t operand, int line) {
-//     DEBUG_ASSERT(within<uint8_t>(operand), "size overflow");
-//     emit_operand_flexible(operand, line);
-// }
-//
-// void AstCompiler::emit_operand_2(size_t operand, int line) {
-//     DEBUG_ASSERT(within<uint16_t>(operand), "operand is not within uint16");
-//     current_chunk().write_operand_2(operand, line);
-// }
+void AstCompiler::emit_opcode(Opcode op_code, int line) {
+    current_chunk().write_opcode(op_code, line);
+}
+
+void AstCompiler::emit_operand_flexible(size_t operand, int line) {
+    DEBUG_ASSERT(within<uint16_t>(operand), "size overflow");
+    current_chunk().write_operand(operand, line);
+}
+
+void AstCompiler::emit_operand_1(size_t operand, int line) {
+    DEBUG_ASSERT(within<uint8_t>(operand), "size overflow");
+    emit_operand_flexible(operand, line);
+}
+
+void AstCompiler::emit_operand_2(size_t operand, int line) {
+    DEBUG_ASSERT(within<uint16_t>(operand), "operand is not within uint16");
+    current_chunk().write_operand_2(operand, line);
+}

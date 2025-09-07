@@ -30,8 +30,6 @@
  *
  */
 
-
-
 ExprPtr ExpressionParser::parse_expression() {
     return parse_assignment();
 }
@@ -71,7 +69,7 @@ ExprPtr ExpressionParser::parse_call() {
             }
             left = std::make_unique<CallExpression>(std::move(left), std::move(arguments));
         } else {
-            implementation_error("not implemented yet");
+            NOT_IMPLEMENTED();
         }
     }
     return left;

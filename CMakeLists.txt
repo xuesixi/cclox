@@ -107,3 +107,4 @@ target_link_libraries(cclox m readline fmt)
 
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(src/typechecker)

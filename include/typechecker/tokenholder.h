@@ -30,7 +30,7 @@ public:
      */
     Token &last_token() {
         if (next == 0) {
-            implementation_error("next is 0, you should not call last_token now");
+            IMPL_ERROR("next is 0, you should not call last_token now");
         }
         return tokens.at(next - 1);
     }

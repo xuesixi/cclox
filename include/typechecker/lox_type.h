@@ -121,7 +121,7 @@ public:
                                     const std::string &member_name, TypePtr &type) {
         auto found = global_classes.find(class_name);
         if (found == global_classes.end()) {
-            implementation_error("a class name is not found");
+            IMPL_ERROR("a class name is not found");
         }
         ClassRecord &the_class = found->second;
         the_class.check_duplicate_member(member_name);
@@ -129,12 +129,12 @@ public:
             the_class.fields.insert({member_name, type});
         } else if (member_type == ClassRecord::ClassMemberType::Method) {
             if (type->type_enum != LoxTypeEnum::Function) {
-                implementation_error("the method is not a function type");
+                IMPL_ERROR("the method is not a function type");
             } else {
                 the_class.methods.insert({member_name, type});
             }
         } else {
-            implementation_error("not implemented yet");
+            NOT_IMPLEMENTED();
         }
     }
 
@@ -158,9 +158,7 @@ public:
 
     static TypePtr find_function(const std::string &fun_name) {
         // todo
-        // auto found
-        implementation_error("not implemented yet");
-        return nullptr;
+        NOT_IMPLEMENTED();
     }
 
     static void check_duplicate(const std::string &name) {

@@ -46,7 +46,7 @@ void Chunk::write_operand(size_t operand, int line) {
     } else if (within<uint16_t>(operand)) {
         write_operand_2(operand, line);
     } else {
-        implementation_error("not within uint16 limits");
+        IMPL_ERROR("not within uint16 limits");
     }
 }
 

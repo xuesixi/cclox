@@ -10,6 +10,7 @@
 TypePtr OrExpression::resolve_type() {
     auto left_type = left->resolve_type();
     auto right_type = right->resolve_type();
+    this->line = left->get_line();
     if (LoxType::both_of_type(left_type, right_type, LoxTypeEnum::Bool)) {
         return PrimitiveType::BoolType;
     } else {

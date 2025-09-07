@@ -10,6 +10,7 @@
 TypePtr BinaryExpression::resolve_type() {
     auto left_type = left->resolve_type();
     auto right_type = right->resolve_type();
+    this->line = left->get_line();
     switch (op.get_type()) {
         case TokenType::MINUS:
         case TokenType::SLASH:
@@ -59,7 +60,7 @@ TypePtr BinaryExpression::resolve_type() {
                                                   left_type->to_string(), right_type->to_string()));
         }
         default:
-            implementation_error("no such binary type");
+            IMPL_ERROR("no such binary type");
             return PrimitiveType::MismatchedType;
     }
 }

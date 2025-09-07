@@ -32,7 +32,7 @@ namespace Configuration {
     #define DEBUG_ASSERT(condition, message) \
     do { \
         if (!(condition)) { \
-            implementation_error(__FILE__ ":" STRINGIFY(__LINE__) " - " message);  \
+            IMPL_ERROR(__FILE__ ":" STRINGIFY(__LINE__) " - " message);  \
         } \
     } while (0)
 #else

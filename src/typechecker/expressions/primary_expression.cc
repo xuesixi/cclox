@@ -8,6 +8,7 @@
 #include "typechecker/ast.h"
 
 TypePtr PrimaryExpression::resolve_type() {
+    this->line = value_token.get_line();
     switch (value_token.get_type()) {
         case TokenType::INTEGER:
             return PrimitiveType::IntType;
@@ -22,7 +23,7 @@ TypePtr PrimaryExpression::resolve_type() {
         case TokenType::Nil:
             return PrimitiveType::NilType;
         default:
-            implementation_error("unknown primary expr type");
+            IMPL_ERROR("unknown primary expr type");
             return PrimitiveType::MismatchedType;
     }
 }

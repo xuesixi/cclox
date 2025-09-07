@@ -3,9 +3,9 @@
 #include "value.h"
 #include "common.h"
 #include "compiler.h"
+#include "disassembler.h"
 #include <sstream>
 #include <iostream>
-#include <string>
 #include <variant>
 
 #include "objects/loxstring.h"
@@ -374,7 +374,7 @@ InterpreterResult VM::run() {
                     break;
                 }
                 default:
-                    implementation_error(fmt::format("unknown opcode inside the vm running. code num: {}",
+                    IMPL_ERROR(fmt::format("unknown opcode inside the vm running. code num: {}",
                                                      static_cast<uint8_t>(instruction)));
             }
         }

@@ -137,8 +137,7 @@ public:
             case 255: return 16.0;
 
             default:
-                implementation_error("unknown immediate index");
-                return 0L;
+                ASSERT_UNREACHABLE();
         }
     }
 

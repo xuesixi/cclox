@@ -20,12 +20,17 @@ public:
 
     /**
      * 检查并返回该表达式的返回值类型。
+     * 于此同时，计算并储存行号。
      * 如果出现了问题，抛出异常
      * @return 该表达式的返回值类型
      */
     virtual TypePtr resolve_type() = 0;
 
     virtual void accept(AstCompiler &compiler) = 0;
+
+    int get_line() const {
+        return line;
+    }
 
     int line = 0;
 };

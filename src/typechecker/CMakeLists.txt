@@ -1,78 +1,18 @@
-find_package(Catch2 3 REQUIRED)
+set(src ../../src)
+set(incl ../../include)
+set(tc typechecker)
 
-add_executable(tc_test
-        ../../test/type_parsing_test.cc
-        ../../include/error.h
-        ../scanner.cc
-        ../../include/scanner.h
-        typeparser.cc
-        ../../include/typechecker/typeparser.h
-        expression.cc
-        ../../include/typechecker/expression.h
-        ../../include/typechecker/tokenholder.h
-        statement.cc
-        ../../include/typechecker/statement.h
-        ../../include/typechecker/types/class_type.h
-        ../../include/typechecker/types/primitive_type.h
-        ../../include/typechecker/types/intersection_type.h
-        ../../include/typechecker/types/union_type.h
-        ../../include/typechecker/types/tuple_type.h
-        ../../include/typechecker/types/array_type.h
-        ../../include/typechecker/types/function_type.h
-        ../../include/typechecker/lox_type.h
-        ../../include/typechecker/ast.h
-        ast.cc
-        ../../include/typechecker/statements/var_statement.h
-        ../../include/typechecker/statements/print_statement.h
-        ../../include/typechecker/statements/fun_statement.h
-        ../../include/typechecker/statements/expression_statement.h
-        ../../include/typechecker/statements/block_statement.h
-        statements/block_statement.cc
-        statements/expression_statement.cc
-        statements/fun_statement.cc
-        statements/print_statement.cc
-        statements/var_statement.cc
-        expressions/assignment_expression.cc
-        ../../include/typechecker/expressions/assignment_expression.h
-        expressions/or_expression.cc
-        ../../include/typechecker/expressions/or_expression.h
-        expressions/and_expression.cc
-        ../../include/typechecker/expressions/and_expression.h
-        expressions/binary_expression.cc
-        ../../include/typechecker/expressions/binary_expression.h
-        expressions/unary_expression.cc
-        ../../include/typechecker/expressions/unary_expression.h
-        expressions/call_expression.cc
-        ../../include/typechecker/expressions/call_expression.h
-        expressions/dot_expression.cc
-        ../../include/typechecker/expressions/dot_expression.h
-        expressions/primary_expression.cc
-        ../../include/typechecker/expressions/primary_expression.h
-        types/array_type.cc
-        types/class_type.cc
-        types/function_type.cc
-        types/intersection_type.cc
-        types/primitive_type.cc
-        types/tuple_type.cc
-        types/union_type.cc
+file(GLOB_RECURSE tc_cc ${src}/{tc}/*.cc)
+file(GLOB_RECURSE tc_h ${incl}/{tc}/*.h)
+file(GLOB clox_cc ${src}/*.cc)
+file(GLOB clox_h ${incl}/*.h)
 
+add_executable(stlox
+        ${tc_cc}
+        ${tc_h}
+        ${clox_cc}
+        ${clox_h}
 )
 
-target_include_directories(tc_test PRIVATE ../../include)
-
-target_link_libraries(tc_test fmt Catch2::Catch2WithMain)
-
-#aux_source_directory(../../src/typechecker src_typechcker)
-#aux_source_directory(../../include/typechecker header_typechecker)
-#
-#add_executable(stlox
-#        ${src_typechecker}
-#        ${header_typechecker}
-#)
-#
-#target_include_directories(stlox PRIVATE ../../include)
-target_link_libraries(tc_test fmt Catch2::Catch2WithMain)
-
-include(CTest)
-include(Catch)
-catch_discover_tests(tc_test)
+target_include_directories(stlox PRIVATE ${incl})
+target_link_libraries(stlox fmt::fmt)
