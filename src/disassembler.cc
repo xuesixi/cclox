@@ -41,6 +41,7 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::JumpIfPopFalse, "JumpIfPopFalse"},
     {Opcode::JumpBack, "JumpBack"},
     {Opcode::JumpIfFalse, "JumpIfFalse"},
+    {Opcode::JumpIfTrue, "JumpIfTrue"},
     {Opcode::Call, "Call"},
     {Opcode::MakeClosure, "MakeClosure"},
     {Opcode::Recur, "Recur"},
@@ -118,6 +119,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_general(instruction, offset);
         case Opcode::JumpIfPopFalse:
         case Opcode::JumpIfFalse:
+        case Opcode::JumpIfTrue:
         case Opcode::Jump:
             return instruction_jump(instruction, offset);
         case Opcode::JumpBack:

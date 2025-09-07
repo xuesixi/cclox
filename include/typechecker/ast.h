@@ -40,55 +40,51 @@ public:
         expr->accept(*this);
     }
 
-    void visit_block_statement(BlockStatement *block_statement) {
+    void visit_expression(ExprPtr &expr) {
+        expr.get()->accept(*this);
+    }
+
+    void visit_block_statement(BlockStatement *stmt) {
 
     }
 
-    void visit_expression_statement(ExpressionStatement *expression_statement) {
+    void visit_expression_statement(ExpressionStatement *stmt) {
 
     }
 
-    void visit_fun_statement(FunStatement *fun_statement) {
+    void visit_fun_statement(FunStatement *stmt) {
 
     }
 
-    void visit_var_statement(VarStatement *var_statement) {
+    void visit_var_statement(VarStatement *stmt) {
 
     }
 
-    void visit_print_statement(PrintStatement *print_statement) {
+    void visit_print_statement(PrintStatement *stmt) {
 
     }
 
-    void visit_and_expr(AndExpression *expression) {
+    void visit_and_expr(AndExpression *expr);
+
+    void visit_assignment_expr(AssignmentExpression *expr);
+
+    void visit_binary_expr(BinaryExpression *expr);
+
+    void visit_call_expr(CallExpression *expr) {
 
     }
 
-    void visit_assignment_expr(AssignmentExpression *expression) {
+    void visit_dot_expr(DotExpression *expr) {
 
     }
 
-    void visit_binary_expr(BinaryExpression *expression) {
+    void visit_or_expr(OrExpression *expr);
+
+    void visit_primary_expr(PrimaryExpression *expr) {
 
     }
 
-    void visit_call_expr(CallExpression *expression) {
-
-    }
-
-    void visit_dot_expr(DotExpression *expression) {
-
-    }
-
-    void visit_or_expr(OrExpression *expression) {
-
-    }
-
-    void visit_primary_expr(PrimaryExpression *expression) {
-
-    }
-
-    void visit_unary_expr(UnaryExpression *expression);
+    void visit_unary_expr(UnaryExpression *expr);
 
     Chunk &current_chunk();
 
@@ -116,6 +112,12 @@ private:
      * @pre operand 处在uint16范围内
      */
     void emit_operand_2(size_t operand, int line);
+
+    OperandSize emit_jump(Opcode jump_operation, int line);
+
+    void patch_jump(OperandSize from_label);
+
+    void loop_back(size_t destination);
 
     std::vector<StmtPtr> statements;
     std::shared_ptr<Scope> scope;

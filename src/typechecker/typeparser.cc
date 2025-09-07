@@ -12,27 +12,6 @@
 #include "typechecker/types/union_type.h"
 
 
-std::unordered_map<std::string, TypePtr> LoxType::global_functions;
-std::unordered_map<std::string, LoxType::ClassRecord> LoxType::global_classes;
-
-std::unordered_map<std::string, size_t> LoxType::typename_to_id;
-std::vector<std::string> LoxType::id_to_typename;
-
-size_t LoxType::resolve_type_id(const std::string &name) {
-    auto found = typename_to_id.find(name);
-    if (found != typename_to_id.end()) {
-        return found->second;
-    }
-    id_to_typename.push_back(name);
-    size_t id = id_to_typename.size() - 1;
-    typename_to_id.insert({name, id});
-    return id;
-}
-
-std::string LoxType::read_typename_from_id(size_t type_id) {
-    return id_to_typename.at(type_id);
-}
-
 bool LoxType::both_of_type(const TypePtr &a, const TypePtr &b, LoxTypeEnum type_enum) {
     return a->type_enum == type_enum && b->type_enum == type_enum;
 }

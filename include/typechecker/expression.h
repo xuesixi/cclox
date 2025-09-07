@@ -28,6 +28,13 @@ public:
 
     virtual void accept(AstCompiler &compiler) = 0;
 
+    /**
+     * 该表达式可否作为左值。
+     */
+    virtual bool can_be_assign() const {
+        return false;
+    }
+
     int get_line() const {
         return line;
     }

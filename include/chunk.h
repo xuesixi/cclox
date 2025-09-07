@@ -45,6 +45,7 @@ enum class Opcode: uint8_t {
     Jump, // distance: operand2 ； pc += distance
     JumpIfPopFalse, // distance: operand2 ；弹出栈顶的值，如果其为false，则pc += distance
     JumpIfFalse, // distance: operand2 ；如果栈顶的值为false，则pc += distance
+    JumpIfTrue, // distance: operand2 ; 如果栈顶的值为true, 则pc += distance
     JumpBack, // distance: operand2 ；pc -= distance
     Call, // arg_count: operand1 ；以栈顶的arg_count个值作为参数，以再前的一个值为函数，生成新的栈帧
     MakeClosure, // captured_count: operand1, [is_local: operand1, index: operand1]... ； captured_count标识后面有多少个捕获值。进行捕获

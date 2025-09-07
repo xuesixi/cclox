@@ -22,6 +22,8 @@ public:
     TypePtr resolve_type() override;
 
     void accept(AstCompiler &compiler) override;
+
+    bool can_be_assign() const override;
 };
 
 #endif //CCLOX_PRIMARY_EXPRESSION_H

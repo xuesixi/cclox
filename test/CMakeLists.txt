@@ -3,20 +3,21 @@ find_package(Catch2 3 REQUIRED)
 include(CTest)
 include(Catch)
 
-set(src_dir ../src)
-set(include_dir ../include)
+set(src ../src)
+set(incl ../include)
+set(tc typechecker)
 
-file(GLOB type_cc ${src_dir}/typechecker/types/*.cc)
-file(GLOB type_h ${src_dir}/typechecker/types/*.h)
+file(GLOB type_cc ${src}/${tc}/types/*.cc)
+file(GLOB type_h ${incl}/${tc}/types/*.h)
 
 add_executable(scanner_test
         scanner_test.cc
-        ${src_dir}/scanner.cc
-        ${include_dir}/scanner.h
-        ${include_dir}/error.h
+        ${src}/scanner.cc
+        ${incl}/scanner.h
+        ${incl}/error.h
 )
 target_link_libraries(scanner_test PRIVATE Catch2::Catch2WithMain fmt::fmt)
-target_include_directories(scanner_test PRIVATE ../include)
+target_include_directories(scanner_test PRIVATE ${incl})
 catch_discover_tests(scanner_test)
 
 add_executable(type_test
@@ -24,15 +25,16 @@ add_executable(type_test
         type_accept_test.cc
         ${type_cc}
         ${type_h}
-        ${src_dir}/typechecker/typeparser.cc
-        ${include_dir}/typechecker/typeparser.h
-        ${src_dir}/scanner.cc
-        ${include_dir}/scanner.h
-        ${include_dir}/common.h
-        ${include_dir}/error.h
-        type_accept_test.cc
+        ${src}/${tc}/typeparser.cc
+        ${incl}/${tc}/typeparser.h
+        ${src}/${tc}/lox_type.cc
+        ${incl}/${tc}/lox_type.h
+        ${src}/scanner.cc
+        ${incl}/scanner.h
+        ${incl}/common.h
+        ${incl}/error.h
 )
 target_link_libraries(type_test PRIVATE Catch2::Catch2WithMain fmt::fmt)
-target_include_directories(type_test PRIVATE ${include_dir})
+target_include_directories(type_test PRIVATE ${incl})
 catch_discover_tests(type_test)
 

@@ -14,6 +14,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(fmt)
 
+
+# 原版的cclox，不包括任何typechecker的源代码
 add_executable(cclox
         src/main.cc
         include/error.h
@@ -50,56 +52,6 @@ add_executable(cclox
         src/stringintern.cc
         include/stringintern.h
         include/nativeobjects/loxconcurrent.h
-        src/typechecker/typeparser.cc
-        include/typechecker/typeparser.h
-        src/typechecker/expression.cc
-        include/typechecker/expression.h
-        include/typechecker/tokenholder.h
-        src/typechecker/statement.cc
-        include/typechecker/statement.h
-        include/typechecker/types/class_type.h
-        include/typechecker/types/primitive_type.h
-        include/typechecker/types/intersection_type.h
-        include/typechecker/types/union_type.h
-        include/typechecker/types/tuple_type.h
-        include/typechecker/types/array_type.h
-        include/typechecker/types/function_type.h
-        include/typechecker/lox_type.h
-        include/typechecker/ast.h
-        src/typechecker/ast.cc
-        include/typechecker/statements/var_statement.h
-        include/typechecker/statements/print_statement.h
-        include/typechecker/statements/fun_statement.h
-        include/typechecker/statements/expression_statement.h
-        include/typechecker/statements/block_statement.h
-        src/typechecker/statements/block_statement.cc
-        src/typechecker/statements/expression_statement.cc
-        src/typechecker/statements/fun_statement.cc
-        src/typechecker/statements/print_statement.cc
-        src/typechecker/statements/var_statement.cc
-        src/typechecker/expressions/assignment_expression.cc
-        include/typechecker/expressions/assignment_expression.h
-        src/typechecker/expressions/or_expression.cc
-        include/typechecker/expressions/or_expression.h
-        src/typechecker/expressions/and_expression.cc
-        include/typechecker/expressions/and_expression.h
-        src/typechecker/expressions/binary_expression.cc
-        include/typechecker/expressions/binary_expression.h
-        src/typechecker/expressions/unary_expression.cc
-        include/typechecker/expressions/unary_expression.h
-        src/typechecker/expressions/call_expression.cc
-        include/typechecker/expressions/call_expression.h
-        src/typechecker/expressions/dot_expression.cc
-        include/typechecker/expressions/dot_expression.h
-        src/typechecker/expressions/primary_expression.cc
-        include/typechecker/expressions/primary_expression.h
-        src/typechecker/types/array_type.cc
-        src/typechecker/types/class_type.cc
-        src/typechecker/types/function_type.cc
-        src/typechecker/types/intersection_type.cc
-        src/typechecker/types/primitive_type.cc
-        src/typechecker/types/tuple_type.cc
-        src/typechecker/types/union_type.cc
 )
 
 target_include_directories(cclox PRIVATE "include")

@@ -267,6 +267,13 @@ InterpreterResult VM::run() {
                     }
                     break;
                 }
+                case Opcode::JumpIfTrue: {
+                    auto distance = read_operand_2();
+                    if (LoxValue::to_bool(stack_.back())) {
+                        pc() += distance;
+                    }
+                    break;
+                }
                 case Opcode::JumpBack: {
                     auto distance = read_operand_2();
                     pc() -= distance;

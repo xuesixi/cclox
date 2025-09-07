@@ -22,12 +22,24 @@ TypePtr PrimaryExpression::resolve_type() {
             return PrimitiveType::StringType;
         case TokenType::Nil:
             return PrimitiveType::NilType;
+        case TokenType::IDENTIFIER: {
+            return LoxType::find_class(value_token.get_lexeme());
+        }
         default:
-            IMPL_ERROR("unknown primary expr type");
-            return PrimitiveType::MismatchedType;
+            ASSERT_UNREACHABLE();
     }
 }
 
 void PrimaryExpression::accept(AstCompiler &compiler) {
     compiler.visit_primary_expr(this);
+}
+
+/**
+ * 如果是标识符，则可以被赋值
+ */
+bool PrimaryExpression::can_be_assign() const {
+    if (value_token.get_type() == TokenType::IDENTIFIER) {
+        return true;
+    }
+    return false;
 }
