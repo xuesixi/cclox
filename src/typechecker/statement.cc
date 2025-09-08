@@ -10,6 +10,7 @@
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/var_statement.h"
 #include "typechecker/statements/block_statement.h"
+#include "typechecker/types/function_type.h"
 #include "typechecker/types/primitive_type.h"
 
 TypePtr Statement::resolve_return_type() {
@@ -47,6 +48,7 @@ StmtPtr StatementParser::parse_block() {
 
 StmtPtr StatementParser::parse_print() {
     auto expr = expr_parser->parse_expression();
+    tokens->consume();
     return std::make_unique<PrintStatement>(std::move(expr));
 }
 
@@ -63,12 +65,14 @@ StmtPtr StatementParser::parse_var() {
         if (tokens->match(TokenType::EQUAL)) {
             initializer = expr_parser->parse_expression();
         }
+        tokens->consume();
         return std::make_unique<VarStatement>(name, var_type, std::move(initializer));
     } else {
         // 省略了类型申明
         var_type = PrimitiveType::UnspecifiedType;
         tokens->consume(TokenType::EQUAL, "a initializer is required if the type is not declared explicitly");
         initializer = expr_parser->parse_expression();
+        tokens->consume();
         return std::make_unique<VarStatement>(name, var_type, std::move(initializer));
     }
 }
@@ -99,8 +103,16 @@ StmtPtr StatementParser::parse_fun() {
         return_type = PrimitiveType::UnspecifiedType; // 默认为 void
     }
 
+    std::vector<TypePtr> type_params(parameters.size());
+    for (auto & param : parameters) {
+        type_params.push_back(param.second);
+    }
+
+    // todo: 函数类型不只是返回值，而需要包括参数列表
+    auto fun_type = std::make_shared<FunctionType>(std::move(type_params), TypePtr(return_type));
+
     // 将这个函数添加到解析名字中
-    name_resolver.declare_function(fun_name.get_lexeme(), return_type);
+    name_resolver.declare_function(fun_name.get_lexeme(), fun_type);
 
     // 解析函数体
     tokens->consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");
@@ -117,5 +129,6 @@ StmtPtr StatementParser::parse_fun() {
 
 StmtPtr StatementParser::parse_expression_statement() {
     auto expr = expr_parser->parse_expression();
+    tokens->consume();
     return std::make_unique<ExpressionStatement>(std::move(expr));
 }

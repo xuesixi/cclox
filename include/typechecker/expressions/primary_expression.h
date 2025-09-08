@@ -8,6 +8,10 @@
 #include "typechecker/expression.h"
 
 
+/**
+ * 基础的表达式，包括以下几种可能：
+ * - int, float, bool, nil, String, identifier(变量)
+ */
 class PrimaryExpression : public Expression {
 public:
     friend class AstCompiler;

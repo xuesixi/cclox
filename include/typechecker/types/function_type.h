@@ -10,7 +10,7 @@
 class FunctionType : public LoxType {
 public:
     friend class CallExpression;
-    FunctionType(std::vector<TypePtr> &&p, TypePtr &&rt) : parameters(std::move(p)), return_type(std::move(rt)) {
+    FunctionType(std::vector<TypePtr> &&parem, TypePtr &&return_type) : parameters(std::move(parem)), return_type(std::move(return_type)) {
         static_assert(!std::is_abstract_v<FunctionType>);
         type_enum = LoxTypeEnum::Function;
     }

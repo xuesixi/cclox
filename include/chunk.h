@@ -96,6 +96,12 @@ public:
     void write_operand(size_t operand, int line);
 
     /**
+     * 向code中写入operand。只会写入一个字节。如果超出 u8 范围，实现错误
+     * @pre operand 在uint8范围内
+     */
+    void write_operand_1(size_t operand, int line);
+
+    /**
      * 向code中写入operand。无论operand的值是否超出uint8的范围，都会写入两个字节。
      * @pre operand 在uint16范围内
      */
@@ -106,6 +112,12 @@ public:
      * @throws ConstantPoolOverflowError 如果常数池的元素数量超出uint16
      */
     OperandSize add_constant(Value &&value);
+
+    /**
+     * 向常数池中增加一个值，并返回其索引。如果索引在uint16范围内，返回之。
+     * @throws ConstantPoolOverflowError 如果常数池的元素数量超出uint16
+     */
+    OperandSize add_constant(const Value &value);
 
     /**
      * 对于一个Value，如果它属于立即数，返回其立即数索引，否则返回nullopt

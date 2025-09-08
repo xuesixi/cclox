@@ -96,7 +96,7 @@ public:
      * 添加后，该本地变量尚未被初始化。
      * 如果locals的元素个数超出了uint8，则抛出异常
      */
-    void add_local(const Token &token, TypePtr = nullptr);
+    void add_local(const Token &token, TypePtr type);
 
 
     /**

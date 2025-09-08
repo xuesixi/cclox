@@ -47,7 +47,7 @@ ExprPtr ExpressionParser::parse_primary() {
     })) {
         return std::make_unique<PrimaryExpression>(tokens->last_token());
     } else {
-        throw tokens->error_at(0, "expect a token as value here");
+        throw tokens->error_at(0, fmt::format("expect a token as value here, but got: {}", tokens->next_token().get_lexeme()));
     }
 }
 

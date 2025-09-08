@@ -77,12 +77,12 @@ public:
     }
 
     /**
-     * 要求匹配某个token，某个不匹配则抛出异常
+     * 要求匹配某个token，某个不匹配则抛出异常。如果不提供任何参数，则是要求以分号结束语句。
      * @param token_type 要匹配的token
      * @param message 如果失败，抛出的异常的错误信息
      * @return 匹配的那个token
      */
-    Token &consume(TokenType token_type, const std::string &message) {
+    Token &consume(TokenType token_type = TokenType::SEMICOLON, const std::string &message = "expect a semicolon to end the statement") {
         if (!match(token_type)) {
             throw error_at(last_token(), message);
         }

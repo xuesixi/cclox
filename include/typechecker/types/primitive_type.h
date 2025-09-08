@@ -8,7 +8,7 @@
 #include "typechecker/lox_type.h"
 
 /**
- * 特殊类型，包括内建的int, float, bool, String，any, 以及用于解释器的unspecified, mismatched
+ * 特殊类型，包括内建的int, float, bool, nil, String，any, 以及用于解释器的unspecified, mismatched
  */
 class PrimitiveType : public LoxType {
 public:

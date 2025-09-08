@@ -53,7 +53,7 @@ public:
     /**
      * 记录一个新的函数。如果重复，抛出异常
      */
-    void declare_function(const std::string &name, TypePtr &type);
+    void declare_function(const std::string &name, const TypePtr &type);
 
     /**
      * 记录一个新的类。如果重复，抛出异常

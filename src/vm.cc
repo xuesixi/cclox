@@ -8,6 +8,7 @@
 #include <iostream>
 #include <variant>
 
+#include "typechecker/ast.h"
 #include "objects/loxstring.h"
 #include "objects/loxclass.h"
 
@@ -22,6 +23,26 @@ InterpreterResult VM::interpret(std::string &&source) {
         auto f = compiler.compile(std::move(source));
         auto cl = Runtime::allocate_as<LoxClosure>(f);
         if (f && !Flag::not_run) {
+            setup_frame(cl, 0);
+            push(cl);
+            Runtime::record_allocation(cl);
+            Runtime::allow_gc = true;
+            return run();
+        } else {
+            return InterpreterResult::CompileError;
+        }
+
+    } catch (ScannerError &error) {
+        std::cerr << error.what() << std::endl;
+        return InterpreterResult::CompileError;
+    }
+}
+
+InterpreterResult VM::interpret_st(std::string &&source) {
+    try {
+        AstCompiler compiler;
+        auto cl = compiler.compile(std::move(source));
+        if (cl && !Flag::not_run) {
             setup_frame(cl, 0);
             push(cl);
             Runtime::record_allocation(cl);

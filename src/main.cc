@@ -77,6 +77,30 @@ void run_file(const std::string &path) {
     }
 }
 
+void run_file_st(const std::string &path) {
+    VM vm;
+    try {
+        std::string source = read_file(path);
+        auto result = vm.interpret_st(std::move(source));
+        switch (result) {
+            case InterpreterResult::CompileError: {
+                print_to(std::cout, "== Compile Error ==\n", Color::RED);
+                break;
+            }
+            case InterpreterResult::RuntimeError: {
+                print_to(std::cout, "== Runtime Error ==\n", Color::RED);
+                break;
+            }
+            case InterpreterResult::OK: {
+                print_to(std::cout, "== Execution Finished ==\n", Color::GREEN);
+                break;
+            }
+        }
+    } catch (FileOpenFailureError &err) {
+        std::cerr << err.what() << std::endl;
+    }
+}
+
 void test_scanner(const std::string &path) {
     Scanner scanner(read_file(path));
     while (scanner.has_more()) {
@@ -116,6 +140,6 @@ int main(int argc, const char **args) {
         Flag::repl = true;
         repl();
     } else {
-        run_file(filepath);
+        run_file_st(filepath);
     }
 }

@@ -48,7 +48,7 @@ public:
 
     std::vector<StmtPtr> parse_all() {
         std::vector<StmtPtr> statements;
-        while (tokens->is_end() == false) {
+        while (tokens->match(TokenType::END_OF_FILE) == false) {
             statements.push_back(parse_statement());
         }
         return statements;

@@ -50,6 +50,15 @@ void Chunk::write_operand(size_t operand, int line) {
     }
 }
 
+void Chunk::write_operand_1(size_t operand, int line) {
+    if (within<uint8_t>(operand)) {
+        code.push_back(static_cast<uint8_t>(operand));
+        lines.push_back(line);
+    } else {
+        IMPL_ERROR("not within uint8 limits");
+    }
+}
+
 void Chunk::write_operand_2(size_t operand, int line) {
     auto [high, low] = u16_to_u8(operand);
     code.push_back(low);
@@ -59,6 +68,16 @@ void Chunk::write_operand_2(size_t operand, int line) {
 }
 
 OperandSize Chunk::add_constant(Value &&value) {
+    constants.push_back(std::move(value));
+    size_t index = constants.size() - 1;
+    if (!within<OperandSize>(index)) {
+        throw ConstantPoolOverflowError("constant pool overflow");
+    } else {
+        return index;
+    }
+}
+
+OperandSize Chunk::add_constant(const Value &value) {
     constants.push_back(std::move(value));
     size_t index = constants.size() - 1;
     if (!within<OperandSize>(index)) {

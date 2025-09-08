@@ -41,12 +41,12 @@ std::string GlobalNameResolver::read_typename_from_id(size_t type_id) {
     return id_to_typename.at(type_id);
 }
 
-void GlobalNameResolver::declare_function(const std::string &name, TypePtr &type) {
+void GlobalNameResolver::declare_function(const std::string &name, const TypePtr &type) {
     if (resolve_name(name).first->type_enum == LoxTypeEnum::Unspecified) {
         auto index = st_runtime.declare_global();
         global_functions.insert({name, {type, index}});
     } else {
-        throw DuplicateNameVariableError(fmt::format("the name {} is already defined", name));
+        throw DuplicateNameVariableError(fmt::format("the name: {} is already defined", name));
     }
 }
 
@@ -55,7 +55,7 @@ void GlobalNameResolver::declare_class(const std::string &class_name) {
         auto index = st_runtime.declare_global();
         global_classes.insert({class_name, {{class_name}, index}});
     } else {
-        throw DuplicateNameVariableError(fmt::format("the name {} is already defined", class_name));
+        throw DuplicateNameVariableError(fmt::format("the name: {} is already defined", class_name));
     }
 }
 

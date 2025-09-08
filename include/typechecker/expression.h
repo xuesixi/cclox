@@ -43,6 +43,7 @@ public:
      * 检查并返回该表达式的返回值类型。
      * 于此同时，计算并储存行号。
      * 如果出现了问题，抛出异常
+     * 该函数是幂等的。但是，除非特别情况，否则一般由表达式的 visit 内部调用。语句的 visit 不需要额外调用。
      * @return 该表达式的返回值类型
      */
     virtual TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) = 0;

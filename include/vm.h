@@ -68,6 +68,9 @@ public:
      */
     InterpreterResult interpret(std::string &&source);
 
+    InterpreterResult interpret_st(std::string &&source);
+
+
     /**
      * 根据栈来执行指令。运行直到帧栈为空。该函数内部会捕获LoxError
      * @return 运行结果

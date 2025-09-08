@@ -6,22 +6,32 @@
 #include "typechecker/expressions/unary_expression.h"
 #include "typechecker/st_runtime.h"
 #include "chunk.h"
-#include "scope.h"
+#include "objects/loxclosure.h"
+#include "objects/loxstring.h"
 #include "typechecker/global_name_resolver.h"
 #include "typechecker/expressions/and_expression.h"
 #include "typechecker/expressions/assignment_expression.h"
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/or_expression.h"
 #include "typechecker/expressions/primary_expression.h"
+#include "typechecker/statements/expression_statement.h"
 #include "typechecker/statements/fun_statement.h"
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/var_statement.h"
 #include "typechecker/types/union_type.h"
 
-std::shared_ptr<LoxFunction> AstCompiler::compile(std::string &&source) {
+std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
     StatementParser parser(std::move(source));
     statements = parser.parse_all();
-    return nullptr;
+    for (auto & statement : statements) {
+        visit_statement(statement);
+    }
+    return main;
+}
+
+void AstCompiler::visit_expression_statement(ExpressionStatement *stmt) {
+    visit_expression(stmt->expr);
+    current_chunk().write_opcode(Opcode::Pop, stmt->expr->line);
 }
 
 void AstCompiler::visit_fun_statement(FunStatement *fun) {
@@ -40,6 +50,7 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         visit_statement(stmt);
 
         // 如果该函数有标注返回值，那么需要检查每个语句是否成功返回了合适的返回值
+        // 这是为了保证函数返回正确的返回值。而return语句中的检查则是为了避免返回错误的返回值
         // 在第一个成功返回处，停止代码生成
         if (fun->return_type->type_enum != LoxTypeEnum::Unspecified) {
             const auto &stmt_type = stmt->resolve_return_type();
@@ -60,32 +71,49 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     if (fun->return_type->type_enum != LoxTypeEnum::Unspecified && accepted_return == false) {
         // 如果有标注返回值，但函数体内没有返回，则抛出异常
         throw MismatchedTypeError(fmt::format("not all control flows return the expected type: {}", fun->return_type->to_string()));
+    } else {
+        // 如果没有标注返回值，那么返回nil（但这里的nil只是占位符，让 return 指令实现起来更简单），typechecker 会阻止真的试图使用它的人
+        current_chunk().write_opcode(Opcode::LoadNil, -1);
+        current_chunk().write_opcode(Opcode::Return, -1);
     }
     uint8_t clear_amount = scope->step_out(0);
-    current_chunk().write_opcode(Opcode::ClearN, 0);
-    current_chunk().write_operand(clear_amount, 0);
+    current_chunk().write_opcode(Opcode::ClearN, -1);
+    current_chunk().write_operand(clear_amount, -1);
 
     Runtime::record_allocation(scope->function_); // todo: 考虑 st_runtime
 
     auto [type, index] = name_resolver.resolve_name(fun->fun_name.get_lexeme());
 
-    st_runtime.define_global(index, scope->function_);
+    auto closure = std::make_shared<LoxClosure>(scope->function_);
+
+    st_runtime.define_global(index, closure);
+    Runtime::record_allocation(closure);
+
+    if (fun->fun_name.get_lexeme() == "main") {
+        if (main == nullptr) {
+            main = closure;
+        } else {
+            IMPL_ERROR("multiple main definition should have been detected during the ast buildup");
+        }
+    }
+
 
     scope = std::move(scope->outer_);
 }
 
 void AstCompiler::visit_var_statement(VarStatement *stmt) {
 
-    scope->add_local(stmt->name);
 
     if (stmt->type->type_enum == LoxTypeEnum::Unspecified) {
         DEBUG_ASSERT(stmt->initializer != nullptr, "both initializer and type are empty");
         // 如果没有指明类型，则类型由初始值决定
         auto type = stmt->initializer->resolve_type(scope);
+        scope->add_local(stmt->name, type);
         visit_expression(stmt->initializer); // 将初始值入栈
     } else {
 
         // 如果指明了类型，那么初始值可能为空
+        scope->add_local(stmt->name, stmt->type);
 
         if (stmt->initializer != nullptr) {
             // 初始值不为空, 判断指定的类型是否和初始值的实际类型匹配
@@ -139,10 +167,10 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
             }
         }
     }
+    scope->initialize();
 }
 
 void AstCompiler::visit_print_statement(PrintStatement *stmt) {
-    stmt->expr->resolve_type(scope);
     visit_expression(stmt->expr);
     emit_opcode(Opcode::Print, stmt->expr->get_line());
 }
@@ -150,7 +178,7 @@ void AstCompiler::visit_print_statement(PrintStatement *stmt) {
 void AstCompiler::visit_and_expr(AndExpression *expr) {
     expr->resolve_type(scope);
     visit_expression(expr->left);
-    auto short_circuit = emit_jump(Opcode::JumpIfFalse, 0);
+    auto short_circuit = emit_jump(Opcode::JumpIfFalse, -1);
     visit_expression(expr->right);
     patch_jump(short_circuit);
 }
@@ -160,6 +188,7 @@ void AstCompiler::visit_as_expr(AsExpression *expr) {
 
 void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {
     expr->resolve_type(scope);
+    visit_expression(expr->right);
     auto target_type = expr->left->get_expression_type();
     if (target_type == Expression::ExpressionType::Primary) {
         auto left = std::unique_ptr<PrimaryExpression>(static_cast<PrimaryExpression *>(expr->left.release()));
@@ -228,9 +257,74 @@ void AstCompiler::visit_binary_expr(BinaryExpression *expr) {
 void AstCompiler::visit_or_expr(OrExpression *expr) {
     expr->resolve_type(scope);
     visit_expression(expr->left);
-    auto short_circuit = emit_jump(Opcode::JumpIfTrue, 0);
+    auto short_circuit = emit_jump(Opcode::JumpIfTrue, -1);
     visit_expression(expr->right);
     patch_jump(short_circuit);
+}
+
+void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
+    const std::string lexeme = expr->value_token.get_lexeme();
+    int line = expr->value_token.get_line();
+    expr->line = line;
+    switch (expr->value_token.get_type()) {
+        case TokenType::INTEGER: {
+            int64_t num = std::stoll(lexeme);
+            auto index = Chunk::to_immediate(num);
+            if (index.has_value()) {
+                current_chunk().write_opcode(Opcode::LoadImmediate, line);
+                current_chunk().write_operand_1(index.value(), line);
+            } else {
+                emit_constant(num, line);
+            }
+            break;
+        }
+        case TokenType::FLOAT: {
+            double num = std::stod(lexeme);
+            auto index = Chunk::to_immediate(num);
+            if (index.has_value()) {
+                current_chunk().write_opcode(Opcode::LoadImmediate, line);
+                current_chunk().write_operand_1(index.value(), line);
+            } else {
+                emit_constant(num, line);
+            }
+            break;
+        }
+        case TokenType::False:
+            current_chunk().write_opcode(Opcode::LoadFalse, line);
+            break;
+        case TokenType::True:
+            current_chunk().write_opcode(Opcode::LoadTrue, line);
+            break;
+        case TokenType::Nil:
+            current_chunk().write_opcode(Opcode::LoadNil, line);
+            break;
+        case TokenType::STRING: {
+            LoxReference value = Runtime::allocate_as_ref<LoxString>(lexeme.substr(1, lexeme.size() - 2));
+            Runtime::record_allocation(value);
+            break;
+        }
+            // todo: fmtstring
+
+        case TokenType::IDENTIFIER: {
+            auto local_index = scope->resolve_local(expr->value_token);
+            // 先在本地寻找
+            if (local_index.has_value()) {
+                current_chunk().write_opcode(Opcode::LoadLocal, line);
+                current_chunk().write_operand_1(local_index.value(), line);
+                break;
+            }
+            auto [type, global_index] = name_resolver.resolve_name(lexeme);
+            if (type->type_enum != LoxTypeEnum::Unspecified ) {
+                current_chunk().write_opcode(Opcode::LoadGlobal, line);
+                current_chunk().write_operand_2(global_index, line);
+                break;
+            }
+            throw VariableNotFoundError(fmt::format("no such variable: {}", lexeme));
+            break;
+        }
+        default:
+            ASSERT_UNREACHABLE();
+    }
 }
 
 void AstCompiler::visit_unary_expr(UnaryExpression *expr) {
@@ -266,6 +360,19 @@ void AstCompiler::emit_operand_1(size_t operand, int line) {
 void AstCompiler::emit_operand_2(size_t operand, int line) {
     DEBUG_ASSERT(within<uint16_t>(operand), "operand is not within uint16");
     current_chunk().write_operand_2(operand, line);
+}
+
+void AstCompiler::emit_constant(const Value &value, int line) {
+    uint16_t index = current_chunk().add_constant(value);
+    if (within<uint8_t>(index)) {
+        current_chunk().write_opcode(Opcode::LoadConstant, line);
+        current_chunk().write_operand_1(index, line);
+    } else if (within<uint16_t>(index)) {
+        current_chunk().write_opcode(Opcode::LoadConstant2, line);
+        current_chunk().write_operand_2(index, line);
+    } else {
+        ASSERT_UNREACHABLE();
+    }
 }
 
 OperandSize AstCompiler::emit_jump(Opcode jump_operation, int line) {

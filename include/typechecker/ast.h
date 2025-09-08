@@ -17,7 +17,10 @@ class PrintStatement;
 class VarStatement;
 class ExpressionStatement;
 class FunStatement;
+
+
 class LoxFunction;
+class LoxClosure;
 
 class AndExpression;
 class AsExpression;
@@ -31,31 +34,24 @@ class UnaryExpression;
 
 class AstCompiler {
 public:
-    std::shared_ptr<LoxFunction> compile(std::string &&source);
+    std::shared_ptr<LoxClosure> compile(std::string &&source);
 
-    void visit_statement(Statement *stmt) {
-        stmt->accept(*this);
-    }
-
-    void visit_statement(StmtPtr &stmt) {
+    void visit_statement(const StmtPtr &stmt) {
         stmt.get()->accept(*this);
     }
 
-    void visit_expression(Expression *expr) {
-        expr->accept(*this);
-    }
-
-    void visit_expression(ExprPtr &expr) {
+    /**
+     * 访问一个表达式，生成对应的代码。该函数内部会验证表达式的类型
+     */
+    void visit_expression(const ExprPtr &expr) {
         expr.get()->accept(*this);
     }
 
     void visit_block_statement(BlockStatement *stmt) {
-
+        NOT_IMPLEMENTED();
     }
 
-    void visit_expression_statement(ExpressionStatement *stmt) {
-
-    }
+    void visit_expression_statement(ExpressionStatement *stmt);
 
     void visit_fun_statement(FunStatement *fun);
 
@@ -75,17 +71,17 @@ public:
 
     void visit_call_expr(CallExpression *expr) {
 
+        NOT_IMPLEMENTED();
     }
 
     void visit_dot_expr(DotExpression *expr) {
 
+        NOT_IMPLEMENTED();
     }
 
     void visit_or_expr(OrExpression *expr);
 
-    void visit_primary_expr(PrimaryExpression *expr) {
-
-    }
+    void visit_primary_expr(PrimaryExpression *expr);
 
     void visit_unary_expr(UnaryExpression *expr);
 
@@ -116,6 +112,11 @@ private:
      */
     void emit_operand_2(size_t operand, int line);
 
+    /**
+     * 将一个 value 添加入常数池，根据其索引生成 LoadConstant 或者 LoadConstant2
+     */
+    void emit_constant(const Value &value, int line);
+
     OperandSize emit_jump(Opcode jump_operation, int line);
 
     void patch_jump(OperandSize from_label);
@@ -126,7 +127,7 @@ private:
 
     std::vector<StmtPtr> statements;
     std::shared_ptr<ST_Scope> scope;
-    std::shared_ptr<LoxFunction> main;
+    std::shared_ptr<LoxClosure> main;
 };
 
 #endif //CCLOX_AST_H
