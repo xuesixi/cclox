@@ -7,8 +7,8 @@
 #include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"
 
-TypePtr UnaryExpression::resolve_type() {
-    auto operand_type = operand->resolve_type();
+TypePtr UnaryExpression::resolve_type(std::shared_ptr<Scope> &scope) {
+    auto operand_type = operand->resolve_type(scope);
     this->line = operand->get_line();
     if (op.get_type() == TokenType::BANG) {
         if (operand_type->type_enum == LoxTypeEnum::Bool) {

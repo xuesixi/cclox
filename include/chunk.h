@@ -28,6 +28,7 @@ enum class Opcode: uint8_t {
     LoadNil, // ；将nil置入栈顶
     LoadTrue, // ； 将true置入栈顶
     LoadFalse, // ；将false置入栈顶
+    LoadEmptyString, // ；将""置入栈顶
     Not, // ；弹出栈顶的值，取其逻辑not，置入栈顶
     Greater, // ；弹出栈顶的两个值 a, b，将 a < b 的结果置入栈顶
     Less, // ；弹出栈顶的两个值 a, b，将 a < b 的结果置入栈顶

@@ -16,14 +16,15 @@ public:
 
     Token value_token;
 
-    /**
-     * @copydoc Expression::resolve_type
-     */
-    TypePtr resolve_type() override;
+    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
 
     void accept(AstCompiler &compiler) override;
 
-    bool can_be_assign() const override;
+    Assignability get_assignability() const override;
+
+    ExpressionType get_expression_type() const override {
+        return ExpressionType::Primary;
+    }
 };
 
 #endif //CCLOX_PRIMARY_EXPRESSION_H

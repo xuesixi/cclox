@@ -36,9 +36,11 @@ StmtPtr StatementParser::parse_statement() {
 
 StmtPtr StatementParser::parse_block() {
     std::vector<StmtPtr> body;
+    depth ++;
     while (tokens->match(TokenType::RIGHT_BRACE) == false) {
         body.push_back(parse_statement());
     }
+    depth--;
     return std::make_unique<BlockStatement>(std::move(body));
 }
 
@@ -56,7 +58,7 @@ StmtPtr StatementParser::parse_var() {
     ExprPtr initializer;
     if (tokens->match(TokenType::COLON)) {
         // 有类型申明
-        var_type = type_parser->parse_type();
+        var_type = type_parser()->parse_type();
         if (tokens->match(TokenType::EQUAL)) {
             initializer = expr_parser->parse_expression();
         }
@@ -84,13 +86,13 @@ StmtPtr StatementParser::parse_fun() {
         do {
             Token &param_name = tokens->consume(TokenType::IDENTIFIER, "expect a parameter name here");
             tokens->consume(TokenType::COLON, "expect type annotation after each parameter");
-            TypePtr param_type = type_parser->parse_type();
+            TypePtr param_type = type_parser()->parse_type();
             parameters.push_back({param_name, param_type});
         } while (tokens->match(TokenType::COMMA));
     }
     TypePtr return_type;
     if (tokens->match(TokenType::DASH_GREATER)) {
-        return_type = type_parser->parse_type();
+        return_type = type_parser()->parse_type();
     } else {
         return_type = PrimitiveType::UnspecifiedType; // 默认为 void
     }

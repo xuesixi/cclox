@@ -18,9 +18,13 @@ public:
     ExprPtr operand;
     Token op;
 
-    TypePtr resolve_type() override;
+    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
 
     void accept(AstCompiler &compiler) override;
+
+    ExpressionType get_expression_type() const override {
+        return ExpressionType::Unary;
+    }
 };
 
 #endif //CCLOX_UNARAY_EXPRESSION_H

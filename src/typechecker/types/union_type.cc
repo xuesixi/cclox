@@ -26,6 +26,15 @@ bool UnionType::accept(TypePtr other) const {
     return true;
 }
 
+bool UnionType::contains_nil() const {
+    for (auto & type : unions) {
+        if (type->type_enum == LoxTypeEnum::Nil) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::string UnionType::to_no_parenthesis_string() {
     std::stringstream ss;
     size_t i = 0;

@@ -18,12 +18,16 @@ public:
           right(std::move(right)) {
     }
 
-    TypePtr resolve_type() override;
+    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
 
     ExprPtr left;
 
     ExprPtr right;
 
     void accept(AstCompiler &compiler) override;
+
+    ExpressionType get_expression_type() const override {
+        return ExpressionType::Or;
+    }
 };
 #endif //CCLOX_OR_EXPRESSION_H

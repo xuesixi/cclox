@@ -9,6 +9,7 @@
 #include "runtime.h"
 
 enum class FunctionTypeEnum {
+    None,
     Function,
     Method,
     Main,

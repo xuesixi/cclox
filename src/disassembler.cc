@@ -22,6 +22,7 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::Power, "Power"},
     {Opcode::LoadNil, "LoadNil"},
     {Opcode::LoadTrue, "LoadTrue"},
+    {Opcode::LoadEmptyString, "LoadEmptyString"},
     {Opcode::LoadFalse, "LoadFalse"},
     {Opcode::Not, "Not"},
     {Opcode::Less, "Less"},
@@ -98,6 +99,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case Opcode::Power:
         case Opcode::LoadNil:
         case Opcode::LoadTrue:
+        case Opcode::LoadEmptyString:
         case Opcode::LoadFalse:
         case Opcode::Less:
         case Opcode::Greater:

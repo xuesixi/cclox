@@ -18,9 +18,15 @@ public:
     ExprPtr target;
     Token target_field;
 
-    TypePtr resolve_type() override;
+    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
+
+    Assignability get_assignability() const override;
 
     void accept(AstCompiler &compiler) override;
+
+    ExpressionType get_expression_type() const override {
+        return ExpressionType::Dot;
+    }
 };
 
 #endif //CCLOX_DOT_EXPRESSION_H

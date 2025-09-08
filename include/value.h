@@ -5,13 +5,15 @@
 #ifndef CCLOX_VALUE_H
 #define CCLOX_VALUE_H
 
-#include "common.h"
 #include <any>
 #include <thread>
 #include <variant>
+
+#include "common.h"
 #include "object.h"
 #include "native.h"
 #include "nativeobjects/loxconcurrent.h"
+// #include "typechecker/lox_type.h"
 
 using NativeObject = std::variant<std::thread, LoxMutex, LoxCondition>;
 using NativePair = std::pair<uint16_t, NativeObject>;

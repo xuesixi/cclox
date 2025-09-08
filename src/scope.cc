@@ -4,7 +4,22 @@
 
 #include "scope.h"
 
-void Scope::add_local(const Token &token) {
+#include "typechecker/types/primitive_type.h"
+
+uint8_t Scope::step_into() {
+    depth++;
+    return locals.size();
+}
+
+uint8_t Scope::step_out(uint8_t clear_to) {
+    DEBUG_ASSERT(clear_to <= locals.size(), "clear_to should not be greater than locals.size()");
+    uint8_t diff = locals.size() - clear_to;
+    locals.resize(clear_to);
+    depth--;
+    return diff;
+}
+
+void Scope::add_local(const Token &token, TypePtr type) {
     if (locals.size() == UINT8_MAX) {
         throw Uint8OperandOverflowError(
             fmt::format("scope local overflow. You can have up to {} local variables in a scope", UINT8_MAX));
@@ -21,7 +36,7 @@ void Scope::add_local(const Token &token) {
             throw DuplicateNameVariableError(fmt::format("local variables with the same name: {}", local.name));
         }
     }
-    locals.push_back({token.get_lexeme(), -1});
+    locals.push_back({token.get_lexeme(), -1, type});
 }
 
 std::optional<uint8_t> Scope::resolve_local(const Token &token) {
@@ -38,6 +53,15 @@ std::optional<uint8_t> Scope::resolve_local(const Token &token) {
         if (i == 0) {
             return std::nullopt;
         }
+    }
+}
+
+TypePtr Scope::resolve_local_type(const Token &token) {
+    auto found = resolve_local(token);
+    if (found.has_value()) {
+        return locals.at(found.value()).type;
+    } else {
+        return PrimitiveType::UnspecifiedType;
     }
 }
 

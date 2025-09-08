@@ -20,6 +20,7 @@ class FunStatement;
 class LoxFunction;
 
 class AndExpression;
+class AsExpression;
 class AssignmentExpression;
 class BinaryExpression;
 class CallExpression;
@@ -34,6 +35,10 @@ public:
 
     void visit_statement(Statement *stmt) {
         stmt->accept(*this);
+    }
+
+    void visit_statement(StmtPtr &stmt) {
+        stmt.get()->accept(*this);
     }
 
     void visit_expression(Expression *expr) {
@@ -52,19 +57,17 @@ public:
 
     }
 
-    void visit_fun_statement(FunStatement *stmt) {
+    void visit_fun_statement(FunStatement *fun);
 
-    }
+    void visit_var_statement(VarStatement *stmt);
 
-    void visit_var_statement(VarStatement *stmt) {
+    void visit_print_statement(PrintStatement *stmt);
 
-    }
-
-    void visit_print_statement(PrintStatement *stmt) {
-
-    }
+    // ----------------分割线------------------------
 
     void visit_and_expr(AndExpression *expr);
+
+    void visit_as_expr(AsExpression *expr);
 
     void visit_assignment_expr(AssignmentExpression *expr);
 
@@ -86,9 +89,9 @@ public:
 
     void visit_unary_expr(UnaryExpression *expr);
 
-    Chunk &current_chunk();
-
 private:
+
+    Chunk &current_chunk();
 
     /**
      * 将目标opcode写入字节码中
@@ -119,8 +122,11 @@ private:
 
     void loop_back(size_t destination);
 
+    bool is_global_scope() const;
+
     std::vector<StmtPtr> statements;
     std::shared_ptr<Scope> scope;
+    std::shared_ptr<LoxFunction> main;
 };
 
 #endif //CCLOX_AST_H

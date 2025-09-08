@@ -15,10 +15,14 @@ public:
           right(std::move(right)) {
     }
 
-    TypePtr resolve_type() override;
+    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
 
     ExprPtr left;
     ExprPtr right;
+
+    ExpressionType get_expression_type() const override {
+        return ExpressionType::Assignment;
+    }
 
     void accept(AstCompiler &compiler) override;
 };

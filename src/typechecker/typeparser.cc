@@ -120,6 +120,9 @@ TypePtr TypeParser::parse_primary() {
         tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' to end the primary");
         return t;
     } else {
+        if (tokens->match(TokenType::Nil)) {
+            return PrimitiveType::NilType;
+        }
         Token &token = tokens->consume(TokenType::IDENTIFIER, "expect a identifier as type name here");
         if (token.get_lexeme() == "int") {
             return PrimitiveType::IntType;

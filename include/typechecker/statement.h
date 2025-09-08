@@ -20,7 +20,7 @@ public:
     /**
      * 计算该语句的返回值。只有少部分有返回值的语句才需要重写该函数。
      * 例如说，函数的定义语句会判断自己标注的返回值和实际的返回值是否匹配。
-     * 如果出现错误，返回 mismatched
+     *  默认返回 Unspecified。如果出现错误，抛出异常
      */
     virtual TypePtr resolve_return_type();
 
@@ -36,13 +36,13 @@ using StmtPtr = std::unique_ptr<Statement>;
  * - fun、class 只能写在最顶层。
  * - var 不能写在最顶层
  * - method, field 只能写在 class 内部
+ * - 在全局层面，不会出现重复命名的fun、class
  */
 class StatementParser {
 public:
 
     explicit StatementParser(std::string && src): depth( ) {
         tokens = std::make_shared<TokenHolder>(std::move(src));
-        type_parser = std::make_unique<TypeParser>(tokens);
         expr_parser = std::make_unique<ExpressionParser>(tokens);
     }
 
@@ -80,10 +80,13 @@ public:
 
 
 private:
-    std::unique_ptr<TypeParser> type_parser;
+
+    std::unique_ptr<TypeParser> &type_parser() {
+        return expr_parser->type_parser;
+    }
+
     std::unique_ptr<ExpressionParser> expr_parser;
     std::shared_ptr<TokenHolder> tokens;
-    // std::vector<StmtPtr> statements;
     int depth; // 作用域深度，用于判断当前是否处于全局作用域
     bool in_class = false; // 是否处于 class 内部
 };

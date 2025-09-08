@@ -7,6 +7,12 @@
 
 #include "typechecker/statement.h"
 
+/**
+ * 有以下几种状态：
+ * - type 为 unspecified，此时，initializer 必定不为 nullptr
+ * - type 不为 unspecified，此时，initializer 可以为 nullptr
+ * - 不会出现type 为 unspecified 的同时，initializer 也为 nullptr 的情况
+ */
 class VarStatement: public Statement {
 public:
     friend class AstCompiler;

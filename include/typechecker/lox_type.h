@@ -96,22 +96,40 @@ public:
     LoxTypeEnum type_enum = LoxTypeEnum::Unspecified;
 
     /**
-     * 记录一个新的函数
+     * 记录一个新的函数。如果重复，抛出异常
      */
     static void record_function(const std::string &name, TypePtr &type);
 
+    /**
+     * 记录一个新的类。如果重复，抛出异常
+     */
     static void record_class(const Token &token);
 
+    /**
+     * 记录一个新的类的成员
+     */
     static void record_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
                                     const std::string &member_name, TypePtr &type);
 
+    /**
+     * 寻找一个类的类型，如果没找到该类，抛出异常
+     */
     static TypePtr find_class(const std::string &name);
 
+    /**
+     * 寻找一个类的成员的类型。如果没找到该成员，抛出异常
+     */
     static TypePtr find_class_member(size_t type_id, const std::string &member_name);
 
+    /**
+     * 寻找一个函数
+     */
     static TypePtr find_function(const std::string &fun_name);
 
-    static void check_duplicate(const std::string &name);
+    /**
+     * 寻找指定名字对应的类型，如果没找到，返回 Unspecified
+     */
+    static TypePtr find_name_type(const std::string &name);
 
 private:
     static std::unordered_map<std::string, size_t> typename_to_id;

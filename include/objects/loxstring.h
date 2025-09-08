@@ -11,6 +11,9 @@
 
 class LoxString : public LoxObject {
 public:
+
+    inline static std::shared_ptr<LoxString> empty_string = std::make_shared<LoxString>("");
+
     explicit LoxString(const std::string &content) : LoxObject(), str(content) {};
 
     explicit LoxString(std::string &&content) : LoxObject(), str(std::move(content)) {};

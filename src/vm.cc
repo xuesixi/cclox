@@ -160,6 +160,10 @@ InterpreterResult VM::run() {
                     push(false);
                     break;
                 }
+                case Opcode::LoadEmptyString: {
+                    push(LoxString::empty_string);
+                    break;
+                }
                 case Opcode::Not: {
                     Value v = pop_and_get();
                     push(!LoxValue::to_bool(v));

@@ -5,6 +5,7 @@
 #include "typechecker/expression.h"
 
 #include "typechecker/expressions/and_expression.h"
+#include "typechecker/expressions/as_expression.h"
 #include "typechecker/expressions/assignment_expression.h"
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/call_expression.h"
@@ -166,8 +167,17 @@ ExprPtr ExpressionParser::parse_or() {
     return left;
 }
 
+ExprPtr ExpressionParser::parse_as() {
+    auto expr = parse_or();
+    while (tokens->match(TokenType::As)) {
+        auto as_type = type_parser->parse_type();
+        expr = std::make_unique<AsExpression>(std::move(expr), as_type);
+    }
+    return expr;
+}
+
 ExprPtr ExpressionParser::parse_assignment() {
-    auto left = parse_or();
+    auto left = parse_as();
     if (tokens->match(TokenType::EQUAL)) {
         // only parse the structure here
         // semantic errors like a + b = expr will be resolved at analysis time

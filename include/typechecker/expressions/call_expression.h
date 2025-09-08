@@ -19,9 +19,13 @@ public:
     ExprPtr callee;
     std::vector<ExprPtr> arguments;
 
-    TypePtr resolve_type() override;
+    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
 
     void accept(AstCompiler &compiler) override;
+
+    ExpressionType get_expression_type() const override {
+        return ExpressionType::Call;
+    }
 };
 
 #endif //CCLOX_CALL_EXPRESSION_H

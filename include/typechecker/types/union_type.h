@@ -19,6 +19,8 @@ public:
      */
     bool accept(TypePtr other) const override;
 
+    bool contains_nil() const;
+
 private:
     std::string to_no_parenthesis_string() override;
 

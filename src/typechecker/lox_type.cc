@@ -4,6 +4,7 @@
 
 #include "typechecker/lox_type.h"
 #include "typechecker/types/class_type.h"
+#include "typechecker/types/primitive_type.h"
 
 std::unordered_map<std::string, TypePtr> LoxType::global_functions;
 std::unordered_map<std::string, LoxType::ClassRecord> LoxType::global_classes;
@@ -43,14 +44,19 @@ std::string LoxType::read_typename_from_id(size_t type_id) {
 }
 
 void LoxType::record_function(const std::string &name, TypePtr &type) {
-    check_duplicate(name);
-    global_functions.insert({name, type});
+    if (find_name_type(name)->type_enum == LoxTypeEnum::Unspecified) {
+        global_functions.insert({name, type});
+    } else {
+        throw DuplicateNameVariableError(fmt::format("the name {} is already defined", name));
+    }
 }
 
 void LoxType::record_class(const Token &token) {
-    check_duplicate(token.get_lexeme());
-    ClassRecord new_class(token);
-    global_classes.insert({token.get_lexeme(), std::move(new_class)});
+    if (find_name_type(token.get_lexeme())->type_enum == LoxTypeEnum::Unspecified ) {
+        global_classes.insert({token.get_lexeme(), {token}});
+    } else {
+        throw DuplicateNameVariableError(fmt::format("the name {} is already defined", token.get_lexeme()));
+    }
 }
 
 void LoxType::record_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
@@ -101,17 +107,21 @@ TypePtr LoxType::find_class_member(size_t type_id, const std::string &member_nam
 }
 
 TypePtr LoxType::find_function(const std::string &fun_name) {
-    // todo
-    NOT_IMPLEMENTED();
+    auto found = global_functions.find(fun_name);
+    if (found == global_functions.end()) {
+        throw VariableNotFoundError(fmt::format("the function {} is not defined", fun_name));
+    }
+    return found->second;
 }
 
-void LoxType::check_duplicate(const std::string &name) {
+TypePtr LoxType::find_name_type(const std::string &name) {
     auto cls_found = global_classes.find(name);
     if (cls_found != global_classes.end()) {
-        throw DuplicateNameVariableError(fmt::format("the name {} is redefined", name));
+        return cls_found->second.class_type;
     }
     auto var_found = global_functions.find(name);
     if (var_found != global_functions.end()) {
-        throw DuplicateNameVariableError(fmt::format("the name {} is redefined", name));
+        return var_found->second;
     }
+    return PrimitiveType::UnspecifiedType;
 }

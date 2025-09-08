@@ -10,6 +10,8 @@
 #include "scanner.h"
 #include "objects/loxfunction.h"
 
+class LoxType;
+using TypePtr = std::shared_ptr<LoxType>;
 
 class ClassScope {
 public:
@@ -58,33 +60,30 @@ public:
     /**
      * 创建一个新的scope，分配一个新的loxfunction（但还没有调用fix_size），添加第一个本地变量为占地符。
      */
-    explicit Scope(std::shared_ptr<Scope> outer, FunctionTypeEnum function_type):outer_(outer), function_type_(function_type) {
+    explicit Scope(const std::shared_ptr<Scope> &outer, FunctionTypeEnum function_type):outer_(outer), function_type_(function_type) {
         function_ = std::static_pointer_cast<LoxFunction>(Runtime::allocate_as_ref<LoxFunction>());
         if (function_type == FunctionTypeEnum::Main) {
             function_->set_name("<main>");
         }
-        locals.push_back({});// 第一个本地变量有特殊用处
+        locals.push_back({});// 第一个本地变量有特殊用处（在调用过程中代表方法的调用者this或者函数本身，同时也是返回值的位置）
+        initialize();
+    }
+
+    explicit Scope(const std::shared_ptr<Scope> &outer):outer_(outer), function_type_(FunctionTypeEnum::None) {
+        function_ = std::static_pointer_cast<LoxFunction>(Runtime::allocate_as_ref<LoxFunction>());
+        locals.push_back({});// 第一个本地变量有特殊用处（在调用过程中代表方法的调用者this或者函数本身，同时也是返回值的位置）
         initialize();
     }
 
     /**
      * 进入一个新的层级，自增depth，并返回此时的本地变量的数量
      */
-    uint8_t step_into() {
-        depth++;
-        return locals.size();
-    }
+    uint8_t step_into();
 
     /**
      * 离开一个层级。自减depth，并将本地变量的数量从缩减至clear_to。返回缩减的数量
      */
-    [[nodiscard]] uint8_t step_out(uint8_t clear_to) {
-        DEBUG_ASSERT(clear_to <= locals.size(), "clear_to should not be greater than locals.size()");
-        uint8_t diff = locals.size() - clear_to;
-        locals.resize(clear_to);
-        depth--;
-        return diff;
-    }
+    [[nodiscard]] uint8_t step_out(uint8_t clear_to);
 
     size_t locals_size() const {
         return locals.size();
@@ -110,13 +109,19 @@ public:
      * 添加后，该本地变量尚未被初始化。
      * 如果locals的元素个数超出了uint8，则抛出异常
      */
-    void add_local(const Token &token);
+    void add_local(const Token &token, TypePtr = nullptr);
+
 
     /**
      * 在scope中查找对应token对应的同名变量，如果没找到，返回nullopt
      * 如果找到了，但没有被初始化，抛出异常；否则返回其对应的索引
      */
     std::optional<uint8_t> resolve_local(const Token &token);
+
+    /**
+     * 在scope中寻找对应token的类型。如果没找到，返回 Unspecified
+     */
+    TypePtr resolve_local_type(const Token &token);
 
     /**
      * 在已知给定的token不存在于本层的locals中时，调用该函数。
@@ -135,12 +140,21 @@ public:
 
 private:
     struct Local {
+
+        Local() {
+        }
+
+        Local(const std::string &name, int depth, const TypePtr &type): name(name), depth(depth), type(type) {
+
+        }
+
         bool is_initialized() const {
             return depth != -1;
         }
 
         std::string name;
         int depth = -1;
+        TypePtr type;
     };
 
     /**
@@ -154,7 +168,7 @@ private:
 
     std::vector<Local> locals;
     std::vector<Upvalue> upvalues; // 本层级捕获的外层变量
-    int depth = 0;
+    int depth = 0; // 深度。包括函数层级和{}层级
     FunctionTypeEnum function_type_;
     std::shared_ptr<LoxFunction> function_;
     std::shared_ptr<Scope> outer_;
