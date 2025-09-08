@@ -3,6 +3,14 @@
 //
 
 #include "typechecker/types/class_type.h"
+#include "typechecker/global_name_resolver.h"
+
+ClassType::ClassType(const std::string &class_name) {
+    // todo: 同名类型冲突
+    static_assert(!std::is_abstract_v<ClassType>);
+    type_id = name_resolver.resolve_type_id(class_name);
+    type_enum = LoxTypeEnum::Class;
+}
 
 bool ClassType::accept(TypePtr other) const {
     if (other->type_enum == LoxTypeEnum::Nil) {
@@ -20,5 +28,5 @@ size_t ClassType::get_type_id() const {
 }
 
 std::string ClassType::to_no_parenthesis_string() {
-    return read_typename_from_id(type_id);
+    return name_resolver.read_typename_from_id(type_id);
 }

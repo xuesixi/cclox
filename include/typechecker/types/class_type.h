@@ -10,12 +10,8 @@
 
 class ClassType : public LoxType {
 public:
-    ClassType(const Token &identifier) {
-        // todo: 同名类型冲突
-        static_assert(!std::is_abstract_v<ClassType>);
-        type_id = resolve_type_id(identifier.get_lexeme());
-        type_enum = LoxTypeEnum::Class;
-    }
+    friend class GlobalNameResolver;
+    ClassType(const std::string &class_name);
 
     bool accept(TypePtr other) const override;
 

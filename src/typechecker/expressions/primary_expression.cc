@@ -3,6 +3,7 @@
 //
 
 #include "typechecker/expressions/primary_expression.h"
+#include "typechecker/global_name_resolver.h"
 #include "scope.h"
 
 #include "typechecker/types/primitive_type.h"
@@ -34,7 +35,7 @@ TypePtr PrimaryExpression::resolve_type(std::shared_ptr<Scope> &scope) {
             if (type->type_enum != LoxTypeEnum::Unspecified) {
                 return type;
             }
-            return LoxType::find_name_type(value_token.get_lexeme());
+            return name_resolver.find_name_type(value_token.get_lexeme());
         }
         default:
             ASSERT_UNREACHABLE();

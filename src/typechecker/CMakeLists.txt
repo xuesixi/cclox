@@ -19,7 +19,6 @@ add_executable(stlox
         ${clox_h}
         ${clox_obj_h}
         ${clox_native_h}
-        st_runtime.cc
 )
 
 target_include_directories(stlox PRIVATE ${incl})

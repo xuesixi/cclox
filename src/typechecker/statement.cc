@@ -4,6 +4,7 @@
 
 #include "typechecker/statement.h"
 
+#include "typechecker/global_name_resolver.h"
 #include "typechecker/statements/expression_statement.h"
 #include "typechecker/statements/fun_statement.h"
 #include "typechecker/statements/print_statement.h"
@@ -98,7 +99,7 @@ StmtPtr StatementParser::parse_fun() {
     }
 
     // 将这个函数添加到解析名字中
-    LoxType::record_function(fun_name.get_lexeme(), return_type);
+    name_resolver.record_function(fun_name.get_lexeme(), return_type);
 
     tokens->consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");
 

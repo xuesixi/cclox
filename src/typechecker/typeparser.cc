@@ -135,7 +135,7 @@ TypePtr TypeParser::parse_primary() {
         }else if (token.get_lexeme() == "any") {
             return PrimitiveType::AnyType;
         } else {
-            return std::make_shared<ClassType>(token);
+            return std::make_shared<ClassType>(token.get_lexeme());
         }
     }
 }
