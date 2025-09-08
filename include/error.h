@@ -88,6 +88,7 @@ declare_error(DefinitionPositionError, CompilerError);
 declare_error(InvalidAssignmentTargetError, CompilerError);
 declare_error(NoInitializationError, CompilerError);
 declare_error(VariableNotFoundError, CompilerError);
+declare_error(Uint16OperandOverflowError, CompilerError);
 
 
 #undef declare_error

@@ -35,7 +35,11 @@ TypePtr PrimaryExpression::resolve_type(std::shared_ptr<Scope> &scope) {
             if (type->type_enum != LoxTypeEnum::Unspecified) {
                 return type;
             }
-            return name_resolver.find_name_type(value_token.get_lexeme());
+            type = name_resolver.resolve_name(value_token.get_lexeme()).first;
+            if (type->type_enum == LoxTypeEnum::Unspecified) {
+                throw VariableNotFoundError(fmt::format("the variable: {} is not defined", value_token.get_lexeme()));
+            }
+            return type;
         }
         default:
             ASSERT_UNREACHABLE();

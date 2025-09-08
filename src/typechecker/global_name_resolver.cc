@@ -6,6 +6,7 @@
 #include "typechecker/types/class_type.h"
 #include "typechecker/lox_type.h"
 #include "typechecker/types/primitive_type.h"
+#include "typechecker/st_runtime.h"
 
 GlobalNameResolver name_resolver;
 
@@ -40,49 +41,44 @@ std::string GlobalNameResolver::read_typename_from_id(size_t type_id) {
     return id_to_typename.at(type_id);
 }
 
-void GlobalNameResolver::record_function(const std::string &name, TypePtr &type) {
-    if (find_name_type(name)->type_enum == LoxTypeEnum::Unspecified) {
-        global_functions.insert({name, type});
+void GlobalNameResolver::declare_function(const std::string &name, TypePtr &type) {
+    if (resolve_name(name).first->type_enum == LoxTypeEnum::Unspecified) {
+        auto index = st_runtime.declare_global();
+        global_functions.insert({name, {type, index}});
     } else {
         throw DuplicateNameVariableError(fmt::format("the name {} is already defined", name));
     }
 }
 
-void GlobalNameResolver::record_class(const std::string &class_name) {
-    if (find_name_type(class_name)->type_enum == LoxTypeEnum::Unspecified ) {
-        global_classes.insert({class_name, {class_name}});
+void GlobalNameResolver::declare_class(const std::string &class_name) {
+    if (resolve_name(class_name).first->type_enum == LoxTypeEnum::Unspecified ) {
+        auto index = st_runtime.declare_global();
+        global_classes.insert({class_name, {{class_name}, index}});
     } else {
         throw DuplicateNameVariableError(fmt::format("the name {} is already defined", class_name));
     }
 }
 
-void GlobalNameResolver::record_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
+void GlobalNameResolver::declare_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
                                   const std::string &member_name, TypePtr &type) {
     auto found = global_classes.find(class_name);
     if (found == global_classes.end()) {
         IMPL_ERROR("a class name is not found");
     }
-    ClassRecord &the_class = found->second;
-    the_class.check_duplicate_member(member_name);
+    auto &pair = found->second;
+    ClassRecord &class_record = pair.first;
+    class_record.check_duplicate_member(member_name);
     if (member_type == ClassRecord::ClassMemberType::Field) {
-        the_class.fields.insert({member_name, type});
+        class_record.fields.insert({member_name, type});
     } else if (member_type == ClassRecord::ClassMemberType::Method) {
         if (type->type_enum != LoxTypeEnum::Function) {
             IMPL_ERROR("the method is not a function type");
         } else {
-            the_class.methods.insert({member_name, type});
+            class_record.methods.insert({member_name, type});
         }
     } else {
         NOT_IMPLEMENTED();
     }
-}
-
-TypePtr GlobalNameResolver::find_class(const std::string &name) {
-    auto found = global_classes.find(name);
-    if (found == global_classes.end()) {
-        throw ClassNotFoundError(fmt::format("the class {} is not defined", name));
-    }
-    return found->second.class_type;
 }
 
 TypePtr GlobalNameResolver::find_class_member(size_t type_id, const std::string &member_name) {
@@ -91,34 +87,43 @@ TypePtr GlobalNameResolver::find_class_member(size_t type_id, const std::string 
     if (found == global_classes.end()) {
         throw ClassNotFoundError(fmt::format("the class {} is not defined", name));
     }
-    auto &class_name = found->second;
-    auto found_method = class_name.methods.find(member_name);
-    if (found_method != class_name.methods.end()) {
+    auto &class_record = found->second.first;
+    auto found_method = class_record.methods.find(member_name);
+    if (found_method != class_record.methods.end()) {
         return found_method->second;
     }
-    auto found_field = class_name.fields.find(member_name);
-    if (found_field != class_name.fields.end()) {
+    auto found_field = class_record.fields.find(member_name);
+    if (found_field != class_record.fields.end()) {
         return found_field->second;
     }
     throw ClassMemberNotFoundError(fmt::format("the class {} has no such member {}", name, member_name));
 }
 
-TypePtr GlobalNameResolver::find_function(const std::string &fun_name) {
-    auto found = global_functions.find(fun_name);
-    if (found == global_functions.end()) {
-        throw VariableNotFoundError(fmt::format("the function {} is not defined", fun_name));
-    }
-    return found->second;
-}
-
-TypePtr GlobalNameResolver::find_name_type(const std::string &name) {
+std::pair<TypePtr, uint16_t> GlobalNameResolver::resolve_name(const std::string &name) {
     auto cls_found = global_classes.find(name);
     if (cls_found != global_classes.end()) {
-        return cls_found->second.class_type;
+        auto &pair = cls_found->second;
+        return {pair.first.class_type, pair.second};
     }
     auto var_found = global_functions.find(name);
     if (var_found != global_functions.end()) {
         return var_found->second;
     }
-    return PrimitiveType::UnspecifiedType;
+    return {PrimitiveType::UnspecifiedType, 0};
 }
+
+// TypePtr GlobalNameResolver::find_class(const std::string &name) {
+//     auto found = global_classes.find(name);
+//     if (found == global_classes.end()) {
+//         throw ClassNotFoundError(fmt::format("the class {} is not defined", name));
+//     }
+//     return found->second.class_type;
+// }
+//
+// TypePtr GlobalNameResolver::find_function(const std::string &fun_name) {
+//     auto found = global_functions.find(fun_name);
+//     if (found == global_functions.end()) {
+//         throw VariableNotFoundError(fmt::format("the function {} is not defined", fun_name));
+//     }
+//     return found->second;
+// }

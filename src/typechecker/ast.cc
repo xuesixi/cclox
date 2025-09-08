@@ -3,8 +3,10 @@
 //
 #include "typechecker/ast.h"
 #include "typechecker/expressions/unary_expression.h"
+#include "typechecker/st_runtime.h"
 #include "chunk.h"
 #include "scope.h"
+#include "typechecker/global_name_resolver.h"
 #include "typechecker/expressions/and_expression.h"
 #include "typechecker/expressions/assignment_expression.h"
 #include "typechecker/expressions/binary_expression.h"
@@ -31,12 +33,12 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     }
     bool accepted_return = false;
 
-    // 处理每个语句
+    // 处理函数体内的每个语句
     for (auto & stmt : fun->body) {
+
         visit_statement(stmt);
 
-        // 如果该函数有标注返回值，
-        // 那么需要检查每个语句是否成功返回了合适的返回值
+        // 如果该函数有标注返回值，那么需要检查每个语句是否成功返回了合适的返回值
         // 在第一个成功返回处，停止代码生成
         if (fun->return_type->type_enum != LoxTypeEnum::Unspecified) {
             const auto &stmt_type = stmt->resolve_return_type();
@@ -47,7 +49,7 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
                     break;
                 } else {
                     // 如果返回值类型不匹配，则抛出异常。
-                    // 实际上我觉得这个检查时不必要的，因为 return 语句本身会有额外的检查
+                    // 实际上我觉得这个检查时不必要的，因为 return 语句本身会根据 scope 来检查返回值的类型是否合适
                     throw MismatchedTypeError(fmt::format("the function expects return type of {}, but got {}", fun->return_type->to_string(), stmt_type->to_string()));
                 }
             }
@@ -61,9 +63,12 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     uint8_t clear_amount = scope->step_out(0);
     current_chunk().write_opcode(Opcode::ClearN, 0);
     current_chunk().write_operand(clear_amount, 0);
-    // todo: scope?
 
-    Runtime::record_allocation(scope->function_);
+    Runtime::record_allocation(scope->function_); // todo: 考虑 st_runtime
+
+    auto [type, index] = name_resolver.resolve_name(fun->fun_name.get_lexeme());
+
+    st_runtime.define_global(index, scope->function_);
 
     scope = std::move(scope->outer_);
 }

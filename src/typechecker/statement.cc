@@ -81,6 +81,7 @@ StmtPtr StatementParser::parse_fun() {
         throw DefinitionPositionError(fmt::format("can only define function in the global scope: {}", fun_name.get_lexeme()));
     }
 
+    // 解析参数列表
     tokens->consume(TokenType::LEFT_PAREN, "expect a '(' to start the function parameter list");
     std::vector<std::pair<Token, TypePtr> > parameters;
     if (tokens->match(TokenType::RIGHT_PAREN) == false) {
@@ -99,8 +100,9 @@ StmtPtr StatementParser::parse_fun() {
     }
 
     // 将这个函数添加到解析名字中
-    name_resolver.record_function(fun_name.get_lexeme(), return_type);
+    name_resolver.declare_function(fun_name.get_lexeme(), return_type);
 
+    // 解析函数体
     tokens->consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");
 
     std::vector<StmtPtr> body;

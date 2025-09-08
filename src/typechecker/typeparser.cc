@@ -123,19 +123,20 @@ TypePtr TypeParser::parse_primary() {
         if (tokens->match(TokenType::Nil)) {
             return PrimitiveType::NilType;
         }
-        Token &token = tokens->consume(TokenType::IDENTIFIER, "expect a identifier as type name here");
-        if (token.get_lexeme() == "int") {
+        const Token &token = tokens->consume(TokenType::IDENTIFIER, "expect a identifier as type name here");
+        std::string lexeme = token.get_lexeme();
+        if (lexeme == "int") {
             return PrimitiveType::IntType;
-        } else if (token.get_lexeme() == "bool") {
+        } else if (lexeme == "bool") {
             return PrimitiveType::BoolType;
-        }else if (token.get_lexeme() == "float") {
+        } else if (lexeme == "float") {
             return PrimitiveType::FloatType;
-        }else if (token.get_lexeme() == "String") {
+        } else if (lexeme == "String") {
             return PrimitiveType::StringType;
-        }else if (token.get_lexeme() == "any") {
+        } else if (lexeme == "any") {
             return PrimitiveType::AnyType;
         } else {
-            return std::make_shared<ClassType>(token.get_lexeme());
+            return std::make_shared<ClassType>(lexeme);
         }
     }
 }
