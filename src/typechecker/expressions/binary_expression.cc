@@ -7,7 +7,7 @@
 #include "typechecker/ast.h"
 #include "typechecker/types/primitive_type.h"
 
-TypePtr BinaryExpression::resolve_type(std::shared_ptr<Scope> &scope) {
+TypePtr BinaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     auto left_type = left->resolve_type(scope);
     auto right_type = right->resolve_type(scope);
     this->line = left->get_line();

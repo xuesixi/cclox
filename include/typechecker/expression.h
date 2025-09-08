@@ -11,7 +11,7 @@
 
 class AstCompiler;
 class Expression;
-class Scope;
+class ST_Scope;
 
 using ExprPtr = std::unique_ptr<Expression>;
 
@@ -45,7 +45,7 @@ public:
      * 如果出现了问题，抛出异常
      * @return 该表达式的返回值类型
      */
-    virtual TypePtr resolve_type(std::shared_ptr<Scope> &scope) = 0;
+    virtual TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) = 0;
 
     virtual void accept(AstCompiler &compiler) = 0;
 

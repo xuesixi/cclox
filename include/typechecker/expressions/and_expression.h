@@ -18,7 +18,7 @@ public:
     ExprPtr left;
     ExprPtr right;
 
-    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
+    TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) override;
 
     ExpressionType get_expression_type() const override {
         return ExpressionType::And;

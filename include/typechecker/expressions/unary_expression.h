@@ -18,7 +18,7 @@ public:
     ExprPtr operand;
     Token op;
 
-    TypePtr resolve_type(std::shared_ptr<Scope> &scope) override;
+    TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) override;
 
     void accept(AstCompiler &compiler) override;
 

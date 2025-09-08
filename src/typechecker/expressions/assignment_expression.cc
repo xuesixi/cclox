@@ -6,7 +6,7 @@
 
 #include "typechecker/ast.h"
 
-TypePtr AssignmentExpression::resolve_type(std::shared_ptr<Scope> &scope) {
+TypePtr AssignmentExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     auto left_type = left->resolve_type(scope);
     auto right_type = right->resolve_type(scope);
     if (left_type->accept(right_type) == false) {

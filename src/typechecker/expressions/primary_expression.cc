@@ -3,13 +3,14 @@
 //
 
 #include "typechecker/expressions/primary_expression.h"
+#include "typechecker/st_scope.h"
 #include "typechecker/global_name_resolver.h"
 #include "scope.h"
 
 #include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"
 
-TypePtr PrimaryExpression::resolve_type(std::shared_ptr<Scope> &scope) {
+TypePtr PrimaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     this->line = value_token.get_line();
     switch (value_token.get_type()) {
         case TokenType::INTEGER:

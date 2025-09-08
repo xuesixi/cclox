@@ -11,7 +11,7 @@
 
 #include "typechecker/statement.h"
 
-class Scope;
+class ST_Scope;
 class BlockStatement;
 class PrintStatement;
 class VarStatement;
@@ -125,7 +125,7 @@ private:
     bool is_global_scope() const;
 
     std::vector<StmtPtr> statements;
-    std::shared_ptr<Scope> scope;
+    std::shared_ptr<ST_Scope> scope;
     std::shared_ptr<LoxFunction> main;
 };
 

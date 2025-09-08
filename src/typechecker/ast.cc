@@ -2,6 +2,7 @@
 // Created by Yue Xue  on 9/5/25.
 //
 #include "typechecker/ast.h"
+#include "typechecker/st_scope.h"
 #include "typechecker/expressions/unary_expression.h"
 #include "typechecker/st_runtime.h"
 #include "chunk.h"
@@ -24,7 +25,7 @@ std::shared_ptr<LoxFunction> AstCompiler::compile(std::string &&source) {
 }
 
 void AstCompiler::visit_fun_statement(FunStatement *fun) {
-    scope = std::make_shared<Scope>(nullptr);
+    scope = std::make_shared<ST_Scope>(nullptr);
     scope->step_into();
 
     for (auto & parameter : fun->parameters) {
