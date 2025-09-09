@@ -6,6 +6,7 @@
 #include "typechecker/expressions/unary_expression.h"
 #include "typechecker/st_runtime.h"
 #include "chunk.h"
+#include "disassembler.h"
 #include "objects/loxclosure.h"
 #include "objects/loxstring.h"
 #include "typechecker/global_name_resolver.h"
@@ -19,6 +20,7 @@
 #include "typechecker/expressions/primary_expression.h"
 #include "typechecker/statements/expression_statement.h"
 #include "typechecker/statements/fun_statement.h"
+#include "typechecker/statements/if_statement.h"
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/return_statement.h"
 #include "typechecker/statements/var_statement.h"
@@ -32,6 +34,18 @@ std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
         visit_statement(statement);
     }
     return main;
+}
+
+void AstCompiler::visit_block_statement(BlockStatement *stmt) {
+    auto local_count = scope->step_into();
+    for (auto & each : stmt->body) {
+        visit_statement(each);
+    }
+    auto clear_amount = scope->step_out(local_count);
+    if (clear_amount > 0) {
+        current_chunk().write_opcode(Opcode::ClearN, -1);
+        current_chunk().write_operand_1(clear_amount, -1);
+    }
 }
 
 void AstCompiler::visit_expression_statement(ExpressionStatement *stmt) {
@@ -89,8 +103,11 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         current_chunk().write_opcode(Opcode::Return, -1);
     }
     uint8_t clear_amount = scope->step_out(0);
-    current_chunk().write_opcode(Opcode::ClearN, -1);
-    current_chunk().write_operand(clear_amount, -1);
+    if (clear_amount > 0) {
+        // todo: 应该可以省略，因为函数结束会自动清除栈帧
+        current_chunk().write_opcode(Opcode::ClearN, -1);
+        current_chunk().write_operand(clear_amount, -1);
+    }
 
     Runtime::record_allocation(scope->function_); // todo: 考虑 st_runtime
 
@@ -107,6 +124,11 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         } else {
             IMPL_ERROR("multiple main definition should have been detected during the ast buildup");
         }
+    }
+
+    if (Flag::disassembly) {
+        Disassembler disassembler(&scope->function_->get_chunk(), &std::cout);
+        disassembler.disassemble(fun->fun_name.get_lexeme());
     }
 
 
@@ -207,6 +229,25 @@ void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
     }
     visit_expression(return_statement->value);
     current_chunk().write_opcode(Opcode::Return, return_statement->value->get_line());
+}
+
+void AstCompiler::visit_if_statement(IfStatement *if_statement) {
+    auto type = if_statement->condition->resolve_type(scope);
+    if (type->type_enum != LoxTypeEnum::Bool) {
+        throw MismatchedTypeError(fmt::format("line {}: the condition must be bool, but got {}",
+                                              if_statement->condition->line, type->to_string()));
+    }
+    visit_expression(if_statement->condition);
+    auto to_else = emit_jump(Opcode::JumpIfPopFalse, if_statement->condition->line);
+    visit_statement(if_statement->then_branch);
+    if (if_statement->else_branch != nullptr) {
+        auto to_end = emit_jump(Opcode::Jump, -1);
+        patch_jump(to_else);
+        visit_statement(if_statement->else_branch);
+        patch_jump(to_end);
+    } else {
+        patch_jump(to_else);
+    }
 }
 
 void AstCompiler::visit_and_expr(AndExpression *expr) {
@@ -354,6 +395,7 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
         case TokenType::STRING: {
             LoxReference value = Runtime::allocate_as_ref<LoxString>(lexeme.substr(1, lexeme.size() - 2));
             Runtime::record_allocation(value);
+            emit_constant(value, line);
             break;
         }
         // todo: fmtstring

@@ -75,7 +75,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
     auto instruction = static_cast<Opcode>(chunk->code.at(offset));
     int line = chunk->lines.at(offset);
     *out << fmt::format("{:04d}{}", offset, spaces_4); // byte code offset
-    if (offset > 0 && chunk->lines.at(offset - 1) == line) {
+    if (line == -1 || (offset > 0 && chunk->lines.at(offset - 1) == line) ) {
         *out << fmt::format("   |{}", spaces_4); // if the line num is the same as the previous line, do not repeat it
     } else {
         *out << fmt::format("{:04d}{}", line, spaces_4); // line num
@@ -85,9 +85,10 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case Opcode::LoadConstant:
             return instruction_constant_operand_1(instruction, offset);
         case Opcode::LoadConstant2:
+            return instruction_constant_operand_2(instruction, offset);
         case Opcode::As:
         case Opcode::Is:
-            return instruction_constant_operand_2(instruction, offset);
+            return constant_operand2_type(instruction, offset);
         case Opcode::LoadImmediate:
             return instruction_load_immediate(instruction, offset);
         case Opcode::DefineGlobal:
@@ -138,6 +139,8 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_method_bind(instruction, offset);
         case Opcode::MethodInvoke:
             return instruction_method_invoke(instruction, offset);
+        default:
+            ASSERT_UNREACHABLE();
     }
 }
 
@@ -191,9 +194,17 @@ size_t Disassembler::instruction_constant_operand_2(Opcode instruction, size_t o
     return offset + 3;
 }
 
+size_t Disassembler::constant_operand2_type(Opcode instruction, size_t offset) {
+    uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    Value value = chunk->constants.at(index);
+    std::string value_str = LoxValue::to_visual_string(value);
+    *out << fmt::format("{:18} {} type: '{}'\n", opcode_names.at(instruction), spaces_4, value_str);
+    return offset + 3;
+}
+
 size_t Disassembler::instruction_identifier_operand_2(Opcode instruction, size_t offset) {
-    uint16_t stringd_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = StringIntern::read_from_id(stringd_id);
+    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = StringIntern::read_from_id(string_id);
     *out << fmt::format("{:18} {} identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
@@ -205,8 +216,8 @@ size_t Disassembler::instruction_make_closure(Opcode instruction, size_t offset)
 }
 
 size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
-    uint16_t stringd_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = StringIntern::read_from_id(stringd_id);
+    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = StringIntern::read_from_id(string_id);
     uint8_t num_field = chunk->code.at(offset + 3);
     uint8_t num_method = chunk->code.at(offset + 4);
     *out << fmt::format("{:18} {} class: {}; field {}, method {}\n", opcode_names.at(instruction), spaces_4, identifier, num_field, num_method);
@@ -214,15 +225,15 @@ size_t Disassembler::instruction_make_class(Opcode instruction, size_t offset) {
 }
 
 size_t Disassembler::instruction_method_bind(Opcode instruction, size_t offset) {
-    uint16_t stringd_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = StringIntern::read_from_id(stringd_id);
+    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = StringIntern::read_from_id(string_id);
     *out << fmt::format("{:18} {} method: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
 
 size_t Disassembler::instruction_method_invoke(Opcode instruction, size_t offset) {
-    uint16_t stringd_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    std::string identifier = StringIntern::read_from_id(stringd_id);
+    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    std::string identifier = StringIntern::read_from_id(string_id);
     uint8_t arg_count = chunk->code.at(offset + 3);
     *out << fmt::format("{:18} {} method: {}; arg count {}\n", opcode_names.at(instruction), spaces_4, identifier, arg_count);
     return offset + 4;

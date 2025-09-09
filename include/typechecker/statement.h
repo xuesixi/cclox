@@ -83,6 +83,8 @@ public:
      */
     StmtPtr parse_return();
 
+    StmtPtr parse_if();
+
 
 private:
 

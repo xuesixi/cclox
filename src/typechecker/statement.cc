@@ -10,6 +10,7 @@
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/var_statement.h"
 #include "typechecker/statements/block_statement.h"
+#include "typechecker/statements/if_statement.h"
 #include "typechecker/statements/return_statement.h"
 #include "typechecker/types/function_type.h"
 #include "typechecker/types/primitive_type.h"
@@ -20,6 +21,9 @@ TypePtr Statement::resolve_return_type() {
 
 StmtPtr StatementParser::parse_statement() {
     // todo
+    while (tokens->match(TokenType::SEMICOLON)) {
+        // 消耗无用的分号
+    }
     if (tokens->match(TokenType::Print)) {
         return parse_print();
     }
@@ -35,9 +39,10 @@ StmtPtr StatementParser::parse_statement() {
     if (tokens->match(TokenType::Return)) {
         return parse_return();
     }
-
+    if (tokens->match(TokenType::If)) {
+        return parse_if();
+    }
     return parse_expression_statement();
-
 }
 
 StmtPtr StatementParser::parse_block() {
@@ -143,4 +148,14 @@ StmtPtr StatementParser::parse_return() {
     auto stmt = std::make_unique<ReturnStatement>(expr_parser->parse_expression());
     tokens->consume();
     return stmt;
+}
+
+StmtPtr StatementParser::parse_if() {
+    auto condition = expr_parser->parse_expression();
+    auto then_branch =parse_statement();
+    StmtPtr else_branch = nullptr;
+    if (tokens->match(TokenType::Else)) {
+        else_branch = parse_statement();
+    }
+    return std::make_unique<IfStatement>(std::move(condition), std::move(then_branch), std::move(else_branch));
 }

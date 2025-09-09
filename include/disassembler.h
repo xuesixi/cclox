@@ -9,9 +9,14 @@
  */
 class Disassembler {
 public:
+    Disassembler(const Chunk *chunk, std::ostream *out) : chunk(chunk), out(out) {
+    }
+
+    [[deprecated]]
+    Disassembler() = default;
 
     /**
-     * 反汇编整个chunk
+     * 反汇编整个chunk，需要手动指定chunk和out
      * @param name
      */
     void disassemble(const std::string &name);
@@ -22,6 +27,19 @@ public:
      */
     size_t disassemble_instruction(size_t offset);
 
+
+    void set_chunk(const Chunk *the_chunk) {
+        this->chunk = the_chunk;
+    }
+
+    /**
+     * 设置输出流
+     */
+    void set_out(std::ostream *o) {
+        out = o;
+    }
+
+private:
     /**
      * 单字节指令，没有额外的操作数
      */
@@ -46,6 +64,8 @@ public:
      */
     size_t instruction_constant_operand_2(Opcode instruction, size_t offset);
 
+    size_t constant_operand2_type(Opcode instruction, size_t offset);
+
     size_t instruction_identifier_operand_2(Opcode instruction, size_t offset);
 
     size_t instruction_load_immediate(Opcode instruction, size_t offset);
@@ -58,18 +78,6 @@ public:
 
     size_t instruction_method_invoke(Opcode instruction, size_t offset);
 
-    void set_chunk(const Chunk *the_chunk) {
-        this->chunk = the_chunk;
-    }
-
-    /**
-     * 设置输出流
-     */
-    void set_out(std::ostream *o) {
-        out = o;
-    }
-
-private:
     const Chunk *chunk = nullptr;
     std::ostream *out = nullptr; // 输出流，要么是cout，要么是日志文件
 };

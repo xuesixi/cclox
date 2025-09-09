@@ -8,9 +8,11 @@
 #include "error.h"
 #include "common.h"
 #include "chunk.h"
+#include "statements/block_statement.h"
 
 #include "typechecker/statement.h"
 
+class IfStatement;
 class IsExpression;
 class ST_Scope;
 class BlockStatement;
@@ -49,9 +51,7 @@ public:
         expr.get()->accept(*this);
     }
 
-    void visit_block_statement(BlockStatement *stmt) {
-        NOT_IMPLEMENTED();
-    }
+    void visit_block_statement(BlockStatement *stmt);
 
     void visit_expression_statement(ExpressionStatement *stmt);
 
@@ -62,6 +62,8 @@ public:
     void visit_print_statement(PrintStatement *stmt);
 
     void visit_return_statement(ReturnStatement *return_statement);
+
+    void visit_if_statement(IfStatement *if_statement);
 
     // ----------------分割线------------------------
 
