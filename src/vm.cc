@@ -72,7 +72,6 @@ void VM::show_stack() {
         }
     }
     print_log("\n", Color::None);
-    // std::cout << std::endl;
 }
 
 InterpreterResult VM::run() {

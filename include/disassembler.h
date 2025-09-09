@@ -43,40 +43,52 @@ private:
     /**
      * 单字节指令，没有额外的操作数
      */
-    size_t instruction_operand_0(Opcode instruction, size_t offset);
+    size_t no_operand(Opcode instruction, size_t offset) const;
 
     /**
      * 有一个额外的操作数代表常数池索引
      */
-    size_t instruction_constant_operand_1(Opcode instruction, size_t offset);
+    size_t constant_index_1(Opcode instruction, size_t offset) const;
 
     /**
      * 通用的单操作数指令
      */
-    size_t instruction_general(Opcode instruction, size_t offset);
+    size_t single_operand(Opcode instruction, size_t offset) const;
 
-    size_t instruction_jump(Opcode instruction, size_t offset);
+    /**
+     * 向前跳转的指令
+     */
+    size_t jump_forward(Opcode instruction, size_t offset) const;
 
-    size_t instruction_jump_back(Opcode instruction, size_t offset);
+    /**
+     * 向后跳转的指令
+     */
+    size_t jump_back(Opcode instruction, size_t offset) const;
 
     /**
      * 有两个额外的操作数代表常数池索引
      */
-    size_t instruction_constant_operand_2(Opcode instruction, size_t offset);
+    size_t constant_index_2(Opcode instruction, size_t offset) const;
 
-    size_t constant_operand2_type(Opcode instruction, size_t offset);
+    /**
+     * 有两个额外的操作数代表常数池索引，且被解释为类型
+     */
+    size_t constant_index_2_as_type(Opcode instruction, size_t offset) const;
 
-    size_t instruction_identifier_operand_2(Opcode instruction, size_t offset);
+    size_t instruction_identifier_operand_2(Opcode instruction, size_t offset) const;
 
-    size_t instruction_load_immediate(Opcode instruction, size_t offset);
+    /**
+     * 立即数
+     */
+    size_t load_immediate(Opcode instruction, size_t offset) const;
 
-    size_t instruction_make_closure(Opcode instruction, size_t offset);
+    size_t make_closure(Opcode instruction, size_t offset) const;
 
-    size_t instruction_make_class(Opcode instruction, size_t offset);
+    size_t make_class(Opcode instruction, size_t offset) const;
 
-    size_t instruction_method_bind(Opcode instruction, size_t offset);
+    size_t method_bind(Opcode instruction, size_t offset) const;
 
-    size_t instruction_method_invoke(Opcode instruction, size_t offset);
+    size_t method_invoke(Opcode instruction, size_t offset) const;
 
     const Chunk *chunk = nullptr;
     std::ostream *out = nullptr; // 输出流，要么是cout，要么是日志文件

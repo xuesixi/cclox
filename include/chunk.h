@@ -36,9 +36,9 @@ enum class Opcode: uint8_t {
     Print, // ；弹出并打印栈顶的值，自带换行符。如果设置了Flag::print_color，则打印绿色
     Pop, // ； 弹出栈顶的值
     ClearN, // n: operand1 ；弹出栈顶的n个值，并进行捕获值逃逸
-    DefineGlobal, // 已弃用。 string_id: operand2 ；弹出栈顶的值，创建一个名为string_id所对应的标识符的全局变量，将其值设置为刚才弹出的那个值
-    LoadGlobal, // string_id: operand2 ；将名为string_id所对应的标识符的全局变量置入栈顶
-    SetGlobal, // 已弃用. string_id: operand2 ； 将名为string_id所对应的标识符的全局变量设置为栈顶的值
+    DefineGlobal, // todo 已弃用。 string_id: operand2 ；弹出栈顶的值，创建一个名为string_id所对应的标识符的全局变量，将其值设置为刚才弹出的那个值
+    LoadGlobal, // index: operand2 ；将 index 对应的全局变量置入栈顶
+    SetGlobal, // todo 已弃用. string_id: operand2 ； 将名为string_id所对应的标识符的全局变量设置为栈顶的值
     LoadLocal, // index: operand1 ；将帧栈中本地索引为index的那个本地变量的值置入栈顶
     SetLocal, // index: operand1 ； 将栈帧中本地索引为index的那个本地变量设置为栈顶的值
     SetCaptured, // index: operand1 ；将当前栈帧closure的captured[index]的值设置为当前栈顶的值
@@ -57,7 +57,7 @@ enum class Opcode: uint8_t {
     SetField, // index: operand1 ；以stack[fp]为instance，设置instance的索引为index的字段
     MethodBind, // string_id: operand2 ； 此时，栈顶是方法的接受者。在其类中查找对应的方法closure。将获取到的closure绑定到接受者上，弹出接受者，置入method
     MethodInvoke, // string_id: operand2, arg_count: operand1； 此时，栈顶是方法的接受者, 在其类中查找对应的方法closure。用查询到的closure创建新的栈帧。
-    As, // index: operand2 ；如果constants[index]的所代表的类型接受栈顶的表达式，则无事发生
+    As, // index: operand2 ；如果constants[index]的所代表的类型接受栈顶的表达式，则无事发生。否则抛出异常
     Is, // index: operand2 ；弹出栈顶的值，如果constants[index]的所代表的类型接受原本栈顶的值，置入 true，否则置入 false
 };
 
