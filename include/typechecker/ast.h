@@ -11,6 +11,7 @@
 
 #include "typechecker/statement.h"
 
+class IsExpression;
 class ST_Scope;
 class BlockStatement;
 class PrintStatement;
@@ -67,6 +68,8 @@ public:
     void visit_and_expr(AndExpression *expr);
 
     void visit_as_expr(AsExpression *expr);
+
+    void visit_is_expr(IsExpression *expr);
 
     void visit_assignment_expr(AssignmentExpression *expr);
 

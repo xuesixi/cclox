@@ -28,7 +28,7 @@ enum class TokenType {
     True, Var, While,
 
     // extension
-    Break, Continue, Recur, Field, Method, Static, Public, Export, Import, As, Try, Catch, Throw, Const,
+    Break, Continue, Recur, Field, Method, Static, Public, Export, Import, As, Try, Catch, Throw, Const, Is,
 
     // type
     TypeInt, TypeFloat, TypeBool, TypeAny, TypeVoid,

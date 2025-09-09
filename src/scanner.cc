@@ -40,6 +40,7 @@ static std::unordered_map<std::string, TokenType> keyword_map{
     {"bool", TokenType::TypeBool},
     {"any", TokenType::TypeAny},
     {"void", TokenType::TypeVoid},
+    {"is", TokenType::Is},
 
 };
 

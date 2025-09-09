@@ -31,6 +31,7 @@ public:
         Binary,
         Call,
         Dot,
+        Is,
         Or,
         Primary,
         Unary
@@ -95,6 +96,9 @@ private:
 
     ExprPtr parse_primary();
 
+    /**
+     * 包括函数调用和成员访问
+     */
     ExprPtr parse_call();
 
     ExprPtr parse_unary();
@@ -108,6 +112,8 @@ private:
     ExprPtr parse_comparison();
 
     ExprPtr parse_equality();
+
+    ExprPtr parse_is();
 
     ExprPtr parse_and();
 

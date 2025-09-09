@@ -10,6 +10,7 @@
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/call_expression.h"
 #include "typechecker/expressions/dot_expression.h"
+#include "typechecker/expressions/is_expression.h"
 #include "typechecker/expressions/or_expression.h"
 #include "typechecker/expressions/primary_expression.h"
 #include "typechecker/expressions/unary_expression.h"
@@ -47,7 +48,7 @@ ExprPtr ExpressionParser::parse_primary() {
     })) {
         return std::make_unique<PrimaryExpression>(tokens->last_token());
     } else {
-        throw tokens->error_at(0, fmt::format("expect a token as value here, but got: {}", tokens->next_token().get_lexeme()));
+        throw tokens->error_at(0, fmt::format("expect a token as value here, but got: '{}'", tokens->next_token().get_lexeme()));
     }
 }
 
@@ -148,9 +149,18 @@ ExprPtr ExpressionParser::parse_equality() {
     return left;
 }
 
+ExprPtr ExpressionParser::parse_is() {
+    auto left = parse_equality();
+    while (tokens->match(TokenType::Is)) {
+        auto test_type = type_parser->parse_type();
+        left = std::make_unique<IsExpression>(std::move(left), test_type);
+    }
+    return left;
+}
+
 ExprPtr ExpressionParser::parse_and() {
     // a and b and c
-    auto left = parse_equality();
+    auto left = parse_is();
     if (tokens->match(TokenType::And)) {
         auto right = parse_and();
         return std::make_unique<AndExpression>(std::move(left), std::move(right));

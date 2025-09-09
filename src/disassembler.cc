@@ -53,6 +53,7 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::MethodBind, "MethodBind"},
     {Opcode::MethodInvoke, "MethodInvoke"},
     {Opcode::As, "As"},
+    {Opcode::Is, "Is"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。
@@ -85,6 +86,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
             return instruction_constant_operand_1(instruction, offset);
         case Opcode::LoadConstant2:
         case Opcode::As:
+        case Opcode::Is:
             return instruction_constant_operand_2(instruction, offset);
         case Opcode::LoadImmediate:
             return instruction_load_immediate(instruction, offset);

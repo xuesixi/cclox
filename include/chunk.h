@@ -58,6 +58,7 @@ enum class Opcode: uint8_t {
     MethodBind, // string_id: operand2 ； 此时，栈顶是方法的接受者。在其类中查找对应的方法closure。将获取到的closure绑定到接受者上，弹出接受者，置入method
     MethodInvoke, // string_id: operand2, arg_count: operand1； 此时，栈顶是方法的接受者, 在其类中查找对应的方法closure。用查询到的closure创建新的栈帧。
     As, // index: operand2 ；如果constants[index]的所代表的类型接受栈顶的表达式，则无事发生
+    Is, // index: operand2 ；弹出栈顶的值，如果constants[index]的所代表的类型接受原本栈顶的值，置入 true，否则置入 false
 };
 
 using OperandSize = uint16_t;

@@ -403,10 +403,15 @@ InterpreterResult VM::run() {
                 case Opcode::As: {
                     TypePtr as_type = std::get<TypePtr>(read_constant_2());
                     TypePtr value_type = LoxValue::get_type(stack().back());
-                    // todo
                     if (as_type->accept(value_type) == false) {
                         throw TypeAssertionError(fmt::format("assertion fail: {} does not accept {}", as_type->to_string(), value_type->to_string()));
                     }
+                    break;
+                }
+                case Opcode::Is: {
+                    TypePtr test_type = std::get<TypePtr>(read_constant_2());
+                    TypePtr value_type = LoxValue::get_type(pop_and_get());
+                    push(test_type->accept(value_type));
                     break;
                 }
                 default:
