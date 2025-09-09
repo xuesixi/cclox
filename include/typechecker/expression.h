@@ -56,7 +56,7 @@ public:
      * @return 一个 MismatchedTypeError
      */
     [[nodiscard]]
-    MismatchedTypeError mismatch(const TypePtr &expected, const TypePtr &actual, const char *msg_fmt = "expect type of {}, but got {}") {
+    MismatchedTypeError mismatch(const TypePtr &expected, const TypePtr &actual, const char *msg_fmt = "expect type of '{}', but got '{}'") {
         return MismatchedTypeError(fmt::format("line: {}, mismatched type: {}", line, fmt::format(fmt::runtime(msg_fmt), expected->to_string(), actual->to_string())));
     }
 
@@ -70,7 +70,7 @@ public:
     virtual ExpressionType get_expression_type() const = 0;
 
     int get_line() const {
-        DEBUG_ASSERT(line != 0, "line num is 0, which means the line num is accessd before type resolution");
+        DEBUG_ASSERT(line != 0, "line num is 0, which means the line num is accessed before type resolution");
         return line;
     }
 

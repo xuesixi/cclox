@@ -59,7 +59,7 @@ StmtPtr StatementParser::parse_print() {
 StmtPtr StatementParser::parse_var() {
     Token &name = tokens->consume(TokenType::IDENTIFIER, "expect an identifier as the variable name");
     if (depth == 0) {
-        throw DefinitionPositionError(fmt::format("cannot use var to define variables in the global scope: {}", name.get_lexeme()));
+        throw DefinitionPositionError(fmt::format("line {}: cannot use var to define variables in the global scope: {}", name.get_line(), name.get_lexeme()));
     }
     TypePtr var_type;
     ExprPtr initializer;
@@ -86,7 +86,7 @@ StmtPtr StatementParser::parse_fun() {
 
     Token &fun_name = tokens->consume(TokenType::IDENTIFIER, "expect an identifier as the function name");
     if (depth > 0) {
-        throw DefinitionPositionError(fmt::format("can only define function in the global scope: {}", fun_name.get_lexeme()));
+        throw DefinitionPositionError(fmt::format("line {}: can only define function in the global scope: {}",fun_name.get_line(), fun_name.get_lexeme()));
     }
 
     // 解析参数列表

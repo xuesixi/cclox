@@ -22,7 +22,7 @@ TypePtr BinaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
             } else if (LoxType::int_and_float(left_type, right_type)) {
                 return PrimitiveType::FloatType;
             }
-            throw mismatch(left_type, right_type, "expect int or float, but got {} and {}");
+            throw mismatch(left_type, right_type, "expect int or float, but got '{}' and '{}'");
         }
         case TokenType::PLUS: {
             if (LoxType::both_of_type(left_type, right_type, LoxTypeEnum::Int)) {
@@ -34,7 +34,7 @@ TypePtr BinaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
             } else if (LoxType::both_of_type(left_type, right_type, LoxTypeEnum::String)) {
                 return PrimitiveType::StringType;
             }
-            throw mismatch(left_type, right_type, "expect int or float or two String, but got {} and {}");
+            throw mismatch(left_type, right_type, "expect int or float or two String, but got '{}' and '{}'");
         }
         case TokenType::STAR_STAR: {
             if (LoxType::both_of_type(left_type, right_type, LoxTypeEnum::Int)
@@ -42,7 +42,7 @@ TypePtr BinaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
                 || LoxType::int_and_float(left_type, right_type)) {
                 return PrimitiveType::FloatType;
             }
-            throw mismatch(left_type, right_type, "expect int or float, but got {} and {}");
+            throw mismatch(left_type, right_type, "expect int or float, but got '{}' and '{}'");
         }
         case TokenType::LESS:
         case TokenType::LESS_EQUAL:
@@ -53,7 +53,7 @@ TypePtr BinaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
             if (left_type->type_enum == right_type->type_enum) {
                 return PrimitiveType::BoolType;
             }
-            throw mismatch(left_type, right_type, "expect same type for comparison, but got {} and {}");
+            throw mismatch(left_type, right_type, "expect same type for comparison, but got '{}' and '{}'");
         }
         default:
             IMPL_ERROR("no such binary type");

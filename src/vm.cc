@@ -56,6 +56,9 @@ InterpreterResult VM::interpret_st(std::string &&source) {
     } catch (ScannerError &error) {
         std::cerr << error.what() << std::endl;
         return InterpreterResult::CompileError;
+    } catch (CompilerError &error) {
+        std::cerr << error.what() << std::endl;
+        return InterpreterResult::CompileError;
     }
 }
 

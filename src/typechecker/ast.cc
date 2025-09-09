@@ -70,8 +70,8 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
                     break;
                 } else {
                     // 如果返回值类型不匹配，则抛出异常。
-                    // 实际上我觉得这个检查时不必要的，因为 return 语句本身会根据 scope 来检查返回值的类型是否合适
-                    throw MismatchedTypeError(fmt::format("the function expects return type of {}, but got {}",
+                    // todo: 实际上我觉得这个检查时不必要的，因为 return 语句本身会根据 scope 来检查返回值的类型是否合适
+                    throw MismatchedTypeError(fmt::format("the function expects return type of '{}', but got '{}'",
                                                           fun_return_type->to_string(), stmt_type->to_string()));
                 }
             }
@@ -80,7 +80,7 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
 
     if (fun_return_type->type_enum != LoxTypeEnum::Void && accepted_return == false) {
         // 如果有标注返回值，但函数体内没有返回，则抛出异常
-        throw MismatchedTypeError(fmt::format("for function {}, not all control flows return the expected type: {}",
+        throw MismatchedTypeError(fmt::format("for function {}, not all control flows return the expected type: '{}'",
                                               fun->fun_name.get_lexeme(), fun_return_type->to_string()));
     } else {
         // 如果没有标注返回值，那么返回nil（但这里的nil只是占位符，让 return 指令实现起来更简单），typechecker 会阻止真的试图使用它的人
@@ -129,8 +129,10 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
             if (stmt->type->accept(type)) {
                 visit_expression(stmt->initializer);
             } else {
-                throw MismatchedTypeError(fmt::format("annotated type: {} does not match initializer type: {}",
-                                                      stmt->type->to_string(), type->to_string()));
+                throw MismatchedTypeError(fmt::format(
+                    "line {}: annotated type: '{}' does not match initializer type: '{}'",
+                    stmt->name.get_line(),
+                    stmt->type->to_string(), type->to_string()));
             }
         } else {
             // 初始值为空，此时，初始值由指定的类型决定。但也有些类型不允许初始值
@@ -167,12 +169,14 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
                         current_chunk().write_opcode(Opcode::LoadNil, line);
                     } else {
                         throw NoInitializationError(
-                            fmt::format("the annotated type: {} must be initialized", stmt->type->to_string()));
+                            fmt::format("line {}: the annotated type: '{}' must be initialized", stmt->name.get_line(),
+                                        stmt->type->to_string()));
                     }
                     break;
                 }
                 default:
-                    throw NoInitializationError(fmt::format("the annotated type: {} must be initialized",
+                    throw NoInitializationError(fmt::format("line {}: the annotated type: '{}' must be initialized",
+                                                            stmt->name.get_line(),
                                                             stmt->type->to_string()));
             }
         }
@@ -194,7 +198,7 @@ void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
                                                   return_statement->value->get_line()));
     }
     if (scope->function_->get_type()->return_type->accept(type) == false) {
-        throw MismatchedTypeError(fmt::format("line {}, the function expects return type of {}, but got {}",
+        throw MismatchedTypeError(fmt::format("line {}: the function expects return type of '{}', but got '{}'",
                                               return_statement->value->get_line(),
                                               scope->function_->get_type()->return_type->to_string(),
                                               type->to_string()
@@ -224,12 +228,14 @@ void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {
     if (target_type == Expression::ExpressionType::Primary) {
         auto left = std::unique_ptr<PrimaryExpression>(static_cast<PrimaryExpression *>(expr->left.release()));
         if (left->value_token.get_type() != TokenType::IDENTIFIER) {
-            throw InvalidAssignmentTargetError(fmt::format("invalid assignment target"));
+            throw InvalidAssignmentTargetError(fmt::format("line {}: invalid assignment target", expr->left->line));
         }
         Token &target_name = left->value_token;
         auto local_found = scope->resolve_local(target_name);
         if (local_found.has_value() == false) {
-            throw VariableNotFoundError(fmt::format("no such variable: {}", target_name.get_lexeme()));
+            throw VariableNotFoundError(fmt::format("line {}: no such variable: '{}'",
+                                                    target_name.get_line(),
+                                                    target_name.get_lexeme()));
         }
         emit_opcode(Opcode::SetLocal, left->get_line());
         emit_operand_1(local_found.value(), left->get_line());
@@ -358,7 +364,8 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
                 current_chunk().write_operand_2(global_index, line);
                 break;
             }
-            throw VariableNotFoundError(fmt::format("no such variable: {}", lexeme));
+            throw VariableNotFoundError(fmt::format("line {}: no such variable: {}", expr->value_token.get_line(),
+                                                    lexeme));
             break;
         }
         default:

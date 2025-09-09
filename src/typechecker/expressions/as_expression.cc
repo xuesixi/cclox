@@ -13,7 +13,7 @@ TypePtr AsExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
         // 断言的类型必须相关。可以 String | nil as String， 但不能 String as Animal
         return as_type;
     }
-    throw mismatch(t, as_type, "cannot assert {} as {}");
+    throw mismatch(t, as_type, "cannot assert '{}' as '{}'");
 }
 
 void AsExpression::accept(AstCompiler &compiler) {

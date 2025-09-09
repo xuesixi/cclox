@@ -14,7 +14,7 @@ TypePtr UnaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
         if (operand_type->type_enum == LoxTypeEnum::Bool) {
             return PrimitiveType::BoolType;
         } else {
-            throw MismatchedTypeError(fmt::format("line {}: expect bool, but got {}", line, operand_type->to_string()));
+            throw MismatchedTypeError(fmt::format("line {}: expect bool, but got '{}'", line, operand_type->to_string()));
         }
     } else if (op.get_type() == TokenType::MINUS) {
         if (operand_type->type_enum == LoxTypeEnum::Int) {
@@ -22,7 +22,7 @@ TypePtr UnaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
         } else if (operand_type->type_enum == LoxTypeEnum::Float) {
             return PrimitiveType::FloatType;
         }
-        throw MismatchedTypeError(fmt::format("line {}" "expect int or float, but got {}", line, operand_type->to_string()));
+        throw MismatchedTypeError(fmt::format("line {}: expect int or float, but got '{}'", line, operand_type->to_string()));
     } else {
         ASSERT_UNREACHABLE();
     }

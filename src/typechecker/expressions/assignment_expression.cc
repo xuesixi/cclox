@@ -11,7 +11,7 @@ TypePtr AssignmentExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     auto right_type = right->resolve_type(scope);
     this->line = left->get_line();
     if (left_type->accept(right_type) == false) {
-        throw mismatch(left_type, right_type, "the assignment target is of type: {} which cannot accept expression of type: {}");
+        throw mismatch(left_type, right_type, "the assignment target is of type '{}' which cannot accept expression of type '{}'");
     }
     return left_type;
 }

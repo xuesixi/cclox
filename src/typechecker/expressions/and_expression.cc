@@ -14,7 +14,7 @@ TypePtr AndExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     if (LoxType::both_of_type(left_type, right_type, LoxTypeEnum::Bool)) {
         return PrimitiveType::BoolType;
     } else {
-        throw mismatch(left_type, right_type, "expect bool, but got {} and {}");
+        throw mismatch(left_type, right_type, "expect bool, but got '{}' and '{}'");
     }
 }
 
