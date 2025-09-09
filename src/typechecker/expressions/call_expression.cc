@@ -21,8 +21,10 @@ TypePtr CallExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     for (size_t i = 0; i < arguments.size(); i++) {
         auto arg_type = arguments.at(i)->resolve_type(scope);
         if (callable->parameters.at(i)->accept(arg_type) == false) {
-            throw MismatchedTypeError(fmt::format("the {}th argument is expected to be {}, but got {}",
-                                                  i + 1, callable->parameters.at(i)->to_string(), arg_type->to_string()));
+            throw MismatchedTypeError(fmt::format("line {}, the {}th argument is expected to be {}, but got {}",
+                                                  arguments.at(i)->get_line(),
+                                                  i + 1, callable->parameters.at(i)->to_string(),
+                                                  arg_type->to_string()));
         }
     }
     return callable->return_type;

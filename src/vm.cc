@@ -4,6 +4,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "disassembler.h"
+#include "typechecker/st_runtime.h"
 #include <sstream>
 #include <iostream>
 #include <variant>
@@ -230,18 +231,21 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::LoadGlobal: {
                     auto str_id = read_operand_2();
-                    std::lock_guard<std::mutex> lock(Runtime::globals_access_mutex);
-                    auto found = Runtime::globals.find(str_id);
-                    if (found != Runtime::globals.end()) {
-                        push(found->second);
-                        break;
-                    }
-                    found = Runtime::builtin.find(str_id);
-                    if (found != Runtime::builtin.end()) {
-                        push(found->second);
-                        break;
-                    }
-                    throw LoxNameError(fmt::format("the variable: {} is not found", StringIntern::read_from_id(str_id)));
+
+                    push(st_runtime.access_global(str_id));
+
+                    // std::lock_guard<std::mutex> lock(Runtime::globals_access_mutex);
+                    // auto found = Runtime::globals.find(str_id);
+                    // if (found != Runtime::globals.end()) {
+                    //     push(found->second);
+                    //     break;
+                    // }
+                    // found = Runtime::builtin.find(str_id);
+                    // if (found != Runtime::builtin.end()) {
+                    //     push(found->second);
+                    //     break;
+                    // }
+                    // throw LoxNameError(fmt::format("the variable: {} is not found", StringIntern::read_from_id(str_id)));
                     break;
                 }
                 case Opcode::SetGlobal: {
@@ -307,7 +311,8 @@ InterpreterResult VM::run() {
                 case Opcode::Call: {
                     // fn, 1, 2
                     uint8_t arg_count = read_operand_1();
-                    call_value(arg_count);
+                    // call_value(arg_count);
+                    call_closure_st(arg_count);
                     break;
                 }
                 case Opcode::MakeClosure: {
@@ -454,6 +459,12 @@ void VM::call_value(size_t arg_count) {
         default:
             throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
     }
+}
+
+void VM::call_closure_st(size_t arg_count) {
+    size_t fp = stack_.size() - 1 - arg_count;
+    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack_.at(fp));
+    setup_frame(cl, fp);
 }
 
 void VM::call_closure(size_t arg_count) {

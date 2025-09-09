@@ -12,7 +12,7 @@ TypePtr DotExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     auto target_type = target->resolve_type(scope);
     this->line = target->get_line();
     if (target_type->type_enum != LoxTypeEnum::Class) {
-        throw MismatchedTypeError(fmt::format("cannot access member of type {}", target_type->to_string()));
+        throw MismatchedTypeError(fmt::format("line {}: cannot access member of type {}", line, target_type->to_string()));
     }
     auto instance_class = std::static_pointer_cast<ClassType>(target_type);
     return name_resolver.find_class_member(instance_class->get_type_id(), target_field.get_lexeme());

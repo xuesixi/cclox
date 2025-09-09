@@ -12,6 +12,7 @@
 #include "typechecker/expressions/and_expression.h"
 #include "typechecker/expressions/assignment_expression.h"
 #include "typechecker/expressions/binary_expression.h"
+#include "typechecker/expressions/call_expression.h"
 #include "typechecker/expressions/or_expression.h"
 #include "typechecker/expressions/primary_expression.h"
 #include "typechecker/statements/expression_statement.h"
@@ -30,6 +31,7 @@ std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
 }
 
 void AstCompiler::visit_expression_statement(ExpressionStatement *stmt) {
+    stmt->expr->resolve_type(scope);
     visit_expression(stmt->expr);
     current_chunk().write_opcode(Opcode::Pop, stmt->expr->line);
 }
@@ -38,9 +40,12 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     scope = std::make_shared<ST_Scope>(nullptr);
     scope->step_into();
 
+    scope->function_->set_name(fun->fun_name.get_lexeme());
+
     for (auto & parameter : fun->parameters) {
         // 将每一个参数作为本地变量处理
         scope->add_local(parameter.first, parameter.second);
+        scope->initialize();
     }
     bool accepted_return = false;
 
@@ -171,12 +176,12 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
 }
 
 void AstCompiler::visit_print_statement(PrintStatement *stmt) {
+    stmt->expr->resolve_type(scope);
     visit_expression(stmt->expr);
     emit_opcode(Opcode::Print, stmt->expr->get_line());
 }
 
 void AstCompiler::visit_and_expr(AndExpression *expr) {
-    expr->resolve_type(scope);
     visit_expression(expr->left);
     auto short_circuit = emit_jump(Opcode::JumpIfFalse, -1);
     visit_expression(expr->right);
@@ -187,7 +192,6 @@ void AstCompiler::visit_as_expr(AsExpression *expr) {
 }
 
 void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {
-    expr->resolve_type(scope);
     visit_expression(expr->right);
     auto target_type = expr->left->get_expression_type();
     if (target_type == Expression::ExpressionType::Primary) {
@@ -208,7 +212,6 @@ void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {
 }
 
 void AstCompiler::visit_binary_expr(BinaryExpression *expr) {
-    expr->resolve_type(scope);
     visit_expression(expr->left);
     visit_expression(expr->right);
     int line = expr->op.get_line();
@@ -254,8 +257,17 @@ void AstCompiler::visit_binary_expr(BinaryExpression *expr) {
     }
 }
 
+void AstCompiler::visit_call_expr(CallExpression *expr) {
+    visit_expression(expr->callee);
+    for (auto & arg : expr->arguments) {
+        visit_expression(arg);
+    }
+    current_chunk().write_opcode(Opcode::Call, expr->callee->get_line());
+    current_chunk().write_operand_1(expr->arguments.size(), expr->callee->line);
+    // NOT_IMPLEMENTED();
+}
+
 void AstCompiler::visit_or_expr(OrExpression *expr) {
-    expr->resolve_type(scope);
     visit_expression(expr->left);
     auto short_circuit = emit_jump(Opcode::JumpIfTrue, -1);
     visit_expression(expr->right);
@@ -328,7 +340,6 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
 }
 
 void AstCompiler::visit_unary_expr(UnaryExpression *expr) {
-    auto type = expr->resolve_type(scope);
     visit_expression(expr->operand);
     if (expr->op.get_type() == TokenType::MINUS) {
         emit_opcode(Opcode::Negate, expr->get_line());

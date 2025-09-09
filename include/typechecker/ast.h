@@ -69,10 +69,7 @@ public:
 
     void visit_binary_expr(BinaryExpression *expr);
 
-    void visit_call_expr(CallExpression *expr) {
-
-        NOT_IMPLEMENTED();
-    }
+    void visit_call_expr(CallExpression *expr);
 
     void visit_dot_expr(DotExpression *expr) {
 

@@ -95,6 +95,7 @@ StmtPtr StatementParser::parse_fun() {
             TypePtr param_type = type_parser()->parse_type();
             parameters.push_back({param_name, param_type});
         } while (tokens->match(TokenType::COMMA));
+        tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' to end the parameter list");
     }
     TypePtr return_type;
     if (tokens->match(TokenType::DASH_GREATER)) {
@@ -103,7 +104,8 @@ StmtPtr StatementParser::parse_fun() {
         return_type = PrimitiveType::UnspecifiedType; // 默认为 void
     }
 
-    std::vector<TypePtr> type_params(parameters.size());
+    std::vector<TypePtr> type_params;
+    type_params.reserve(parameters.size());
     for (auto & param : parameters) {
         type_params.push_back(param.second);
     }

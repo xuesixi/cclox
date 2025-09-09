@@ -40,16 +40,25 @@ public:
     }
 
     /**
-     * 检查并返回该表达式的返回值类型。
-     * 于此同时，计算并储存行号。
+     * 检查并返回该表达式的返回值类型。于此同时，计算并储存行号。
      * 如果出现了问题，抛出异常
-     * 该函数是幂等的。但是，除非特别情况，否则一般由表达式的 visit 内部调用。语句的 visit 不需要额外调用。
+     * 该函数是幂等的。但是，只应该各种 visit_statement 内部调用。表达式的 visit 中不需要额外调用，否则会导致指数级别的时间复杂度。
      * @return 该表达式的返回值类型
      */
     virtual TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) = 0;
 
     virtual void accept(AstCompiler &compiler) = 0;
 
+    /**
+     * 返回一个代表了类型不匹配的错误。调用者要手动throw之
+     * @param expected 预期类型
+     * @param actual 实际类型
+     * @return 一个 MismatchedTypeError
+     */
+    [[nodiscard]]
+    MismatchedTypeError mismatch(const TypePtr &expected, const TypePtr &actual, const char *msg_fmt = "expect type of {}, but got {}") {
+        return MismatchedTypeError(fmt::format("line: {}, mismatched type: {}", line, fmt::format(fmt::runtime(msg_fmt), expected->to_string(), actual->to_string())));
+    }
 
     /**
      * 该表达式可否作为左值。

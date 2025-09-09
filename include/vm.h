@@ -232,6 +232,8 @@ private:
      */
     void call_value(size_t arg_count);
 
+    void call_closure_st(size_t arg_count);
+
     void call_closure(size_t arg_count);
 
     void call_method(size_t arg_count);
