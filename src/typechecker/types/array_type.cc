@@ -8,7 +8,7 @@ bool ArrayType::accept(TypePtr other) const {
     if (other->type_enum != LoxTypeEnum::Array) {
         return false;
     }
-    auto other_arr = std::static_pointer_cast<ArrayType>(other);
+    const auto other_arr = std::static_pointer_cast<ArrayType>(other);
     return element_type->accept(other_arr->element_type);
 }
 

@@ -8,8 +8,8 @@
 #include "typechecker/ast.h"
 
 TypePtr OrExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
-    auto left_type = left->resolve_type(scope);
-    auto right_type = right->resolve_type(scope);
+    const auto left_type = left->resolve_type(scope);
+    const auto right_type = right->resolve_type(scope);
     this->line = left->get_line();
     if (LoxType::both_of_type(left_type, right_type, LoxTypeEnum::Bool)) {
         return PrimitiveType::BoolType;

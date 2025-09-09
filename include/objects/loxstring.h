@@ -25,7 +25,7 @@ public:
     void clear_reference() override {};
 
     bool operator==(const LoxObject &other) const override {
-        auto s = dynamic_cast<const LoxString*>(&other);
+        const auto s = dynamic_cast<const LoxString*>(&other);
         if (s == nullptr) {
             return false;
         }

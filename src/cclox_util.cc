@@ -15,8 +15,8 @@ std::string read_file(const std::string &path) {
 }
 
 std::string timestamp_str() {
-    auto time = std::chrono::system_clock::now();
-    auto tt = std::chrono::system_clock::to_time_t(time);
+    const auto time = std::chrono::system_clock::now();
+    const auto tt = std::chrono::system_clock::to_time_t(time);
 
     std::ostringstream oss;
     oss << std::put_time(std::localtime(&tt), "%Y%m%d_%H%M%S");
@@ -24,7 +24,7 @@ std::string timestamp_str() {
 }
 
 std::string nanos_str() {
-    auto now = std::chrono::high_resolution_clock::now();
+    const auto now = std::chrono::high_resolution_clock::now();
     auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
         now - program_start
     ).count();

@@ -46,6 +46,13 @@ public:
         return tokens.at(next++);
     }
 
+    const Token &peek_next() {
+        if (next >= tokens.size()) {
+            throw std::out_of_range("token exhausted");
+        }
+        return tokens.at(next);
+    }
+
     /**
      * 尝试匹配
      * @param token_type 要匹配的类型
@@ -68,7 +75,7 @@ public:
      * @return 如果任意一个匹配成功，则消费之，返回true。否则返回false
      */
     bool match_one_of(std::initializer_list<TokenType> candidates) {
-        for (auto token: candidates) {
+        for (const auto token: candidates) {
             if (match(token)) {
                 return true;
             }

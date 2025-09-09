@@ -45,8 +45,8 @@ static std::unordered_map<std::string, TokenType> keyword_map{
 };
 
 TokenType Scanner::get_identifier_type() {
-    std::string identifier = text.substr(start_index, next_index - start_index);
-    auto found = keyword_map.find(identifier);
+    const std::string identifier = text.substr(start_index, next_index - start_index);
+    const auto found = keyword_map.find(identifier);
     if (found != keyword_map.end()) {
         return found->second;
     } else {
@@ -111,7 +111,7 @@ Token Scanner::scan_token() {
     if (is_at_end()) {
         return make_token(TokenType::END_OF_FILE);
     }
-    char c = advance();
+    const char c = advance();
 
     if (isdigit(c)) {
         // 处理数字

@@ -69,7 +69,7 @@ namespace Runtime {
         wait_sync();
 
         int active_count = 0;
-        for (auto vm : vm_list) {
+        for (const auto vm : vm_list) {
             if (vm->is_active()) {
                 active_count ++;
             }
@@ -78,7 +78,7 @@ namespace Runtime {
         if (Flag::show_heap) {
             print_log(fmt::format("@{} vm {} start a gc with allocated size : {}. vm counts: {}, active_count: {}, Waiting for response: {}\n",
                 nanos_str(), thread_id, allocated_size.load(), vm_list.size(), active_count, active_count-1), Color::CYAN);
-            for (auto vm : vm_list) {
+            for (const auto vm : vm_list) {
                 if (vm->is_active() && vm->get_vm_id() != thread_id) {
                     vm_to_wait.insert(vm->get_vm_id());
                     print_log(fmt::format("gc is waiting for vm {}\n", vm->get_vm_id()), Color::CYAN);
@@ -104,14 +104,14 @@ namespace Runtime {
 
         // 追踪标记
         while (!queue.empty()) {
-            auto ref = queue.front();
+            const auto ref = queue.front();
             queue.pop();
             ref->mark_reference(queue);
         }
 
         // 清除
         for (auto & weak : weak_pool) {
-            auto ptr = weak.lock();
+            const auto ptr = weak.lock();
             if (ptr and !ptr->is_marked and !ptr->is_protected) {
                 ptr->clear_reference();
             }
@@ -180,7 +180,7 @@ namespace Runtime {
         for (auto & pair : globals) {
             LoxValue::mark_value(pair.second, queue);
         }
-        for (auto vm : vm_list) {
+        for (const auto vm : vm_list) {
             for (auto & value : vm->stack()) {
                 LoxValue::mark_value(value, queue);
             }

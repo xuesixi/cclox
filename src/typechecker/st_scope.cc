@@ -21,7 +21,7 @@ uint8_t ST_Scope::step_into() {
 
 uint8_t ST_Scope::step_out(uint8_t clear_to) {
     DEBUG_ASSERT(clear_to <= locals.size(), "clear_to should not be greater than locals.size()");
-    uint8_t diff = locals.size() - clear_to;
+    const uint8_t diff = locals.size() - clear_to;
     locals.resize(clear_to);
     depth--;
     return diff;
@@ -65,7 +65,7 @@ std::optional<uint8_t> ST_Scope::resolve_local(const Token &token) {
 }
 
 TypePtr ST_Scope::resolve_local_type(const Token &token) {
-    auto found = resolve_local(token);
+    const auto found = resolve_local(token);
     if (found.has_value()) {
         return locals.at(found.value()).type;
     } else {

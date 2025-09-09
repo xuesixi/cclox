@@ -169,7 +169,7 @@ public:
         code.shrink_to_fit();
         constants.shrink_to_fit();
         lines.shrink_to_fit();
-        size_t sum = sizeof(uint8_t) * code.capacity() + sizeof(Value) * constants.capacity()
+        const size_t sum = sizeof(uint8_t) * code.capacity() + sizeof(Value) * constants.capacity()
         + sizeof(int) * lines.capacity() ;
         return sum;
     }

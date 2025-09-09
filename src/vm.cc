@@ -428,7 +428,7 @@ InterpreterResult VM::run() {
 std::string VM::backtrace() {
     std::stringstream result;
     for (auto it = frames_.rbegin(); it != frames_.rend(); it++) {
-        auto call_frame = *it;
+        const auto call_frame = *it;
         auto line = call_frame.closure->function->get_chunk().get_line_num(call_frame.pc);
         result << fmt::format("{} at line {}\n", call_frame.closure->to_string(), line);
     }
@@ -439,8 +439,8 @@ void VM::call_value(size_t arg_count) {
     if (frames_.size() == Configuration::frame_max) {
         throw LoxStackOverflowError("stack overflow");
     }
-    size_t fp = stack_.size() - 1 - arg_count;
-    Value callable = stack_.at(fp);
+    const size_t fp = stack_.size() - 1 - arg_count;
+    const Value callable = stack_.at(fp);
 
     if (std::holds_alternative<std::shared_ptr<LoxNativeFunction>>(callable)) {
         call_native(arg_count);
@@ -465,13 +465,13 @@ void VM::call_value(size_t arg_count) {
 }
 
 void VM::call_closure_st(size_t arg_count) {
-    size_t fp = stack_.size() - 1 - arg_count;
-    auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack_.at(fp));
+    const size_t fp = stack_.size() - 1 - arg_count;
+    const auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack_.at(fp));
     setup_frame(cl, fp);
 }
 
 void VM::call_closure(size_t arg_count) {
-    size_t fp = stack_.size() - 1 - arg_count;
+    const size_t fp = stack_.size() - 1 - arg_count;
     auto cl = LoxValue::to_reference_unsafe<LoxClosure>(stack_.at(fp));
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
@@ -481,8 +481,8 @@ void VM::call_closure(size_t arg_count) {
 }
 
 void VM::call_method(size_t arg_count) {
-    size_t fp = stack_.size() - 1 - arg_count;
-    auto method = LoxValue::to_reference_unsafe<LoxMethod>(stack_.at(fp));
+    const size_t fp = stack_.size() - 1 - arg_count;
+    const auto method = LoxValue::to_reference_unsafe<LoxMethod>(stack_.at(fp));
     auto &cl = method->closure();
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the callable {} expect {} arguments, but got {}", LoxValue::to_string(cl),
@@ -493,9 +493,9 @@ void VM::call_method(size_t arg_count) {
 }
 
 void VM::call_class(size_t arg_count) {
-    size_t fp = stack_.size() - 1 - arg_count;
+    const size_t fp = stack_.size() - 1 - arg_count;
     auto a_class = LoxValue::to_reference_unsafe<LoxClass>(stack_.at(fp));
-    auto &constructor = a_class->constructor();
+    const auto &constructor = a_class->constructor();
     if (constructor == nullptr) {
         // 无构造函数
         if (arg_count != 0) {
@@ -522,13 +522,13 @@ void VM::call_class(size_t arg_count) {
 }
 
 void VM::call_native(size_t arg_count) {
-    size_t fp = stack_.size() - 1 - arg_count;
-    auto native = std::get<std::shared_ptr<LoxNativeFunction>>(stack().at(fp));
+    const size_t fp = stack_.size() - 1 - arg_count;
+    const auto native = std::get<std::shared_ptr<LoxNativeFunction>>(stack().at(fp));
     if (arg_count != native->get_arity()) {
         throw LoxArgError(fmt::format("the native function {} expect {} arguments, but got {}", native->get_name(),
                                       native->get_arity(), arg_count));
     }
-    auto impl = native->get_impl();
+    const auto impl = native->get_impl();
     impl(*this, fp);
 }
 
@@ -559,12 +559,12 @@ std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize
         throw LoxTypeError(fmt::format("the value {} is not an reference type and cannot bind to a method",
                                        LoxValue::to_string(receiver)));
     }
-    auto ref = std::get<LoxReference>(receiver);
+    const auto ref = std::get<LoxReference>(receiver);
     if (!ref->is_of_type(LoxObjectType::Instance)) {
         throw LoxTypeError(fmt::format("the value {} is not an reference type and cannot bind to a method",
                                        LoxValue::to_string(receiver)));
     }
-    auto instance = std::static_pointer_cast<LoxInstance>(ref);
+    const auto instance = std::static_pointer_cast<LoxInstance>(ref);
 
     auto clo = instance->get_class()->resolve_method(string_id);
 
@@ -573,9 +573,9 @@ std::shared_ptr<LoxClosure> VM::method_lookup(const Value &receiver, OperandSize
 
 void VM::method_invoke(OperandSize string_id, uint8_t arg_count) {
     // receiver, arg1, arg2, arg3
-    size_t fp = stack_.size() - arg_count - 1;
-    Value receiver = stack_.at(fp);
-    auto cl = method_lookup(receiver, string_id);
+    const size_t fp = stack_.size() - arg_count - 1;
+    const Value receiver = stack_.at(fp);
+    const auto cl = method_lookup(receiver, string_id);
     if (cl->function->arity() != arg_count) {
         throw LoxArgError(fmt::format("the method {} expects {} arguments, but got {}", cl->to_string(), cl->function->arity(), arg_count));
     }

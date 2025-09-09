@@ -19,7 +19,7 @@ bool ClassType::accept(TypePtr other) const {
     if (other->type_enum != LoxTypeEnum::Class) {
         return false;
     }
-    std::shared_ptr<ClassType> other_class = std::static_pointer_cast<ClassType>(other);
+    const std::shared_ptr<ClassType> other_class = std::static_pointer_cast<ClassType>(other);
     return type_id == other_class->type_id;
 }
 

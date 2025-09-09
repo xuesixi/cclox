@@ -185,13 +185,13 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
      * 如果next不为空，说明next可以作为一个表达式的开头，则运行之。
      */
     advance();
-    TokenType type = curr.type;
-    ParseFn prefix = get_prefix(type);
+    const TokenType type = curr.type;
+    const ParseFn prefix = get_prefix(type);
     if (prefix == nullptr) {
         error_at(curr, fmt::format("expect an expression but get: {}", curr.lexeme));
         return;
     }
-    bool can_assign = at_least <= Precedence::ASSIGNMENT;
+    const bool can_assign = at_least <= Precedence::ASSIGNMENT;
     (this->*prefix)(can_assign); // 前缀运算符应该是没有用到can_assign这个属性的
 
     /*
@@ -202,14 +202,14 @@ void Compiler::compile_precedence_at_least(Precedence at_least) {
     // ReSharper disable once CppDFALoopConditionNotUpdated
     while (get_precedence(next.type) >= at_least) {
         advance();
-        ParseFn infix = get_infix(curr.type); // 在经历上一行的advance()之后，这里的curr就是上面条件中的next。
+        const ParseFn infix = get_infix(curr.type); // 在经历上一行的advance()之后，这里的curr就是上面条件中的next。
         (this->*infix)(can_assign); // 这里的can_assign参数实际上并没有用，因为暂时没有任何infix真的用到了它
     }
 }
 
 void Compiler::integer_expr([[maybe_unused]] bool) {
     int64_t integer = std::stoll(curr.lexeme);
-    auto opt_index = Chunk::to_immediate(integer);
+    const auto opt_index = Chunk::to_immediate(integer);
     if (!opt_index) {
         emit_load_constant_flexible(integer);
     } else {
@@ -220,7 +220,7 @@ void Compiler::integer_expr([[maybe_unused]] bool) {
 
 void Compiler::float_expr([[maybe_unused]] bool can_assign) {
     double decimal = std::stod(curr.lexeme);
-    auto opt_index = Chunk::to_immediate(decimal);
+    const auto opt_index = Chunk::to_immediate(decimal);
     if (!opt_index) {
         emit_load_constant_flexible(decimal);
     } else {
@@ -239,8 +239,8 @@ void Compiler::grouping_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::binary_expr([[maybe_unused]] bool can_assign) {
-    TokenType type = curr.type;
-    Precedence precedence = get_precedence(type);
+    const TokenType type = curr.type;
+    const Precedence precedence = get_precedence(type);
     compile_precedence_at_least(get_higher_precedence(precedence));
     switch (type) {
         case TokenType::MINUS:
@@ -292,9 +292,9 @@ void Compiler::dot_expr(bool can_assign) {
     // a.b().c()
 
     consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
-    auto string_id = StringIntern::resolve_string(curr.get_lexeme());
+    const auto string_id = StringIntern::resolve_string(curr.get_lexeme());
     if (match(TokenType::LEFT_PAREN)) {
-        auto arg_count = argument_list();
+        const auto arg_count = argument_list();
         emit_opcode(Opcode::MethodInvoke);
         emit_operand_2(string_id);
         emit_operand_1(arg_count);
@@ -306,7 +306,7 @@ void Compiler::dot_expr(bool can_assign) {
 
 void Compiler::and_expr([[maybe_unused]] bool can_assign) {
     // a and b and c
-    auto short_circuit = emit_jump(Opcode::JumpIfFalse);
+    const auto short_circuit = emit_jump(Opcode::JumpIfFalse);
     emit_opcode(Opcode::Pop);
 
     compile_precedence_at_least(Precedence::AND);
@@ -316,8 +316,8 @@ void Compiler::and_expr([[maybe_unused]] bool can_assign) {
 
 void Compiler::or_expr([[maybe_unused]] bool can_assign) {
     // a or b or c
-    auto short_circuit = emit_jump(Opcode::JumpIfFalse);
-    auto end = emit_jump(Opcode::Jump);
+    const auto short_circuit = emit_jump(Opcode::JumpIfFalse);
+    const auto end = emit_jump(Opcode::Jump);
 
     patch_jump(short_circuit);
 
@@ -327,7 +327,7 @@ void Compiler::or_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::literal_expr([[maybe_unused]] bool can_assign) {
-    TokenType type = curr.type;
+    const TokenType type = curr.type;
     switch (type) {
         case TokenType::Nil:
             emit_opcode(Opcode::LoadNil);
@@ -355,14 +355,14 @@ void Compiler::lambda_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
-    auto s = curr.lexeme.substr(1, curr.lexeme.size() - 2); // 去除头尾的引号
+    const auto s = curr.lexeme.substr(1, curr.lexeme.size() - 2); // 去除头尾的引号
     int count = 0;
     auto ranges = Scanner::split(s);
     if (!ranges) {
         throw FmtStringUnbalancedError("the format string is not balanced");
     }
     auto saved_scanner = std::move(scanner);
-    Token saved_next = next; // next要被保存。因为切换scanner进行解析的过程中会被修改
+    const Token saved_next = next; // next要被保存。因为切换scanner进行解析的过程中会被修改
     int curr_line = curr.line;
     for (auto [caught, left, right]: ranges.value()) {
         if (!caught) {
@@ -396,7 +396,7 @@ void Compiler::fmt_string_expr([[maybe_unused]] bool can_assign) {
 }
 
 void Compiler::call_expr([[maybe_unused]] bool can_assign) {
-    uint8_t arg_count = argument_list();
+    const uint8_t arg_count = argument_list();
     emit_opcode(Opcode::Call);
     emit_operand_1(arg_count);
 }
@@ -418,7 +418,7 @@ uint8_t Compiler::argument_list() {
 }
 
 void Compiler::unary_expr([[maybe_unused]] bool can_assign) {
-    TokenType type = curr.type;
+    const TokenType type = curr.type;
     compile_precedence_at_least(Precedence::UNARY);
     if (type == TokenType::MINUS) {
         emit_opcode(Opcode::Negate);
@@ -448,7 +448,7 @@ void Compiler::variable_expr(bool can_assign) {
 
     if (scope->function_type_ == FunctionTypeEnum::Method) {
         // 如果在方法内部，则还可能是对象字段。
-        auto field_found = class_scope->resolve_field(curr.get_lexeme());
+        const auto field_found = class_scope->resolve_field(curr.get_lexeme());
         if (field_found) {
             if (match(TokenType::EQUAL)) {
                 if (can_assign) {
@@ -492,7 +492,7 @@ void Compiler::variable_expr(bool can_assign) {
     }
 
     // 都没找到，则认为是全局变量
-    OperandSize string_id = StringIntern::resolve_string(curr.lexeme);
+    const OperandSize string_id = StringIntern::resolve_string(curr.lexeme);
     if (match(TokenType::EQUAL)) {
         if (can_assign) {
             compile_precedence_at_least(Precedence::ASSIGNMENT);
@@ -519,7 +519,7 @@ void Compiler::this_expr(bool can_assign) {
     if (match(TokenType::DOT)) {
         // this.identifier
         consume(TokenType::IDENTIFIER, "expect an identifier after '.'");
-        auto field_found = class_scope->resolve_field(curr.lexeme);
+        const auto field_found = class_scope->resolve_field(curr.lexeme);
         if (field_found) {
             // 找到了对应的字段
 
@@ -544,9 +544,9 @@ void Compiler::this_expr(bool can_assign) {
             emit_operand_1(0);
 
             // 没有找到字段，则判断是方法
-            auto string_id = StringIntern::resolve_string(curr.get_lexeme());
+            const auto string_id = StringIntern::resolve_string(curr.get_lexeme());
             if (match(TokenType::LEFT_PAREN)) {
-                uint8_t arg_count = argument_list();
+                const uint8_t arg_count = argument_list();
                 emit_opcode(Opcode::MethodInvoke);
                 emit_operand_2(string_id);
                 emit_operand_1(arg_count);
@@ -564,7 +564,7 @@ void Compiler::this_expr(bool can_assign) {
 
 void Compiler::emit_load_constant_flexible(Value &&value) {
     try {
-        OperandSize index = current_chunk().add_constant(std::move(value));
+        const OperandSize index = current_chunk().add_constant(std::move(value));
         if (within<uint8_t>(index)) {
             emit_opcode(Opcode::LoadConstant);
         } else {
@@ -623,7 +623,7 @@ void Compiler::return_statement() {
 void Compiler::recur_statement() {
     consume(TokenType::LEFT_PAREN, "expect a '(' after recur");
 
-    auto arg_count = argument_list();
+    const auto arg_count = argument_list();
     consume();
     emit_opcode(Opcode::Recur);
     emit_operand_1(arg_count);
@@ -646,14 +646,14 @@ void Compiler::if_statement() {
     compile_expression();
 
     // jump if pop false -> else
-    auto to_else = emit_jump(Opcode::JumpIfPopFalse);
+    const auto to_else = emit_jump(Opcode::JumpIfPopFalse);
 
     // then_statement
     statement();
 
     if (match(TokenType::Else)) {
         // jump -> end
-        auto to_end = emit_jump(Opcode::Jump);
+        const auto to_end = emit_jump(Opcode::Jump);
 
         // else_statement
         patch_jump(to_else);
@@ -668,13 +668,13 @@ void Compiler::if_statement() {
 }
 
 void Compiler::while_statement() {
-    size_t condition_label = current_chunk().code_size();
+    const size_t condition_label = current_chunk().code_size();
 
-    auto old_continue_point = save_continue_point();
+    const auto old_continue_point = save_continue_point();
     compile_expression();
 
-    auto old_breakpoint = save_breakpoint();
-    auto to_end = emit_jump(Opcode::JumpIfPopFalse);
+    const auto old_breakpoint = save_breakpoint();
+    const auto to_end = emit_jump(Opcode::JumpIfPopFalse);
 
     statement();
     loop_back(condition_label);
@@ -724,7 +724,7 @@ OperandSize Compiler::resolve_global_identifier() {
 
 void Compiler::fun_statement() {
     if (scope->is_global_scope()) {
-        OperandSize string_id = resolve_global_identifier();
+        const OperandSize string_id = resolve_global_identifier();
 
         auto [fun, fun_scope] = parse_function(FunctionTypeEnum::Function);
 
@@ -745,7 +745,7 @@ void Compiler::fun_statement() {
 
 void Compiler::class_statement() {
     if (scope->is_global_scope()) {
-        OperandSize string_id = resolve_global_identifier();
+        const OperandSize string_id = resolve_global_identifier();
         parse_class();
         emit_opcode(Opcode::DefineGlobal);
         emit_operand_2(string_id);
@@ -762,7 +762,7 @@ void Compiler::var_statement() {
     try {
         if (scope->is_global_scope()) {
             // 全局变量
-            OperandSize str_id = resolve_global_identifier();
+            const OperandSize str_id = resolve_global_identifier();
             if (match(TokenType::EQUAL)) {
                 compile_expression();
             } else {
@@ -806,8 +806,8 @@ void Compiler::method_statement(bool is_static) {
 }
 
 void Compiler::parse_class() {
-    std::string class_name = curr.get_lexeme();
-    auto string_id = StringIntern::resolve_string(class_name);
+    const std::string class_name = curr.get_lexeme();
+    const auto string_id = StringIntern::resolve_string(class_name);
     consume(TokenType::LEFT_BRACE, "expect a '{' after the class name");
     class_scope = ClassScope{};
     bool field_finished = false; // 方法都必须写在所有的field后面
@@ -921,9 +921,9 @@ void Compiler::statement() {
     if (match(TokenType::Print)) {
         print_statement();
     } else if (match(TokenType::LEFT_BRACE)) {
-        auto old_size = scope->step_into();
+        const auto old_size = scope->step_into();
         block_statement();
-        auto amount_to_pop = scope->step_out(old_size);
+        const auto amount_to_pop = scope->step_out(old_size);
         emit_opcode(Opcode::ClearN);
         emit_operand_1(amount_to_pop);
     } else if (match(TokenType::If)) {
@@ -981,7 +981,7 @@ void Compiler::loop_back(size_t destination) {
      * current
      */
     DEBUG_ASSERT(current_chunk().code_size() >= destination, "loop back is jumping forward!");
-    size_t distance = current_chunk().code_size() - destination + 3;
+    const size_t distance = current_chunk().code_size() - destination + 3;
 
     if (!within<uint16_t>(distance)) {
         throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
@@ -1001,7 +1001,7 @@ void Compiler::patch_jump(size_t from_label) {
      */
 
     // from_label的位置是jump指令的第一个操作数。但实际在执行jump语句的时候，pc的位置是jump语句的第二个操作数之后，因此跳转距离-2
-    size_t distance = current_chunk().code_size() - from_label - 2;
+    const size_t distance = current_chunk().code_size() - from_label - 2;
     if (!within<uint16_t>(distance)) {
         throw JumpDistanceOverflowError("the distance to jump is too much to be encoded as an uint16");
     }

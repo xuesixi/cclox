@@ -8,7 +8,7 @@
 #include "error.h"
 
 uint16_t StringIntern::resolve_string(const std::string &name) {
-    auto found = string_to_id.find(name);
+    const auto found = string_to_id.find(name);
     if (found == string_to_id.end()) {
         id_to_string.push_back(name);
         size_t id = id_to_string.size() - 1;

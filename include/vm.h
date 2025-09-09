@@ -176,20 +176,20 @@ private:
 
     // 读取后两个操作数，将它们解释为一个uint16。先读取的是low，后读取的是high
     uint16_t read_operand_2() {
-        uint8_t low = next();
-        uint8_t high = next();
+        const uint8_t low = next();
+        const uint8_t high = next();
         return u8_to_u16(low, high);
     }
 
     // 读取下一个操作数作为索引，从常数池中读取对应的值
     Value read_constant_1() {
-        uint8_t index = read_operand_1();
+        const uint8_t index = read_operand_1();
         return chunk().constant_at(index);
     }
 
     // 读取下两个操作数作为uint16索引，从常数池中读取对应的值
     Value read_constant_2() {
-        uint16_t index = read_operand_2();
+        const uint16_t index = read_operand_2();
         return chunk().constant_at(index);
     }
 
@@ -211,7 +211,7 @@ private:
      */
     void escape_above(size_t index) {
         while (open_captured.empty() == false) {
-            auto curr = open_captured.back();
+            const auto curr = open_captured.back();
             if (curr->index() >= index) {
                 open_captured.pop_back();
                 curr->escape();

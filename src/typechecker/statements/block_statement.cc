@@ -12,7 +12,7 @@ void BlockStatement::accept(AstCompiler &compiler) {
 }
 
 TypePtr BlockStatement::resolve_return_type() {
-    for (auto &statement: body) {
+    for (const auto &statement: body) {
         auto statement_return_type = statement->resolve_return_type();
         if (statement_return_type->type_enum != LoxTypeEnum::Unspecified) {
             return statement_return_type;

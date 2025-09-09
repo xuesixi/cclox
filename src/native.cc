@@ -26,7 +26,7 @@ namespace Native {
         if (std::holds_alternative<NativeReference>(v) == false) {
             throw LoxTypeError(fmt::format("invalid type of argument: {}, expect: <{}>", LoxValue::to_string(v), expected));
         }
-        NativeReference ref = std::get<NativeReference>(v);
+        const NativeReference ref = std::get<NativeReference>(v);
         if (std::holds_alternative<T>(ref->second) == false) {
             throw LoxTypeError(fmt::format("invalid type of argument: {}, expect: <{}>", LoxValue::to_string(v), expected));
         }
@@ -37,7 +37,7 @@ namespace Native {
      * 打印日志。如果开启了文件日志选项，则会打印在runtime日志中。否则输出到cout。自动换行。
      */
     void log(VM &vm, size_t fp) {
-        Value v = vm.stack().back();
+        const Value v = vm.stack().back();
         vm.stack().pop_back();
         vm.stack().pop_back();
         Runtime::print_log(fmt::format("@{} vm {}: {}\n", nanos_str(), vm.get_vm_id(), LoxValue::to_string(v)), Color::GREEN);
@@ -57,7 +57,7 @@ namespace Native {
      * 参数为一个closure或者class或者method
      */
     void thread_new(VM &vm, size_t fp) {
-        Value v = vm.stack().back();
+        const Value v = vm.stack().back();
         vm.stack().pop_back(); // 弹出参数
         vm.stack().pop_back(); // 弹出该native
         uint16_t name_id = StringIntern::resolve_string("std::thread");

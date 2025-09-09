@@ -6,12 +6,12 @@
 
 std::optional<uint8_t> Chunk::to_immediate(Value value) {
     if (std::holds_alternative<int64_t>(value)) {
-        int64_t l = std::get<int64_t>(value);
+        const int64_t l = std::get<int64_t>(value);
         if (l <= 240) {
             return static_cast<int64_t>(l);
         }
     } else if (std::holds_alternative<double>(value)) {
-        double d = std::get<double>(value);
+        const double d = std::get<double>(value);
 
         if (double_equal(d, 0.0)) return 241;
         if (double_equal(d, 1.0)) return 242;
@@ -69,7 +69,7 @@ void Chunk::write_operand_2(size_t operand, int line) {
 
 OperandSize Chunk::add_constant(Value &&value) {
     constants.push_back(std::move(value));
-    size_t index = constants.size() - 1;
+    const size_t index = constants.size() - 1;
     if (!within<OperandSize>(index)) {
         throw ConstantPoolOverflowError("constant pool overflow");
     } else {
@@ -79,7 +79,7 @@ OperandSize Chunk::add_constant(Value &&value) {
 
 OperandSize Chunk::add_constant(const Value &value) {
     constants.push_back(std::move(value));
-    size_t index = constants.size() - 1;
+    const size_t index = constants.size() - 1;
     if (!within<OperandSize>(index)) {
         throw ConstantPoolOverflowError("constant pool overflow");
     } else {

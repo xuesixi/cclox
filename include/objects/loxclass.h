@@ -52,7 +52,7 @@ public:
      * @throws LoxNameError 如果没找到
      */
     std::shared_ptr<LoxClosure> resolve_method(uint16_t strid) {
-        auto found = methods.find(strid);
+        const auto found = methods.find(strid);
         if (found == methods.end()) {
             throw LoxNameError(fmt::format("no such method {} in class {}", StringIntern::read_from_id(strid), name));
         }

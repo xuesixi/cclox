@@ -9,7 +9,7 @@ bool TupleType::accept(TypePtr other) const {
     if (other->type_enum != LoxTypeEnum::Tuple) {
         return false;
     }
-    auto other_tuple = std::static_pointer_cast<TupleType>(other);
+    const auto other_tuple = std::static_pointer_cast<TupleType>(other);
     if (other_tuple->tuple.size() != tuple.size()) {
         return false;
     }

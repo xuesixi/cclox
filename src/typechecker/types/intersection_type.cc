@@ -16,7 +16,7 @@ bool IntersectionType::accept(TypePtr other) const {
         return true;
     }
     // 如果也是交集，则检查other是否包含了自身的所有元素
-    auto other_inter = std::static_pointer_cast<IntersectionType>(other);
+    const auto other_inter = std::static_pointer_cast<IntersectionType>(other);
     for (auto & type : intersections) {
         if (other_inter->accept(type) == false) {
             return false;
@@ -28,7 +28,7 @@ bool IntersectionType::accept(TypePtr other) const {
 std::string IntersectionType::to_no_parenthesis_string() {
     std::stringstream ss;
     size_t i = 0;
-    for (auto & type : intersections) {
+    for (const auto & type : intersections) {
         ss << type->to_string();
         if (i != intersections.size() - 1) {
             ss << " & ";

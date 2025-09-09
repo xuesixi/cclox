@@ -30,7 +30,7 @@ TypePtr TypeParser::parse_type() {
 }
 
 TypePtr TypeParser::parse_function() {
-    size_t save = tokens->save_position();
+    const size_t save = tokens->save_position();
     if (tokens->match(TokenType::LEFT_PAREN)) {
         std::vector<TypePtr> parameters;
         if (!tokens->match(TokenType::RIGHT_PAREN)) {
@@ -82,7 +82,7 @@ TypePtr TypeParser::parse_intersection() {
 }
 
 TypePtr TypeParser::parse_tuple() {
-    size_t save = tokens->save_position();
+    const size_t save = tokens->save_position();
     if (tokens->match(TokenType::LEFT_PAREN)) {
         // (a, b, c)
         std::vector<TypePtr> tuple;

@@ -22,7 +22,7 @@ public:
         if (member_fields.size() == UINT8_MAX) {
             throw Uint8OperandOverflowError("cannot have more than 256 fields");
         }
-        auto found = resolve_field(name);
+        const auto found = resolve_field(name);
         if (found) {
             throw DuplicateNameVariableError("fields with the same name");
         }

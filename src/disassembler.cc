@@ -71,7 +71,7 @@ void Disassembler::disassemble(const std::string &name) {
 }
 
 size_t Disassembler::disassemble_instruction(size_t offset) {
-    auto instruction = static_cast<Opcode>(chunk->code.at(offset));
+    const auto instruction = static_cast<Opcode>(chunk->code.at(offset));
     int line = chunk->lines.at(offset);
 
     // 字节码偏移值
@@ -154,7 +154,7 @@ size_t Disassembler::no_operand(Opcode instruction, size_t offset) const {
 
 size_t Disassembler::constant_index_1(Opcode instruction, size_t offset) const {
     size_t index = chunk->code.at(offset + 1);
-    Value value = chunk->constants.at(index);
+    const Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_visual_string(value);
     *out << fmt::format("{:18} {} index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 2;
@@ -167,14 +167,14 @@ size_t Disassembler::single_operand(Opcode instruction, size_t offset) const {
 }
 
 size_t Disassembler::jump_forward(Opcode instruction, size_t offset) const {
-    uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     size_t destination = offset + 3 + distance;
     *out << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
     return offset + 3;
 }
 
 size_t Disassembler::jump_back(Opcode instruction, size_t offset) const {
-    uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const uint16_t distance = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     size_t destination = offset + 3 - distance;
     *out << fmt::format("{:18} {} -> {}\n", opcode_names.at(instruction), spaces_4, destination);
     return offset + 3;
@@ -182,8 +182,8 @@ size_t Disassembler::jump_back(Opcode instruction, size_t offset) const {
 
 
 size_t Disassembler::load_immediate(Opcode instruction, size_t offset) const {
-    size_t index = chunk->code.at(offset + 1);
-    Value value = Chunk::read_immediate(index);
+    const size_t index = chunk->code.at(offset + 1);
+    const Value value = Chunk::read_immediate(index);
     std::string value_str = LoxValue::to_visual_string(value);
     *out << fmt::format("{:18} {} value: {}\n", opcode_names.at(instruction), spaces_4, value_str);
     return offset + 2;
@@ -191,22 +191,22 @@ size_t Disassembler::load_immediate(Opcode instruction, size_t offset) const {
 
 size_t Disassembler::constant_index_2(Opcode instruction, size_t offset) const {
     uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    Value value = chunk->constants.at(index);
+    const Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_visual_string(value);
     *out << fmt::format("{:18} {} index: {}, value: {}\n", opcode_names.at(instruction), spaces_4, index, value_str);
     return offset + 3;
 }
 
 size_t Disassembler::constant_index_2_as_type(Opcode instruction, size_t offset) const {
-    uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
-    Value value = chunk->constants.at(index);
+    const uint16_t index = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const Value value = chunk->constants.at(index);
     std::string value_str = LoxValue::to_visual_string(value);
     *out << fmt::format("{:18} {} type: '{}'\n", opcode_names.at(instruction), spaces_4, value_str);
     return offset + 3;
 }
 
 size_t Disassembler::instruction_identifier_operand_2(Opcode instruction, size_t offset) const {
-    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = StringIntern::read_from_id(string_id);
     *out << fmt::format("{:18} {} identifier: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
@@ -219,7 +219,7 @@ size_t Disassembler::make_closure(Opcode instruction, size_t offset) const {
 }
 
 size_t Disassembler::make_class(Opcode instruction, size_t offset) const {
-    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = StringIntern::read_from_id(string_id);
     uint8_t num_field = chunk->code.at(offset + 3);
     uint8_t num_method = chunk->code.at(offset + 4);
@@ -228,14 +228,14 @@ size_t Disassembler::make_class(Opcode instruction, size_t offset) const {
 }
 
 size_t Disassembler::method_bind(Opcode instruction, size_t offset) const {
-    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = StringIntern::read_from_id(string_id);
     *out << fmt::format("{:18} {} method: {}\n", opcode_names.at(instruction), spaces_4, identifier);
     return offset + 3;
 }
 
 size_t Disassembler::method_invoke(Opcode instruction, size_t offset) const {
-    uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
+    const uint16_t string_id = u8_to_u16(chunk->code.at(offset + 1), chunk->code.at(offset + 2));
     std::string identifier = StringIntern::read_from_id(string_id);
     uint8_t arg_count = chunk->code.at(offset + 3);
     *out << fmt::format("{:18} {} method: {}; arg count {}\n", opcode_names.at(instruction), spaces_4, identifier, arg_count);

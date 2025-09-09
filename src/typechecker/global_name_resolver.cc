@@ -16,18 +16,18 @@ GlobalNameResolver::ClassRecord::ClassRecord(const std::string &class_name) {
 }
 
 void GlobalNameResolver::ClassRecord::check_duplicate_member(const std::string &member_name) {
-    auto field_found = fields.find(member_name);
+    const auto field_found = fields.find(member_name);
     if (field_found != fields.end()) {
         throw DuplicateNameVariableError(fmt::format("redefine class member {}", member_name));
     }
-    auto method_found = methods.find(member_name);
+    const auto method_found = methods.find(member_name);
     if (method_found != methods.end()) {
         throw DuplicateNameVariableError(fmt::format("redefine class member {}", member_name));
     }
 }
 
 size_t GlobalNameResolver::resolve_type_id(const std::string &name) {
-    auto found = typename_to_id.find(name);
+    const auto found = typename_to_id.find(name);
     if (found != typename_to_id.end()) {
         return found->second;
     }
@@ -68,7 +68,7 @@ void GlobalNameResolver::declare_class(const Token &class_name_token) {
 void GlobalNameResolver::declare_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
                                   const Token &member_name_token, TypePtr &type) {
     const std::string &member_name = member_name_token.get_lexeme();
-    auto found = global_classes.find(class_name);
+    const auto found = global_classes.find(class_name);
     if (found == global_classes.end()) {
         IMPL_ERROR("a class name is not found");
     }
@@ -91,16 +91,16 @@ void GlobalNameResolver::declare_class_member(const std::string &class_name, Cla
 TypePtr GlobalNameResolver::find_class_member(size_t type_id, const Token &member_name_token) {
     const std::string &member_name = member_name_token.get_lexeme();
     std::string name = read_typename_from_id(type_id);
-    auto found = global_classes.find(name);
+    const auto found = global_classes.find(name);
     if (found == global_classes.end()) {
         throw ClassNotFoundError(fmt::format("the class {} is not defined", name));
     }
     auto &class_record = found->second.first;
-    auto found_method = class_record.methods.find(member_name);
+    const auto found_method = class_record.methods.find(member_name);
     if (found_method != class_record.methods.end()) {
         return found_method->second;
     }
-    auto found_field = class_record.fields.find(member_name);
+    const auto found_field = class_record.fields.find(member_name);
     if (found_field != class_record.fields.end()) {
         return found_field->second;
     }
@@ -108,12 +108,12 @@ TypePtr GlobalNameResolver::find_class_member(size_t type_id, const Token &membe
 }
 
 std::pair<TypePtr, uint16_t> GlobalNameResolver::resolve_name(const std::string &name) {
-    auto cls_found = global_classes.find(name);
+    const auto cls_found = global_classes.find(name);
     if (cls_found != global_classes.end()) {
         auto &pair = cls_found->second;
         return {pair.first.class_type, pair.second};
     }
-    auto var_found = global_functions.find(name);
+    const auto var_found = global_functions.find(name);
     if (var_found != global_functions.end()) {
         return var_found->second;
     }

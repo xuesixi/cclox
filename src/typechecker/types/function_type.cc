@@ -9,7 +9,7 @@ bool FunctionType::accept(TypePtr other) const {
     if (other->type_enum != LoxTypeEnum::Function) {
         return false;
     }
-    auto other_fun = std::static_pointer_cast<FunctionType>(other);
+    const auto other_fun = std::static_pointer_cast<FunctionType>(other);
 
     // other的返回值类型必须是本函数返回值类型的子类
     if (return_type->accept(other_fun->return_type) == false) {

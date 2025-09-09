@@ -57,7 +57,7 @@ void run_file(const std::string &path) {
     VM vm;
     try {
         std::string source = read_file(path);
-        auto result = vm.interpret(std::move(source));
+        const auto result = vm.interpret(std::move(source));
         switch (result) {
             case InterpreterResult::CompileError: {
                 print_to(std::cout, "== Compile Error ==\n", Color::RED);
@@ -81,7 +81,7 @@ void run_file_st(const std::string &path) {
     VM vm;
     try {
         std::string source = read_file(path);
-        auto result = vm.interpret_st(std::move(source));
+        const auto result = vm.interpret_st(std::move(source));
         switch (result) {
             case InterpreterResult::CompileError: {
                 print_to(std::cout, "== Compile Error ==\n", Color::RED);

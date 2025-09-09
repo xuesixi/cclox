@@ -9,7 +9,7 @@
 
 TypePtr IfStatement::resolve_return_type() {
     auto then_type = then_branch->resolve_return_type();
-    auto else_type = else_branch->resolve_return_type();
+    const auto else_type = else_branch->resolve_return_type();
     if (then_type->type_enum != LoxTypeEnum::Unspecified && else_type->type_enum != LoxTypeEnum::Unspecified) {
         return then_type;
     }
