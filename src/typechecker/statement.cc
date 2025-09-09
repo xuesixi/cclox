@@ -130,7 +130,7 @@ StmtPtr StatementParser::parse_fun() {
     }
 
     depth--;
-    return std::make_unique<FunStatement>(fun_name, std::move(parameters), return_type, std::move(body));
+    return std::make_unique<FunStatement>(fun_name, std::move(parameters), fun_type, std::move(body));
 }
 
 StmtPtr StatementParser::parse_expression_statement() {

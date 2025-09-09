@@ -64,6 +64,9 @@ declare_error(LoxNameError, LoxError);
 declare_error(LoxArgError, LoxError);
 declare_error(LoxStackOverflowError, LoxError);
 
+declare_error(TypeAssertionError, LoxError);
+
+
 declare_error(FileOpenFailureError, InterpreterError);
 
 declare_error(ConstantPoolOverflowError, CompilerError);

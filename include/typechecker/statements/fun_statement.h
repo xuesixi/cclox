@@ -7,11 +7,13 @@
 
 #include "typechecker/statement.h"
 
+class FunctionType;
+
 class FunStatement: public Statement {
 public:
     friend class AstCompiler;
-    FunStatement(const Token &fun_name, std::vector<std::pair<Token, TypePtr>> &&params, TypePtr &type, std::vector<StmtPtr> &&body)
-    : fun_name(fun_name), return_type(type), parameters(std::move(params)), body(std::move(body)) {
+    FunStatement(const Token &fun_name, std::vector<std::pair<Token, TypePtr>> &&params, const std::shared_ptr<FunctionType> &type, std::vector<StmtPtr> &&body)
+    : fun_name(fun_name), type(type), parameters(std::move(params)), body(std::move(body)) {
 
         static_assert(!std::is_abstract_v<FunStatement>);
     }
@@ -19,7 +21,7 @@ public:
     void accept(AstCompiler &compiler) override;
 
 private:
-    TypePtr return_type;
+    std::shared_ptr<FunctionType> type;
     Token fun_name;
     std::vector<std::pair<Token, TypePtr>> parameters;
     std::vector<StmtPtr> body;

@@ -48,9 +48,11 @@ public:
         return fmt::format("\"{}\"", str);
     }
 
-    LoxObjectType get_object_type() const override {
+    LoxObjectType get_object_type_enum() const override {
         return LoxObjectType::String;
     }
+
+    std::shared_ptr<LoxType> get_type_ptr() const override;
 
     void mark_reference(std::queue<LoxReference> &queue) override {}
 

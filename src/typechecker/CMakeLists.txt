@@ -19,6 +19,9 @@ add_executable(stlox
         ${clox_h}
         ${clox_obj_h}
         ${clox_native_h}
+        ../objects/loxfunction.cc
+        ../objects/loxclosure.cc
+        ../objects/loxstring.cc
 )
 
 target_include_directories(stlox PRIVATE ${incl})

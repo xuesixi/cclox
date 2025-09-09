@@ -71,7 +71,7 @@ public:
         return num_fields;
     }
 
-    LoxObjectType get_object_type() const override {
+    LoxObjectType get_object_type_enum() const override {
         return LoxObjectType::Class;
     }
 

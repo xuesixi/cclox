@@ -66,7 +66,7 @@ namespace Native {
         }
         LoxReference callable = std::get<LoxReference>(v);
 
-        switch (callable->get_object_type()) {
+        switch (callable->get_object_type_enum()) {
             case LoxObjectType::Closure:{
                 Runtime::wait_sync();
                 NativeReference t = std::make_shared<NativePair>(name_id, std::thread([callable]() {

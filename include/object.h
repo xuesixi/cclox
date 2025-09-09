@@ -12,6 +12,7 @@
 
 class LoxObject;
 
+class LoxType;
 using LoxReference = std::shared_ptr<LoxObject>;
 
 enum class LoxObjectType {
@@ -68,14 +69,16 @@ public:
     /**
      * 该object的具体类型。相比起dynamic-cast，用这个会快一些。
      */
-    virtual LoxObjectType get_object_type() const = 0;
+    virtual LoxObjectType get_object_type_enum() const = 0;
 
     /**
      * 判断该object是否是某个具体的类型。
      */
     bool is_of_type(LoxObjectType type) const {
-        return get_object_type() == type;
+        return get_object_type_enum() == type;
     }
+
+    virtual std::shared_ptr<LoxType> get_type_ptr() const;
 
     /**
      * 如果ref已经被标记，则什么都不做。否则，将之标记，并添加入队列中

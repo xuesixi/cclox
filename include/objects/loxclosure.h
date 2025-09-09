@@ -18,41 +18,26 @@ public:
         Runtime::record_free(*this);
     }
 
-    void clear_reference() override {
-        std::cout << "closure cleared\n";
-        captureds.clear();
-        function = nullptr;
-    }
+    void clear_reference() override;
 
-    [[nodiscard]] std::string to_string() const override {
-        if (function->name == "<main>") {
-            return "<main>";
-        }
-        return fmt::format("<fn: {}>", function->name);
-    }
+    [[nodiscard]] std::string to_string() const override;
 
     std::string fun_name() const {
         return function->name;
     }
 
-    LoxObjectType get_object_type() const override {
+    LoxObjectType get_object_type_enum() const override {
         return LoxObjectType::Closure;
     }
 
-    void mark_reference(std::queue<LoxReference> &queue) override {
-        mark(function, queue);
-        for (auto & captured : captureds) {
-            mark(captured, queue);
-        }
-        // todo: 捕获值的gc
-    }
+    void mark_reference(std::queue<LoxReference> &queue) override;
 
     std::vector<std::shared_ptr<Captured>> captureds;
     std::shared_ptr<LoxFunction> function;
 
-    size_t compute_size() override {
-        return sizeof(LoxClosure) + sizeof(std::shared_ptr<Captured>) * captureds.capacity();
-    }
+    size_t compute_size() override;
+
+    std::shared_ptr<LoxType> get_type_ptr() const override;
 };
 
 #endif //LOXCLOSURE_H

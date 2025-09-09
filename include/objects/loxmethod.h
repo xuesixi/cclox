@@ -40,7 +40,7 @@ public:
         return receiver_;
     }
 
-    LoxObjectType get_object_type() const override {
+    LoxObjectType get_object_type_enum() const override {
         return LoxObjectType::Method;
     }
 

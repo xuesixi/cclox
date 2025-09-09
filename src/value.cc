@@ -59,13 +59,15 @@ TypePtr LoxValue::get_type(const Value &value) {
     return std::visit([](auto &&arg) -> TypePtr {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, LoxReference>) {
-            return nullptr;
+            return arg->get_type_ptr();
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return PrimitiveType::NilType;
         } else if constexpr (std::is_same_v<T, NativeReference>) {
-            return nullptr;
+            // todo
+            return PrimitiveType::UnspecifiedType;
         } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction> >) {
-            return nullptr;
+            // todo
+            return PrimitiveType::UnspecifiedType;
         } else if constexpr (std::is_same_v<T, TypePtr>) {
             return arg;
         } else if constexpr (std::is_same_v<T, int64_t>) {

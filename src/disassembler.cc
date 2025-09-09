@@ -70,7 +70,7 @@ void Disassembler::disassemble(const std::string &name) {
 }
 
 size_t Disassembler::disassemble_instruction(size_t offset) {
-    DEBUG_ASSERT(chunk != nullptr, "chunk is null!");
+    // DEBUG_ASSERT(chunk != nullptr, "chunk is null!");
     auto instruction = static_cast<Opcode>(chunk->code.at(offset));
     int line = chunk->lines.at(offset);
     *out << fmt::format("{:04d}{}", offset, spaces_4); // byte code offset
@@ -84,6 +84,7 @@ size_t Disassembler::disassemble_instruction(size_t offset) {
         case Opcode::LoadConstant:
             return instruction_constant_operand_1(instruction, offset);
         case Opcode::LoadConstant2:
+        case Opcode::As:
             return instruction_constant_operand_2(instruction, offset);
         case Opcode::LoadImmediate:
             return instruction_load_immediate(instruction, offset);

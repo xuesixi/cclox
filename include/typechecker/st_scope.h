@@ -61,7 +61,7 @@ public:
     /**
      * 创建一个新的scope，分配一个新的loxfunction（但还没有调用fix_size），添加第一个本地变量为占地符。
      */
-    explicit ST_Scope(const std::shared_ptr<ST_Scope> &outer, const TypePtr &fun_return_type);
+    explicit ST_Scope(const std::shared_ptr<ST_Scope> &outer, const std::shared_ptr<FunctionType> &fun_type);
 
     /**
      * 进入一个新的层级，自增depth，并返回此时的本地变量的数量
@@ -158,7 +158,6 @@ private:
     std::vector<Upvalue> upvalues; // 本层级捕获的外层变量
     int depth = 0; // 深度。包括函数层级和{}层级
     std::shared_ptr<LoxFunction> function_;
-    TypePtr fun_return_type; // 当前scope所代表的函数的类型
     std::shared_ptr<ST_Scope> outer_;
 };
 

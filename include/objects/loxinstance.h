@@ -45,7 +45,7 @@ public:
         return fields.at(index);
     }
 
-    LoxObjectType get_object_type() const override {
+    LoxObjectType get_object_type_enum() const override {
         return LoxObjectType::Instance;
     }
 

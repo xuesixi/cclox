@@ -40,7 +40,7 @@ void AstCompiler::visit_expression_statement(ExpressionStatement *stmt) {
 }
 
 void AstCompiler::visit_fun_statement(FunStatement *fun) {
-    scope = std::make_shared<ST_Scope>(nullptr, fun->return_type);
+    scope = std::make_shared<ST_Scope>(nullptr, fun->type);
     scope->step_into();
 
     scope->function_->set_name(fun->fun_name.get_lexeme());
@@ -52,6 +52,8 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     }
     bool accepted_return = false;
 
+    const auto &fun_return_type = fun->type->return_type;
+
     // 处理函数体内的每个语句
     for (auto &stmt: fun->body) {
         visit_statement(stmt);
@@ -59,27 +61,27 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         // 如果该函数有标注返回值，那么需要检查每个语句是否成功返回了合适的返回值
         // 这是为了保证函数返回正确的返回值。而return语句中的检查则是为了避免返回错误的返回值
         // 在第一个成功返回处，停止代码生成
-        if (fun->return_type->type_enum != LoxTypeEnum::Void) {
+        if (fun_return_type->type_enum != LoxTypeEnum::Void) {
             const auto &stmt_type = stmt->resolve_return_type();
             if (stmt_type->type_enum != LoxTypeEnum::Unspecified) {
                 // 有返回值！
-                if (fun->return_type->accept(stmt_type)) {
+                if (fun_return_type->accept(stmt_type)) {
                     accepted_return = true;
                     break;
                 } else {
                     // 如果返回值类型不匹配，则抛出异常。
                     // 实际上我觉得这个检查时不必要的，因为 return 语句本身会根据 scope 来检查返回值的类型是否合适
                     throw MismatchedTypeError(fmt::format("the function expects return type of {}, but got {}",
-                                                          fun->return_type->to_string(), stmt_type->to_string()));
+                                                          fun_return_type->to_string(), stmt_type->to_string()));
                 }
             }
         }
     }
 
-    if (fun->return_type->type_enum != LoxTypeEnum::Void && accepted_return == false) {
+    if (fun_return_type->type_enum != LoxTypeEnum::Void && accepted_return == false) {
         // 如果有标注返回值，但函数体内没有返回，则抛出异常
         throw MismatchedTypeError(fmt::format("for function {}, not all control flows return the expected type: {}",
-                                              fun->fun_name.get_lexeme(), fun->return_type->to_string()));
+                                              fun->fun_name.get_lexeme(), fun_return_type->to_string()));
     } else {
         // 如果没有标注返回值，那么返回nil（但这里的nil只是占位符，让 return 指令实现起来更简单），typechecker 会阻止真的试图使用它的人
         current_chunk().write_opcode(Opcode::LoadNil, -1);
@@ -188,14 +190,15 @@ void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
     auto type = return_statement->value->resolve_type(scope);
     return_statement->cached_return_type = type;
     if (scope == nullptr) {
-        throw DefinitionPositionError(fmt::format("line {}: can only return inside a function", return_statement->value->get_line()));
+        throw DefinitionPositionError(fmt::format("line {}: can only return inside a function",
+                                                  return_statement->value->get_line()));
     }
-    if (scope->fun_return_type->accept(type) == false) {
+    if (scope->function_->get_type()->return_type->accept(type) == false) {
         throw MismatchedTypeError(fmt::format("line {}, the function expects return type of {}, but got {}",
-            return_statement->value->get_line(),
-            scope->fun_return_type->to_string(),
-            type->to_string()
-            ));
+                                              return_statement->value->get_line(),
+                                              scope->function_->get_type()->return_type->to_string(),
+                                              type->to_string()
+        ));
     }
     visit_expression(return_statement->value);
     current_chunk().write_opcode(Opcode::Return, return_statement->value->get_line());

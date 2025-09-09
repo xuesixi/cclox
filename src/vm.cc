@@ -399,7 +399,11 @@ InterpreterResult VM::run() {
                 }
                 case Opcode::As: {
                     TypePtr as_type = std::get<TypePtr>(read_constant_2());
+                    TypePtr value_type = LoxValue::get_type(stack().back());
                     // todo
+                    if (as_type->accept(value_type) == false) {
+                        throw TypeAssertionError(fmt::format("assertion fail: {} does not accept {}", as_type->to_string(), value_type->to_string()));
+                    }
                     break;
                 }
                 default:
@@ -438,7 +442,7 @@ void VM::call_value(size_t arg_count) {
     if (!std::holds_alternative<LoxReference>(callable)) {
         throw LoxTypeError(fmt::format("the value {} cannot not be called", LoxValue::to_string(callable)));
     }
-    switch (std::get<LoxReference>(callable)->get_object_type()) {
+    switch (std::get<LoxReference>(callable)->get_object_type_enum()) {
         case LoxObjectType::Closure:
             call_closure(arg_count);
             break;

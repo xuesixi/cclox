@@ -8,6 +8,8 @@
 #include "object.h"
 #include "runtime.h"
 
+class FunctionType;
+
 enum class FunctionTypeEnum {
     None,
     Function,
@@ -16,24 +18,19 @@ enum class FunctionTypeEnum {
     Lambda,
 };
 
-class LoxFunction: public LoxObject {
-
+class LoxFunction : public LoxObject {
 public:
     friend class LoxClosure;
+
+    LoxFunction() = default;
 
     ~LoxFunction() override {
         Runtime::record_free(*this);
     }
-    void clear_reference() override {
-        chunk.constants.clear();
-    };
 
-    std::string to_string() const override {
-        if (name == "<main>") {
-            return "<proto: main>";
-        }
-        return fmt::format("<proto: {}>", name);
-    }
+    void clear_reference() override;;
+
+    std::string to_string() const override;
 
     Chunk &get_chunk() {
         return chunk;
@@ -43,38 +40,36 @@ public:
         name = new_name;
     }
 
+    void set_type(const std::shared_ptr<FunctionType> &type);
+
+    std::shared_ptr<FunctionType> get_type() const {
+        return this->type;
+    }
+
+    std::shared_ptr<LoxType> get_type_ptr() const override;
+
     void incre_arity() {
-        arity_ ++;
+        arity_++;
     }
 
     int arity() {
         return arity_;
     }
 
-    LoxObjectType get_object_type() const override {
+    LoxObjectType get_object_type_enum() const override {
         return LoxObjectType::Function;
     }
 
-    void mark_reference(std::queue<LoxReference> &queue) override {
-        for (auto & constant : chunk.constants) {
-            LoxValue::mark_value(constant, queue);
-        }
-    }
+    void mark_reference(std::queue<LoxReference> &queue) override;
 
-    size_t compute_size() override {
-        if (memory_size == 0) {
-            memory_size = sizeof(LoxFunction) + chunk.estimate_memory_size() + name.capacity();
-            return memory_size;
-        } else {
-            return memory_size;
-        }
-    }
+    size_t compute_size() override;
 
 private:
     Chunk chunk;
     std::string name;
-    int arity_ = 0 ;
+    int arity_ = 0;
     size_t memory_size = 0;
+    std::shared_ptr<FunctionType> type;
 };
 
 #endif //LOXFUNCTION_H
