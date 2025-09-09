@@ -30,6 +30,9 @@ enum class TokenType {
     // extension
     Break, Continue, Recur, Field, Method, Static, Public, Export, Import, As, Try, Catch, Throw, Const,
 
+    // type
+    TypeInt, TypeFloat, TypeBool, TypeAny, TypeVoid,
+
     ERROR, END_OF_FILE // EOF被内置宏占用了
 };
 

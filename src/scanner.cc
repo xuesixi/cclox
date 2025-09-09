@@ -35,6 +35,11 @@ static std::unordered_map<std::string, TokenType> keyword_map{
     {"try", TokenType::Try},
     {"catch", TokenType::Catch},
     {"const", TokenType::Const},
+    {"int", TokenType::TypeInt},
+    {"float", TokenType::TypeFloat},
+    {"bool", TokenType::TypeBool},
+    {"any", TokenType::TypeAny},
+    {"void", TokenType::TypeVoid},
 
 };
 

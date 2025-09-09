@@ -13,13 +13,13 @@
 #include "object.h"
 #include "native.h"
 #include "nativeobjects/loxconcurrent.h"
-// #include "typechecker/lox_type.h"
+#include "typechecker/lox_type.h"
 
 using NativeObject = std::variant<std::thread, LoxMutex, LoxCondition>;
 using NativePair = std::pair<uint16_t, NativeObject>;
 using NativeReference = std::shared_ptr<NativePair>;
 
-using Value = std::variant<int64_t, double, bool, std::nullptr_t, LoxReference, NativeReference, std::shared_ptr<LoxNativeFunction>>;
+using Value = std::variant<int64_t, double, bool, std::nullptr_t, LoxReference, NativeReference, std::shared_ptr<LoxNativeFunction>, TypePtr>;
 
 namespace LoxValue {
 
@@ -29,6 +29,8 @@ namespace LoxValue {
     std::string to_string(const Value &value);
 
     std::string to_visual_string(const Value &value);
+
+    TypePtr get_type(const Value &value);
 
     /**
      * 幂运算

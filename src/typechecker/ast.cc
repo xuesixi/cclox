@@ -11,6 +11,7 @@
 #include "typechecker/global_name_resolver.h"
 #include "typechecker/expressions/and_expression.h"
 #include "typechecker/expressions/assignment_expression.h"
+#include "typechecker/expressions/as_expression.h"
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/call_expression.h"
 #include "typechecker/expressions/or_expression.h"
@@ -208,6 +209,10 @@ void AstCompiler::visit_and_expr(AndExpression *expr) {
 }
 
 void AstCompiler::visit_as_expr(AsExpression *expr) {
+    visit_expression(expr->expr);
+    uint16_t index = current_chunk().add_constant(expr->as_type);
+    current_chunk().write_opcode(Opcode::As, expr->line);
+    current_chunk().write_operand_2(index, expr->line);
 }
 
 void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {

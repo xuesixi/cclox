@@ -14,6 +14,7 @@
 
 #include "runtime.h"
 #include "stringintern.h"
+#include "typechecker/types/primitive_type.h"
 
 std::string LoxValue::to_string(const Value &value) {
     return std::visit([](auto &&arg) -> std::string {
@@ -23,9 +24,10 @@ std::string LoxValue::to_string(const Value &value) {
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
         } else if constexpr (std::is_same_v<T, NativeReference>) {
-            // return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
             return StringIntern::read_from_id(arg->first);
-        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction>>) {
+        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction> >) {
+            return arg->to_string();
+        } else if constexpr (std::is_same_v<T, TypePtr>) {
             return arg->to_string();
         } else {
             return fmt::format("{}", arg);
@@ -41,13 +43,39 @@ std::string LoxValue::to_visual_string(const Value &value) {
         } else if constexpr (std::is_same_v<T, nullptr_t>) {
             return "nil";
         } else if constexpr (std::is_same_v<T, NativeReference>) {
-            // return fmt::format("<cc: {}>", StringIntern::read_from_id(arg->first));
             return StringIntern::read_from_id(arg->first);
-        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction>>) {
+        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction> >) {
             // return arg->get_name();
+            return arg->to_string();
+        } else if constexpr (std::is_same_v<T, TypePtr>) {
             return arg->to_string();
         } else {
             return fmt::format("{}", arg);
+        }
+    }, value);
+}
+
+TypePtr LoxValue::get_type(const Value &value) {
+    return std::visit([](auto &&arg) -> TypePtr {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, LoxReference>) {
+            return nullptr;
+        } else if constexpr (std::is_same_v<T, nullptr_t>) {
+            return PrimitiveType::NilType;
+        } else if constexpr (std::is_same_v<T, NativeReference>) {
+            return nullptr;
+        } else if constexpr (std::is_same_v<T, std::shared_ptr<LoxNativeFunction> >) {
+            return nullptr;
+        } else if constexpr (std::is_same_v<T, TypePtr>) {
+            return arg;
+        } else if constexpr (std::is_same_v<T, int64_t>) {
+            return PrimitiveType::IntType;
+        } else if constexpr (std::is_same_v<T, double>) {
+            return PrimitiveType::FloatType;
+        } else if constexpr (std::is_same_v<T, bool>) {
+            return PrimitiveType::BoolType;
+        } else {
+            ASSERT_UNREACHABLE();
         }
     }, value);
 }
@@ -92,7 +120,8 @@ Value LoxValue::power(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return std::pow(a, b);
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support power arithmetic", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support power arithmetic",
+                                           LoxValue::to_string(a), LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -105,7 +134,8 @@ Value operator>(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a > b;
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support comparison", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support comparison", LoxValue::to_string(a),
+                                           LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -118,7 +148,8 @@ Value operator<(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a < b;
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support comparison", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support comparison", LoxValue::to_string(a),
+                                           LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -140,10 +171,12 @@ Value operator+(const Value &left, const Value &right) {
                 Runtime::record_allocation(str);
                 return str;
             } else {
-                throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a), LoxValue::to_string(b)));
+                throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a),
+                                               LoxValue::to_string(b)));
             }
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support addition", LoxValue::to_string(a),
+                                           LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -156,7 +189,8 @@ Value operator-(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a - b;
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support subtraction", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support subtraction", LoxValue::to_string(a),
+                                           LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -169,7 +203,8 @@ Value operator*(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a * b;
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support multiplication", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support multiplication", LoxValue::to_string(a),
+                                           LoxValue::to_string(b)));
         }
     }, left, right);
 }
@@ -182,7 +217,8 @@ Value operator/(const Value &left, const Value &right) {
         if constexpr (are_non_bool_arithmetic<A, B>()) {
             return a / b;
         } else {
-            throw LoxTypeError(fmt::format("the values {} and {} do not support division", LoxValue::to_string(a), LoxValue::to_string(b)));
+            throw LoxTypeError(fmt::format("the values {} and {} do not support division", LoxValue::to_string(a),
+                                           LoxValue::to_string(b)));
         }
     }, left, right);
 }

@@ -9,6 +9,7 @@
 
 class AsExpression: public Expression {
 public:
+    friend class AstCompiler;
     AsExpression(ExprPtr expr, TypePtr &as_type): expr(std::move(expr)), as_type(as_type) {}
 private:
     ExprPtr expr;

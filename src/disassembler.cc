@@ -52,6 +52,7 @@ const std::unordered_map<Opcode, std::string> opcode_names{
     {Opcode::SetField, "SetField"},
     {Opcode::MethodBind, "MethodBind"},
     {Opcode::MethodInvoke, "MethodInvoke"},
+    {Opcode::As, "As"},
 };
 
 // 四个空格。格式化的时候偶尔会用到。

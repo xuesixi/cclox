@@ -234,18 +234,6 @@ InterpreterResult VM::run() {
 
                     push(st_runtime.access_global(str_id));
 
-                    // std::lock_guard<std::mutex> lock(Runtime::globals_access_mutex);
-                    // auto found = Runtime::globals.find(str_id);
-                    // if (found != Runtime::globals.end()) {
-                    //     push(found->second);
-                    //     break;
-                    // }
-                    // found = Runtime::builtin.find(str_id);
-                    // if (found != Runtime::builtin.end()) {
-                    //     push(found->second);
-                    //     break;
-                    // }
-                    // throw LoxNameError(fmt::format("the variable: {} is not found", StringIntern::read_from_id(str_id)));
                     break;
                 }
                 case Opcode::SetGlobal: {
@@ -311,7 +299,6 @@ InterpreterResult VM::run() {
                 case Opcode::Call: {
                     // fn, 1, 2
                     uint8_t arg_count = read_operand_1();
-                    // call_value(arg_count);
                     call_closure_st(arg_count);
                     break;
                 }
@@ -408,6 +395,11 @@ InterpreterResult VM::run() {
                     auto instance = LoxValue::to_reference_unsafe<LoxInstance>(frame_at(0));
                     instance->get_field(index) = v;
                     push(v);
+                    break;
+                }
+                case Opcode::As: {
+                    TypePtr as_type = std::get<TypePtr>(read_constant_2());
+                    // todo
                     break;
                 }
                 default:

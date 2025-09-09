@@ -123,20 +123,25 @@ TypePtr TypeParser::parse_primary() {
         if (tokens->match(TokenType::Nil)) {
             return PrimitiveType::NilType;
         }
+        if (tokens->match(TokenType::TypeInt)) {
+            return PrimitiveType::IntType;
+        }
+        if (tokens->match(TokenType::TypeFloat)) {
+            return PrimitiveType::FloatType;
+        }
+        if (tokens->match(TokenType::TypeBool)) {
+            return PrimitiveType::BoolType;
+        }
+        if (tokens->match(TokenType::TypeVoid)) {
+            return PrimitiveType::VoidType;
+        }
+        if (tokens->match(TokenType::TypeAny)) {
+            return PrimitiveType::AnyType;
+        }
         const Token &token = tokens->consume(TokenType::IDENTIFIER, "expect a identifier as type name here");
         std::string lexeme = token.get_lexeme();
-        if (lexeme == "int") {
-            return PrimitiveType::IntType;
-        } else if (lexeme == "bool") {
-            return PrimitiveType::BoolType;
-        } else if (lexeme == "float") {
-            return PrimitiveType::FloatType;
-        } else if (lexeme == "String") {
+        if (lexeme == "String") {
             return PrimitiveType::StringType;
-        } else if (lexeme == "any") {
-            return PrimitiveType::AnyType;
-        } else if (lexeme == "void") {
-            return PrimitiveType::VoidType;
         } else {
             return std::make_shared<ClassType>(lexeme);
         }
