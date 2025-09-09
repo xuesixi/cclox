@@ -7,3 +7,9 @@
 * 函数必须标注参数类型和返回值。没有标注返回值的函数视为没有返回值，而非返回nil
 * 变量定义可以省略类型，但如果没有初始值，则必须申明类型，此时，会自动为其赋予初始值（0、0.0、"", false, nil）`var name = get_string();` `var num: int = 10;`, `var age: int;`
 * 可以用as来进行类型转化
+
+## 运行流程
+* Scanner 将源代码转化为 token 
+* StatementParser 将 token 转化为 AST。这个过程中可以检测一些简单的结构错误
+* AstCompiler 访问 AST 来生成字节码。这个过程会进行更多的语法检查，包括类型检查
+* 虚拟机运行字节码

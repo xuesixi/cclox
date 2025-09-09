@@ -18,12 +18,6 @@ using ExprPtr = std::unique_ptr<Expression>;
 class Expression {
 public:
 
-    enum class Assignability {
-        None,
-        Field,
-        Variable,
-    };
-
     enum class ExpressionType {
         And,
         As,
@@ -61,12 +55,6 @@ public:
         return MismatchedTypeError(fmt::format("line: {}, mismatched type: {}", line, fmt::format(fmt::runtime(msg_fmt), expected->to_string(), actual->to_string())));
     }
 
-    /**
-     * 该表达式可否作为左值。
-     */
-    virtual Assignability get_assignability() const {
-        return Assignability::None;
-    }
 
     virtual ExpressionType get_expression_type() const = 0;
 

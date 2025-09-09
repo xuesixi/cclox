@@ -29,9 +29,18 @@
 
 std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
     StatementParser parser(std::move(source));
-    statements = parser.parse_all();
-    for (auto &statement: statements) {
-        visit_statement(statement);
+
+    try {
+        statements = parser.parse_all();
+    } catch (CompilerError &error) {
+        return nullptr;
+    }
+
+    for (auto &each: statements) {
+        visit_statement(each);
+    }
+    if (has_error) {
+        return nullptr;
     }
     return main;
 }
@@ -79,16 +88,9 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         if (fun_return_type->type_enum != LoxTypeEnum::Void) {
             const auto &stmt_type = stmt->resolve_return_type();
             if (stmt_type->type_enum != LoxTypeEnum::Unspecified) {
-                // 有返回值！
-                if (fun_return_type->accept(stmt_type)) {
-                    accepted_return = true;
-                    break;
-                } else {
-                    // 如果返回值类型不匹配，则抛出异常。
-                    // todo: 实际上我觉得这个检查时不必要的，因为 return 语句本身会根据 scope 来检查返回值的类型是否合适
-                    throw MismatchedTypeError(fmt::format("the function expects return type of '{}', but got '{}'",
-                                                          fun_return_type->to_string(), stmt_type->to_string()));
-                }
+                // 有返回值！不检察返回值类型是否匹配，因为return语句本身会检察
+                accepted_return = true;
+                break;
             }
         }
     }
@@ -126,7 +128,7 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         }
     }
 
-    if (Flag::disassembly) {
+    if (Flag::disassembly && has_error == false) {
         Disassembler disassembler(&scope->function_->get_chunk(), &std::cout);
         disassembler.disassemble(fun->fun_name.get_lexeme());
     }

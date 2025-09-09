@@ -18,10 +18,6 @@ TypePtr DotExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     return name_resolver.find_class_member(instance_class->get_type_id(), this->target_field);
 }
 
-Expression::Assignability DotExpression::get_assignability() const {
-    return Assignability::Field;
-}
-
 void DotExpression::accept(AstCompiler &compiler) {
     compiler.visit_dot_expr(this);
 }

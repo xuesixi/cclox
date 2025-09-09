@@ -24,8 +24,6 @@ public:
 
     void accept(AstCompiler &compiler) override;
 
-    Assignability get_assignability() const override;
-
     ExpressionType get_expression_type() const override {
         return ExpressionType::Primary;
     }

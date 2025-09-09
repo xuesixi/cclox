@@ -38,14 +38,28 @@ class UnaryExpression;
 
 class AstCompiler {
 public:
+    /**
+     * 编译给定的源代码
+     * @param source 源代码
+     * @return 如果一切正常，返回 main 函数。如果出现编译错误，返回空指针
+     */
     std::shared_ptr<LoxClosure> compile(std::string &&source);
 
+    /**
+     * 编译指定的语句。该函数内部会捕获编译错误，并设置 has_error
+     */
     void visit_statement(const StmtPtr &stmt) {
-        stmt.get()->accept(*this);
+        try {
+            stmt.get()->accept(*this);
+        } catch (CompilerError &error) {
+            has_error = true;
+            std::cerr << error.what() << std::endl;
+        }
     }
 
     /**
-     * 访问一个表达式，生成对应的代码。该函数内部会验证表达式的类型
+     * 访问一个表达式，生成对应的代码。
+     * 该函数会假设表达式的类型已经在事前被验证过了。
      */
     void visit_expression(const ExprPtr &expr) {
         expr.get()->accept(*this);
@@ -133,6 +147,7 @@ private:
     std::vector<StmtPtr> statements;
     std::shared_ptr<ST_Scope> scope;
     std::shared_ptr<LoxClosure> main;
+    bool has_error = false;
 };
 
 #endif //CCLOX_AST_H

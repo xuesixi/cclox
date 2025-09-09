@@ -21,7 +21,7 @@ public:
         }
     }
 
-    bool is_end() {
+    bool is_end() const {
         return next >= tokens.size();
     }
 

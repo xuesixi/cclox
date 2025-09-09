@@ -50,13 +50,3 @@ TypePtr PrimaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
 void PrimaryExpression::accept(AstCompiler &compiler) {
     compiler.visit_primary_expr(this);
 }
-
-/**
- * 如果是标识符，则可以被赋值
- */
-Expression::Assignability PrimaryExpression::get_assignability() const {
-    if (value_token.get_type() == TokenType::IDENTIFIER) {
-        return Assignability::Variable;
-    }
-    return Assignability::None;
-}

@@ -20,8 +20,6 @@ public:
 
     TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) override;
 
-    Assignability get_assignability() const override;
-
     void accept(AstCompiler &compiler) override;
 
     ExpressionType get_expression_type() const override {
