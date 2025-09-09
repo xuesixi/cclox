@@ -15,7 +15,7 @@ TypePtr DotExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
         throw MismatchedTypeError(fmt::format("line {}: cannot access member of type '{}'", line, target_type->to_string()));
     }
     auto instance_class = std::static_pointer_cast<ClassType>(target_type);
-    return name_resolver.find_class_member(instance_class->get_type_id(), target_field.get_lexeme());
+    return name_resolver.find_class_member(instance_class->get_type_id(), this->target_field);
 }
 
 Expression::Assignability DotExpression::get_assignability() const {

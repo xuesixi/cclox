@@ -118,7 +118,7 @@ StmtPtr StatementParser::parse_fun() {
     auto fun_type = std::make_shared<FunctionType>(std::move(type_params), TypePtr(return_type));
 
     // 将这个函数添加到解析名字中
-    name_resolver.declare_function(fun_name.get_lexeme(), fun_type);
+    name_resolver.declare_function(fun_name, fun_type);
 
     // 解析函数体
     tokens->consume(TokenType::LEFT_BRACE, "expect a '{' to start the function body");

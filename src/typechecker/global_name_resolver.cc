@@ -41,26 +41,33 @@ std::string GlobalNameResolver::read_typename_from_id(size_t type_id) {
     return id_to_typename.at(type_id);
 }
 
-void GlobalNameResolver::declare_function(const std::string &name, const TypePtr &type) {
+void GlobalNameResolver::declare_function(const Token &name_token, const TypePtr &type) {
+    const std::string &name = name_token.get_lexeme();
     if (resolve_name(name).first->type_enum == LoxTypeEnum::Unspecified) {
         auto index = st_runtime.declare_global();
         global_functions.insert({name, {type, index}});
     } else {
-        throw DuplicateNameVariableError(fmt::format("the name: {} is already defined", name));
+        throw DuplicateNameVariableError(fmt::format("line {}: the name: {} is already defined",
+            name_token.get_line(),
+            name));
     }
 }
 
-void GlobalNameResolver::declare_class(const std::string &class_name) {
+void GlobalNameResolver::declare_class(const Token &class_name_token) {
+    const std::string &class_name = class_name_token.get_lexeme();
     if (resolve_name(class_name).first->type_enum == LoxTypeEnum::Unspecified ) {
         auto index = st_runtime.declare_global();
         global_classes.insert({class_name, {{class_name}, index}});
     } else {
-        throw DuplicateNameVariableError(fmt::format("the name: {} is already defined", class_name));
+        throw DuplicateNameVariableError(fmt::format("line {}: the name: {} is already defined",
+            class_name_token.get_line(),
+            class_name));
     }
 }
 
 void GlobalNameResolver::declare_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
-                                  const std::string &member_name, TypePtr &type) {
+                                  const Token &member_name_token, TypePtr &type) {
+    const std::string &member_name = member_name_token.get_lexeme();
     auto found = global_classes.find(class_name);
     if (found == global_classes.end()) {
         IMPL_ERROR("a class name is not found");
@@ -81,7 +88,8 @@ void GlobalNameResolver::declare_class_member(const std::string &class_name, Cla
     }
 }
 
-TypePtr GlobalNameResolver::find_class_member(size_t type_id, const std::string &member_name) {
+TypePtr GlobalNameResolver::find_class_member(size_t type_id, const Token &member_name_token) {
+    const std::string &member_name = member_name_token.get_lexeme();
     std::string name = read_typename_from_id(type_id);
     auto found = global_classes.find(name);
     if (found == global_classes.end()) {
@@ -111,19 +119,3 @@ std::pair<TypePtr, uint16_t> GlobalNameResolver::resolve_name(const std::string 
     }
     return {PrimitiveType::UnspecifiedType, 0};
 }
-
-// TypePtr GlobalNameResolver::find_class(const std::string &name) {
-//     auto found = global_classes.find(name);
-//     if (found == global_classes.end()) {
-//         throw ClassNotFoundError(fmt::format("the class {} is not defined", name));
-//     }
-//     return found->second.class_type;
-// }
-//
-// TypePtr GlobalNameResolver::find_function(const std::string &fun_name) {
-//     auto found = global_functions.find(fun_name);
-//     if (found == global_functions.end()) {
-//         throw VariableNotFoundError(fmt::format("the function {} is not defined", fun_name));
-//     }
-//     return found->second;
-// }

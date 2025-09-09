@@ -14,6 +14,7 @@ using TypePtr = std::shared_ptr<LoxType>;
 /**
  * 在构建 AST 的时候，在类负责记录出现的全局标识符以及它们对应的类型、全局索引
  * 全局函数和类是可以互相调用的（而不必遵循定义的顺序），因为在第一次解析的时候就需要把它们的名字和类型都记录了。
+ * 下面有些函数的参数是Token，有些是string。因为token自带行号信息
  */
 class GlobalNameResolver {
 public:
@@ -53,39 +54,29 @@ public:
     /**
      * 记录一个新的函数。如果重复，抛出异常
      */
-    void declare_function(const std::string &name, const TypePtr &type);
+    void declare_function(const Token &name_token, const TypePtr &type);
 
     /**
      * 记录一个新的类。如果重复，抛出异常
      */
-    void declare_class(const std::string &class_name);
+    void declare_class(const Token &class_name_token);
 
     /**
      * 记录一个新的类的成员
      */
     void declare_class_member(const std::string &class_name, ClassRecord::ClassMemberType member_type,
-                              const std::string &member_name, TypePtr &type);
+                              const Token &member_name_token, TypePtr &type);
 
 
     /**
      * 寻找一个类的成员的类型。如果没找到该成员，抛出异常
      */
-    TypePtr find_class_member(size_t type_id, const std::string &member_name);
+    TypePtr find_class_member(size_t type_id, const Token &member_name_token);
 
     /**
      * 寻找指定名字对应的类型和全局索引<type, index>，如果没找到，返回 <Unspecified, 0>
      */
     std::pair<TypePtr, uint16_t> resolve_name(const std::string &name);
-
-    // /**
-    //  * 寻找一个类的类型，如果没找到该类，抛出异常
-    //  */
-    // TypePtr find_class(const std::string &name);
-    //
-    // /**
-    //  * 寻找一个函数
-    //  */
-    // TypePtr find_function(const std::string &fun_name);
 
 private:
 
