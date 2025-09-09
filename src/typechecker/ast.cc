@@ -18,13 +18,15 @@
 #include "typechecker/statements/expression_statement.h"
 #include "typechecker/statements/fun_statement.h"
 #include "typechecker/statements/print_statement.h"
+#include "typechecker/statements/return_statement.h"
 #include "typechecker/statements/var_statement.h"
+#include "typechecker/types/function_type.h"
 #include "typechecker/types/union_type.h"
 
 std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
     StatementParser parser(std::move(source));
     statements = parser.parse_all();
-    for (auto & statement : statements) {
+    for (auto &statement: statements) {
         visit_statement(statement);
     }
     return main;
@@ -37,12 +39,12 @@ void AstCompiler::visit_expression_statement(ExpressionStatement *stmt) {
 }
 
 void AstCompiler::visit_fun_statement(FunStatement *fun) {
-    scope = std::make_shared<ST_Scope>(nullptr);
+    scope = std::make_shared<ST_Scope>(nullptr, fun->return_type);
     scope->step_into();
 
     scope->function_->set_name(fun->fun_name.get_lexeme());
 
-    for (auto & parameter : fun->parameters) {
+    for (auto &parameter: fun->parameters) {
         // 将每一个参数作为本地变量处理
         scope->add_local(parameter.first, parameter.second);
         scope->initialize();
@@ -50,14 +52,13 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     bool accepted_return = false;
 
     // 处理函数体内的每个语句
-    for (auto & stmt : fun->body) {
-
+    for (auto &stmt: fun->body) {
         visit_statement(stmt);
 
         // 如果该函数有标注返回值，那么需要检查每个语句是否成功返回了合适的返回值
         // 这是为了保证函数返回正确的返回值。而return语句中的检查则是为了避免返回错误的返回值
         // 在第一个成功返回处，停止代码生成
-        if (fun->return_type->type_enum != LoxTypeEnum::Unspecified) {
+        if (fun->return_type->type_enum != LoxTypeEnum::Void) {
             const auto &stmt_type = stmt->resolve_return_type();
             if (stmt_type->type_enum != LoxTypeEnum::Unspecified) {
                 // 有返回值！
@@ -67,15 +68,17 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
                 } else {
                     // 如果返回值类型不匹配，则抛出异常。
                     // 实际上我觉得这个检查时不必要的，因为 return 语句本身会根据 scope 来检查返回值的类型是否合适
-                    throw MismatchedTypeError(fmt::format("the function expects return type of {}, but got {}", fun->return_type->to_string(), stmt_type->to_string()));
+                    throw MismatchedTypeError(fmt::format("the function expects return type of {}, but got {}",
+                                                          fun->return_type->to_string(), stmt_type->to_string()));
                 }
             }
         }
     }
 
-    if (fun->return_type->type_enum != LoxTypeEnum::Unspecified && accepted_return == false) {
+    if (fun->return_type->type_enum != LoxTypeEnum::Void && accepted_return == false) {
         // 如果有标注返回值，但函数体内没有返回，则抛出异常
-        throw MismatchedTypeError(fmt::format("not all control flows return the expected type: {}", fun->return_type->to_string()));
+        throw MismatchedTypeError(fmt::format("for function {}, not all control flows return the expected type: {}",
+                                              fun->fun_name.get_lexeme(), fun->return_type->to_string()));
     } else {
         // 如果没有标注返回值，那么返回nil（但这里的nil只是占位符，让 return 指令实现起来更简单），typechecker 会阻止真的试图使用它的人
         current_chunk().write_opcode(Opcode::LoadNil, -1);
@@ -107,8 +110,6 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
 }
 
 void AstCompiler::visit_var_statement(VarStatement *stmt) {
-
-
     if (stmt->type->type_enum == LoxTypeEnum::Unspecified) {
         DEBUG_ASSERT(stmt->initializer != nullptr, "both initializer and type are empty");
         // 如果没有指明类型，则类型由初始值决定
@@ -116,7 +117,6 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
         scope->add_local(stmt->name, type);
         visit_expression(stmt->initializer); // 将初始值入栈
     } else {
-
         // 如果指明了类型，那么初始值可能为空
         scope->add_local(stmt->name, stmt->type);
 
@@ -126,7 +126,8 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
             if (stmt->type->accept(type)) {
                 visit_expression(stmt->initializer);
             } else {
-                throw MismatchedTypeError(fmt::format("annotated type: {} does not match initializer type: {}", stmt->type->to_string(), type->to_string()));
+                throw MismatchedTypeError(fmt::format("annotated type: {} does not match initializer type: {}",
+                                                      stmt->type->to_string(), type->to_string()));
             }
         } else {
             // 初始值为空，此时，初始值由指定的类型决定。但也有些类型不允许初始值
@@ -162,13 +163,14 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
                     if (u->contains_nil()) {
                         current_chunk().write_opcode(Opcode::LoadNil, line);
                     } else {
-                        throw NoInitializationError(fmt::format("the annotated type: {} must be initialized", stmt->type->to_string()));
+                        throw NoInitializationError(
+                            fmt::format("the annotated type: {} must be initialized", stmt->type->to_string()));
                     }
                     break;
                 }
                 default:
-                    throw NoInitializationError(fmt::format("the annotated type: {} must be initialized", stmt->type->to_string()));
-
+                    throw NoInitializationError(fmt::format("the annotated type: {} must be initialized",
+                                                            stmt->type->to_string()));
             }
         }
     }
@@ -179,6 +181,23 @@ void AstCompiler::visit_print_statement(PrintStatement *stmt) {
     stmt->expr->resolve_type(scope);
     visit_expression(stmt->expr);
     emit_opcode(Opcode::Print, stmt->expr->get_line());
+}
+
+void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
+    auto type = return_statement->value->resolve_type(scope);
+    return_statement->cached_return_type = type;
+    if (scope == nullptr) {
+        throw DefinitionPositionError(fmt::format("line {}: can only return inside a function", return_statement->value->get_line()));
+    }
+    if (scope->fun_return_type->accept(type) == false) {
+        throw MismatchedTypeError(fmt::format("line {}, the function expects return type of {}, but got {}",
+            return_statement->value->get_line(),
+            scope->fun_return_type->to_string(),
+            type->to_string()
+            ));
+    }
+    visit_expression(return_statement->value);
+    current_chunk().write_opcode(Opcode::Return, return_statement->value->get_line());
 }
 
 void AstCompiler::visit_and_expr(AndExpression *expr) {
@@ -259,7 +278,7 @@ void AstCompiler::visit_binary_expr(BinaryExpression *expr) {
 
 void AstCompiler::visit_call_expr(CallExpression *expr) {
     visit_expression(expr->callee);
-    for (auto & arg : expr->arguments) {
+    for (auto &arg: expr->arguments) {
         visit_expression(arg);
     }
     current_chunk().write_opcode(Opcode::Call, expr->callee->get_line());
@@ -315,7 +334,7 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
             Runtime::record_allocation(value);
             break;
         }
-            // todo: fmtstring
+        // todo: fmtstring
 
         case TokenType::IDENTIFIER: {
             auto local_index = scope->resolve_local(expr->value_token);
@@ -326,7 +345,7 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
                 break;
             }
             auto [type, global_index] = name_resolver.resolve_name(lexeme);
-            if (type->type_enum != LoxTypeEnum::Unspecified ) {
+            if (type->type_enum != LoxTypeEnum::Unspecified) {
                 current_chunk().write_opcode(Opcode::LoadGlobal, line);
                 current_chunk().write_operand_2(global_index, line);
                 break;
@@ -350,7 +369,7 @@ void AstCompiler::visit_unary_expr(UnaryExpression *expr) {
     }
 }
 
-Chunk & AstCompiler::current_chunk() {
+Chunk &AstCompiler::current_chunk() {
     return scope->function_->get_chunk();
 }
 

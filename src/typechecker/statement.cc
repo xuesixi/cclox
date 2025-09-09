@@ -10,6 +10,7 @@
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/var_statement.h"
 #include "typechecker/statements/block_statement.h"
+#include "typechecker/statements/return_statement.h"
 #include "typechecker/types/function_type.h"
 #include "typechecker/types/primitive_type.h"
 
@@ -30,6 +31,9 @@ StmtPtr StatementParser::parse_statement() {
     }
     if (tokens->match(TokenType::LEFT_BRACE)) {
         return parse_block();
+    }
+    if (tokens->match(TokenType::Return)) {
+        return parse_return();
     }
 
     return parse_expression_statement();
@@ -101,7 +105,7 @@ StmtPtr StatementParser::parse_fun() {
     if (tokens->match(TokenType::DASH_GREATER)) {
         return_type = type_parser()->parse_type();
     } else {
-        return_type = PrimitiveType::UnspecifiedType; // 默认为 void
+        return_type = PrimitiveType::VoidType; // 默认为 void
     }
 
     std::vector<TypePtr> type_params;
@@ -133,4 +137,10 @@ StmtPtr StatementParser::parse_expression_statement() {
     auto expr = expr_parser->parse_expression();
     tokens->consume();
     return std::make_unique<ExpressionStatement>(std::move(expr));
+}
+
+StmtPtr StatementParser::parse_return() {
+    auto stmt = std::make_unique<ReturnStatement>(expr_parser->parse_expression());
+    tokens->consume();
+    return stmt;
 }

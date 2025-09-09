@@ -8,7 +8,7 @@
 #include "runtime.h"
 #include "typechecker/types/primitive_type.h"
 
-ST_Scope::ST_Scope(const std::shared_ptr<ST_Scope> &outer):outer_(outer) {
+ST_Scope::ST_Scope(const std::shared_ptr<ST_Scope> &outer, const TypePtr &fun_return_type): outer_(outer), fun_return_type(fun_return_type) {
     function_ = std::static_pointer_cast<LoxFunction>(Runtime::allocate_as_ref<LoxFunction>());
     locals.push_back({});// 第一个本地变量有特殊用处（在调用过程中代表方法的调用者this或者函数本身，同时也是返回值的位置）
     initialize();

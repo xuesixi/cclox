@@ -24,6 +24,7 @@ public:
     static TypePtr IntType;
     static TypePtr FloatType;
     static TypePtr BoolType;
+    static TypePtr VoidType;
     static TypePtr AnyType;
     static TypePtr StringType;
     static TypePtr MismatchedType;

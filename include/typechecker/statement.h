@@ -78,6 +78,11 @@ public:
      */
     StmtPtr parse_expression_statement();
 
+    /**
+     * 在 return 已经被消费，next 为表达式的时候调用
+     */
+    StmtPtr parse_return();
+
 
 private:
 

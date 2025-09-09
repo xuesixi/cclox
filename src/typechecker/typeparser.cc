@@ -135,6 +135,8 @@ TypePtr TypeParser::parse_primary() {
             return PrimitiveType::StringType;
         } else if (lexeme == "any") {
             return PrimitiveType::AnyType;
+        } else if (lexeme == "void") {
+            return PrimitiveType::VoidType;
         } else {
             return std::make_shared<ClassType>(lexeme);
         }

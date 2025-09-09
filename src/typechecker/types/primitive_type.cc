@@ -14,6 +14,7 @@ std::string PrimitiveType::to_no_parenthesis_string() {
         case LoxTypeEnum::Bool: return "bool";
         case LoxTypeEnum::Nil: return "nil";
         case LoxTypeEnum::String: return "String";
+        case LoxTypeEnum::Void: return "void";
         default:
             ASSERT_UNREACHABLE();
     }
@@ -29,6 +30,7 @@ bool PrimitiveType::accept(TypePtr other) const {
 TypePtr PrimitiveType::IntType = std::make_shared<PrimitiveType>(LoxTypeEnum::Int);
 TypePtr PrimitiveType::FloatType = std::make_shared<PrimitiveType>(LoxTypeEnum::Float);
 TypePtr PrimitiveType::BoolType = std::make_shared<PrimitiveType>(LoxTypeEnum::Bool);
+TypePtr PrimitiveType::VoidType = std::make_shared<PrimitiveType>(LoxTypeEnum::Void);
 TypePtr PrimitiveType::AnyType  = std::make_shared<PrimitiveType>(LoxTypeEnum::Any);
 TypePtr PrimitiveType::StringType = std::make_shared<PrimitiveType>(LoxTypeEnum::String);
 TypePtr PrimitiveType::MismatchedType = std::make_shared<PrimitiveType>(LoxTypeEnum::Mismatched);

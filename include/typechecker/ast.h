@@ -17,6 +17,7 @@ class PrintStatement;
 class VarStatement;
 class ExpressionStatement;
 class FunStatement;
+class ReturnStatement;
 
 
 class LoxFunction;
@@ -58,6 +59,8 @@ public:
     void visit_var_statement(VarStatement *stmt);
 
     void visit_print_statement(PrintStatement *stmt);
+
+    void visit_return_statement(ReturnStatement *return_statement);
 
     // ----------------分割线------------------------
 
