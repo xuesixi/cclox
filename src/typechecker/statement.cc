@@ -145,9 +145,13 @@ StmtPtr StatementParser::parse_expression_statement() {
 }
 
 StmtPtr StatementParser::parse_return() {
-    auto stmt = std::make_unique<ReturnStatement>(expr_parser->parse_expression());
-    tokens->consume();
-    return stmt;
+    if (tokens->match(TokenType::SEMICOLON)) {
+        return std::make_unique<ReturnStatement>(nullptr, tokens->last_token().get_line());
+    } else {
+        auto stmt = std::make_unique<ReturnStatement>(expr_parser->parse_expression(), -1);
+        tokens->consume();
+        return stmt;
+    }
 }
 
 StmtPtr StatementParser::parse_if() {

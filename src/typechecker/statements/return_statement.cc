@@ -4,8 +4,12 @@
 
 #include "typechecker/statements/return_statement.h"
 #include "typechecker/ast.h"
+#include "typechecker/types/primitive_type.h"
 
 TypePtr ReturnStatement::resolve_return_type() {
+    if (value == nullptr) {
+        return PrimitiveType::UnspecifiedType;
+    }
     return cached_return_type;
 }
 

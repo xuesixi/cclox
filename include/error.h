@@ -83,15 +83,21 @@ declare_error(MismatchedTypeError, CompilerError);
 declare_error(ClassNotFoundError, CompilerError);
 declare_error(ClassMemberNotFoundError, CompilerError);
 
-/**
- * var、fun、class, method, field 出现在不合适的位置
- */
-declare_error(DefinitionPositionError, CompilerError);
 
 declare_error(InvalidAssignmentTargetError, CompilerError);
 declare_error(NoInitializationError, CompilerError);
 declare_error(VariableNotFoundError, CompilerError);
 declare_error(Uint16OperandOverflowError, CompilerError);
+
+/**
+ * 在 ast 的建立过程中出现的错误
+ */
+declare_error(StructureParsingError, runtime_error);
+
+/**
+ * var、fun、class, method, field 出现在不合适的位置
+ */
+declare_error(DefinitionPositionError, StructureParsingError);
 
 
 #undef declare_error

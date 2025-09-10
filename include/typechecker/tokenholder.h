@@ -19,6 +19,8 @@ public:
         while (scanner.has_more()) {
             tokens.push_back(scanner.scan_token());
         }
+        // 最后这个token 是EndOfFile
+        tokens.push_back(scanner.scan_token());
     }
 
     bool is_end() const {
@@ -60,7 +62,8 @@ public:
      */
     bool match(TokenType token_type) {
         if (next >= tokens.size()) {
-            return false;
+            // return false;
+            throw StructureParsingError(fmt::format("The source file is not terminated appropriately"));
         }
         if (tokens.at(next).type == token_type) {
             next++;

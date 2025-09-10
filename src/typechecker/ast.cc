@@ -32,7 +32,8 @@ std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
 
     try {
         statements = parser.parse_all();
-    } catch (CompilerError &error) {
+    } catch (StructureParsingError &error) {
+        std::cerr << error.what() << std::endl;
         return nullptr;
     }
 
@@ -47,7 +48,7 @@ std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
 
 void AstCompiler::visit_block_statement(BlockStatement *stmt) {
     const auto local_count = scope->step_into();
-    for (auto & each : stmt->body) {
+    for (auto &each: stmt->body) {
         visit_statement(each);
     }
     const auto clear_amount = scope->step_out(local_count);
@@ -216,6 +217,18 @@ void AstCompiler::visit_print_statement(PrintStatement *stmt) {
 }
 
 void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
+    if (return_statement->value == nullptr) {
+        // 无返回值
+        if (scope->function_->get_type()->return_type->type_enum == LoxTypeEnum::Void) {
+            current_chunk().write_opcode(Opcode::LoadNil, return_statement->line);
+            current_chunk().write_opcode(Opcode::Return, return_statement->line);
+        } else {
+            throw MismatchedTypeError(fmt::format("line {}: the function expects return type of '{}', but got '{}'",
+                                                  return_statement->line,
+                                                  scope->function_->get_type()->return_type->to_string(),
+                                                  "void"));
+        }
+    }
     const auto type = return_statement->value->resolve_type(scope);
     return_statement->cached_return_type = type;
     if (scope == nullptr) {
