@@ -49,14 +49,16 @@ public:
     std::vector<StmtPtr> parse_all() {
         std::vector<StmtPtr> statements;
         while (tokens->match(TokenType::END_OF_FILE) == false) {
-            statements.push_back(parse_statement());
+            statements.push_back(parse_statement(true));
         }
         return statements;
     }
 
-    StmtPtr parse_statement();
+    StmtPtr parse_statement(bool allow_declaration);
 
     StmtPtr parse_block();
+
+    StmtPtr parse_while();
 
     /**
      * 在 print 已经被消费，next 为表达式的时候调用

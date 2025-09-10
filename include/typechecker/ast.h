@@ -12,6 +12,7 @@
 
 #include "typechecker/statement.h"
 
+class WhileStatement;
 class IfStatement;
 class IsExpression;
 class ST_Scope;
@@ -78,6 +79,8 @@ public:
     void visit_return_statement(ReturnStatement *return_statement);
 
     void visit_if_statement(IfStatement *if_statement);
+
+    void visit_while_statement(WhileStatement *while_statement);
 
     // ----------------分割线------------------------
 

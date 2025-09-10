@@ -24,6 +24,7 @@
 #include "typechecker/statements/print_statement.h"
 #include "typechecker/statements/return_statement.h"
 #include "typechecker/statements/var_statement.h"
+#include "typechecker/statements/while_statement.h"
 #include "typechecker/types/function_type.h"
 #include "typechecker/types/union_type.h"
 
@@ -263,6 +264,21 @@ void AstCompiler::visit_if_statement(IfStatement *if_statement) {
     } else {
         patch_jump(to_else);
     }
+}
+
+void AstCompiler::visit_while_statement(WhileStatement *while_statement) {
+    const auto type = while_statement->condition->resolve_type(scope);
+    if (type->type_enum != LoxTypeEnum::Bool) {
+        throw MismatchedTypeError(fmt::format("line {}: the condition is expected to be of bool type, but got {}",
+            while_statement->condition->get_line(),
+            type->to_string()));
+    }
+    const auto condition = current_chunk().code_size();
+    visit_expression(while_statement->condition);
+    const auto to_end = emit_jump(Opcode::JumpIfPopFalse, -1);
+    visit_statement(while_statement->body);
+    loop_back(condition);
+    patch_jump(to_end);
 }
 
 void AstCompiler::visit_and_expr(AndExpression *expr) {
