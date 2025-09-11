@@ -10,7 +10,7 @@
 #include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"
 
-TypePtr PrimaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
+TypePtr PrimaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint) {
     this->line = value_token.get_line();
     switch (value_token.get_type()) {
         case TokenType::INTEGER:

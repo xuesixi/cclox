@@ -7,7 +7,7 @@
 #include "typechecker/ast.h"
 #include "typechecker/types/primitive_type.h"
 
-TypePtr AndExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
+TypePtr AndExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint) {
     const auto left_type = left->resolve_type(scope);
     const auto right_type = right->resolve_type(scope);
     this->line = left->get_line();

@@ -8,7 +8,7 @@
 #include "typechecker/types/primitive_type.h"
 
 
-TypePtr IsExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
+TypePtr IsExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint) {
     value->resolve_type(scope);
     line = value->get_line();
     return PrimitiveType::BoolType;

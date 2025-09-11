@@ -19,7 +19,7 @@ public:
     ExprPtr callee;
     std::vector<ExprPtr> arguments;
 
-    TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) override;
+    TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint = nullptr) override;
 
     void accept(AstCompiler &compiler) override;
 

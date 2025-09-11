@@ -7,7 +7,7 @@
 
 #include "typechecker/ast.h"
 
-TypePtr CallExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
+TypePtr CallExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint) {
     const auto type = callee->resolve_type(scope);
     this->line = callee->get_line();
     if (type->type_enum != LoxTypeEnum::Function) {

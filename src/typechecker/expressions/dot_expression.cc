@@ -8,7 +8,7 @@
 #include "typechecker/ast.h"
 #include "typechecker/types/class_type.h"
 
-TypePtr DotExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
+TypePtr DotExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint) {
     const auto target_type = target->resolve_type(scope);
     this->line = target->get_line();
     if (target_type->type_enum != LoxTypeEnum::Class) {

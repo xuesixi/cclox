@@ -40,7 +40,7 @@ public:
      * 该函数是幂等的。但是，只应该各种 visit_statement 内部调用。表达式的 visit 中不需要额外调用，否则会导致指数级别的时间复杂度。
      * @return 该表达式的返回值类型
      */
-    virtual TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) = 0;
+    virtual TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint = nullptr) = 0;
 
     virtual void accept(AstCompiler &compiler) = 0;
 

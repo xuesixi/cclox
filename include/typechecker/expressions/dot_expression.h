@@ -18,7 +18,7 @@ public:
     ExprPtr target;
     Token target_field;
 
-    TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope) override;
+    TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint = nullptr) override;
 
     void accept(AstCompiler &compiler) override;
 

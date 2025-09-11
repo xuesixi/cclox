@@ -7,7 +7,7 @@
 #include "typechecker/types/primitive_type.h"
 #include "typechecker/ast.h"
 
-TypePtr UnaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
+TypePtr UnaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint) {
     const auto operand_type = operand->resolve_type(scope);
     this->line = operand->get_line();
     if (op.get_type() == TokenType::BANG) {
