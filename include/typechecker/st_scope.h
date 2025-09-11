@@ -126,6 +126,11 @@ public:
      */
     std::optional<uint8_t> resolve_upvalue(const Token &token);
 
+    /**
+     * 调用resolve_upvalue进行捕获或者查询，如果捕获到了/查询到了，返回其类型，否则返回Unspecified
+     */
+    TypePtr resolve_upvalue_type(const Token &token);
+
 private:
     struct ST_Local {
 
@@ -148,14 +153,21 @@ private:
     /**
      * Compile Time Upvalue 编译时upvalue。其运行期对应的结构为Captured
      */
-    struct Upvalue {
+    struct ST_Upvalue {
+
+        ST_Upvalue(bool is_local, uint8_t index, const std::string &name, const TypePtr &type):
+        is_local(is_local), index(index), name(name), type(type) {
+
+        }
+
         bool is_local; // 被捕獲的值是來自於外層的 locals 還是 upvalues
         uint8_t index; // 根据 is_local，可以是在外层的locals中的索引，或者在外层的upvalues中的索引
         std::string name;
+        TypePtr type;
     };
 
     std::vector<ST_Local> locals;
-    std::vector<Upvalue> upvalues; // 本层级捕获的外层变量
+    std::vector<ST_Upvalue> upvalues; // 本层级捕获的外层变量
     int depth = 0; // 深度。包括函数层级和{}层级
     std::shared_ptr<LoxFunction> function_;
     std::shared_ptr<ST_Scope> outer_;

@@ -15,7 +15,7 @@ TypePtr CallExpression::resolve_type(std::shared_ptr<ST_Scope> &scope) {
     }
     const std::shared_ptr<FunctionType> callable = std::static_pointer_cast<FunctionType>(type);
     if (callable->parameters.size() != arguments.size()) {
-        throw MismatchedTypeError(fmt::format("line {}: the callable expects '{}' arguments, but got '{}'",
+        throw MismatchedTypeError(fmt::format("line {}: the callable expects {} arguments, but got {}",
                                               line,
                                               callable->parameters.size(), arguments.size()));
     }

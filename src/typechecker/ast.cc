@@ -250,7 +250,7 @@ void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
 void AstCompiler::visit_if_statement(IfStatement *if_statement) {
     const auto type = if_statement->condition->resolve_type(scope);
     if (type->type_enum != LoxTypeEnum::Bool) {
-        throw MismatchedTypeError(fmt::format("line {}: the condition must be bool, but got {}",
+        throw MismatchedTypeError(fmt::format("line {}: the condition must be bool, but got '{}'",
                                               if_statement->condition->line, type->to_string()));
     }
     visit_expression(if_statement->condition);
@@ -269,9 +269,9 @@ void AstCompiler::visit_if_statement(IfStatement *if_statement) {
 void AstCompiler::visit_while_statement(WhileStatement *while_statement) {
     const auto type = while_statement->condition->resolve_type(scope);
     if (type->type_enum != LoxTypeEnum::Bool) {
-        throw MismatchedTypeError(fmt::format("line {}: the condition is expected to be of bool type, but got {}",
-            while_statement->condition->get_line(),
-            type->to_string()));
+        throw MismatchedTypeError(fmt::format("line {}: the condition is expected to be of bool type, but got '{}'",
+                                              while_statement->condition->get_line(),
+                                              type->to_string()));
     }
     const auto condition = current_chunk().code_size();
     visit_expression(while_statement->condition);
@@ -305,6 +305,8 @@ void AstCompiler::visit_is_expr(IsExpression *expr) {
 void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {
     visit_expression(expr->right);
     const auto target_type = expr->left->get_expression_type();
+
+    // 值得注意的是，我们并没有进行 visit_expression(left)，而是分析 left 的结构，生成赋值代码
     if (target_type == Expression::ExpressionType::Primary) {
         const auto left = std::unique_ptr<PrimaryExpression>(static_cast<PrimaryExpression *>(expr->left.release()));
         if (left->value_token.get_type() != TokenType::IDENTIFIER) {
@@ -312,13 +314,19 @@ void AstCompiler::visit_assignment_expr(AssignmentExpression *expr) {
         }
         const Token &target_name = left->value_token;
         const auto local_found = scope->resolve_local(target_name);
-        if (local_found.has_value() == false) {
-            throw VariableNotFoundError(fmt::format("line {}: no such variable: '{}'",
-                                                    target_name.get_line(),
-                                                    target_name.get_lexeme()));
+        if (local_found.has_value()) {
+            emit_opcode(Opcode::SetLocal, left->get_line());
+            emit_operand_1(local_found.value(), left->get_line());
+            return;
         }
-        emit_opcode(Opcode::SetLocal, left->get_line());
-        emit_operand_1(local_found.value(), left->get_line());
+        const auto upvalue_found = scope->resolve_upvalue(target_name);
+        if (upvalue_found.has_value()) {
+            emit_opcode(Opcode::SetCaptured, left->get_line());
+            emit_operand_1(local_found.value(), left->get_line());
+            return;
+        }
+        throw VariableNotFoundError(fmt::format("line {}: no such variable: '{}'", target_name.get_line(),
+                                                target_name.get_lexeme()));
     } else {
         NOT_IMPLEMENTED();
     }
@@ -437,6 +445,12 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
             if (local_index.has_value()) {
                 current_chunk().write_opcode(Opcode::LoadLocal, line);
                 current_chunk().write_operand_1(local_index.value(), line);
+                break;
+            }
+            const auto upvalue_index = scope->resolve_upvalue(expr->value_token);
+            if (upvalue_index.has_value()) {
+                current_chunk().write_opcode(Opcode::LoadCaptured, line);
+                current_chunk().write_operand_1(upvalue_index.value(), line);
                 break;
             }
             auto [type, global_index] = name_resolver.resolve_name(lexeme);

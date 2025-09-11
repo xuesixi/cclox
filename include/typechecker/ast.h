@@ -40,7 +40,7 @@ class UnaryExpression;
 class AstCompiler {
 public:
     /**
-     * 编译给定的源代码
+     * 编译给定的源代码, 该函数内部会捕获编译期间的所有错误。
      * @param source 源代码
      * @return 如果一切正常，返回 main 函数。如果出现编译错误，返回空指针
      */

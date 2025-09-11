@@ -89,7 +89,8 @@ std::optional<uint8_t> ST_Scope::resolve_upvalue(const Token &token) {
     // 尝试寻找外层的本地变量
     auto found = outer_->resolve_local(token);
     if (found.has_value()) {
-        Upvalue new_upvalue{true, found.value(), token.get_lexeme()};
+        const ST_Local &captured_local = outer_->locals.at(found.value());
+        ST_Upvalue new_upvalue{true, found.value(), token.get_lexeme(), captured_local.type};
         upvalues.push_back(std::move(new_upvalue));
         return upvalues.size() - 1;
     }
@@ -98,12 +99,20 @@ std::optional<uint8_t> ST_Scope::resolve_upvalue(const Token &token) {
 
     found = outer_->resolve_upvalue(token);
     if (found.has_value()) {
-        Upvalue new_upvalue{false, found.value(), token.get_lexeme()};
+        ST_Upvalue new_upvalue{false, found.value(), token.get_lexeme(), outer_->upvalues.at(found.value()).type};
         upvalues.push_back(std::move(new_upvalue));
         return upvalues.size() - 1;
     }
 
     // 如果没有找到，说明没有
     return std::nullopt;
+}
+
+TypePtr ST_Scope::resolve_upvalue_type(const Token &token) {
+    auto found = resolve_upvalue(token);
+    if (found.has_value()) {
+        return upvalues.at(found.value()).type;
+    }
+    return PrimitiveType::UnspecifiedType;
 }
 
