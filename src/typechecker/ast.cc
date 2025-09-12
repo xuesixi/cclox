@@ -138,6 +138,9 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
     Runtime::record_allocation(closure);
 
     if (fun->fun_name.get_lexeme() == "main") {
+        if (fun->parameters.size() > 0) {
+            throw MismatchedTypeError(fmt::format("line {}: the main function should have 0 parameters, but got {}", fun->fun_name.get_line(), fun->parameters.size()));
+        }
         if (main == nullptr) {
             main = closure;
         } else {
