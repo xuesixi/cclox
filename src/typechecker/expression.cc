@@ -10,6 +10,7 @@
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/call_expression.h"
 #include "typechecker/expressions/dot_expression.h"
+#include "typechecker/expressions/fmt_string_expression.h"
 #include "typechecker/expressions/is_expression.h"
 #include "typechecker/expressions/lambda_expression.h"
 #include "typechecker/expressions/or_expression.h"
@@ -44,6 +45,10 @@ ExprPtr ExpressionParser::parse_primary() {
         tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' to balance the parenthesis");
         return expr;
     }
+    if (tokens->match(TokenType::FMT_STRING)) {
+        // return std::make_unique<FmtStringExpression>(tokens->last_token());
+        return parse_fmt_string(tokens->last_token());
+    }
     if (tokens->match_one_of({
         TokenType::INTEGER, TokenType::FLOAT, TokenType::Nil, TokenType::True, TokenType::False, TokenType::STRING,
         TokenType::FMT_STRING, TokenType::IDENTIFIER, TokenType::AT
@@ -61,6 +66,30 @@ ExprPtr ExpressionParser::parse_primary() {
     auto &next = tokens->peek_next();
     throw tokens->error_at(0, fmt::format("expect a token here, but got: '{}'",
                                           next.get_lexeme()));
+}
+
+ExprPtr ExpressionParser::parse_fmt_string(const Token &token) {
+    const auto s = token.get_lexeme().substr(1, token.get_lexeme().size() - 2);
+    auto temp = Scanner::split(s);
+    if (temp.has_value() == false) {
+        throw ScannerError(fmt::format("line {}: the format string is not balanced", token.get_line()));
+    }
+    auto ranges = std::move(temp.value());
+    const std::string &lexeme = token.get_lexeme();
+    int line = token.get_line();
+    std::vector<ExprPtr> expressions;
+
+    for (auto [caught, left, right] : ranges) {
+        if (!caught) {
+            Token str_token{"\"" + s.substr(left, right - left + 1) + "\"", TokenType::STRING, line};
+            expressions.push_back(std::make_unique<PrimaryExpression>(str_token));
+        } else {
+            std::string inner_expr = s.substr(left + 1, right - left + 1 - 2);
+            ExpressionParser sub_parser(std::move(inner_expr), line);
+            expressions.push_back(sub_parser.parse_expression());
+        }
+    }
+    return std::make_unique<FmtStringExpression>(std::move(expressions));
 }
 
 ExprPtr ExpressionParser::parse_call() {

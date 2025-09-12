@@ -15,6 +15,7 @@
 #include "typechecker/expressions/as_expression.h"
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/call_expression.h"
+#include "typechecker/expressions/fmt_string_expression.h"
 #include "typechecker/expressions/is_expression.h"
 #include "typechecker/expressions/lambda_expression.h"
 #include "typechecker/expressions/or_expression.h"
@@ -293,6 +294,16 @@ void AstCompiler::visit_while_statement(WhileStatement *while_statement) {
     visit_statement(while_statement->body);
     loop_back(condition);
     patch_jump(to_end);
+}
+
+void AstCompiler::visit_fmt_string_expr(FmtStringExpression *expr) {
+    for (auto & each : expr->expressions) {
+        visit_expression(each);
+    }
+    if (expr->expressions.size() > 1) {
+        emit_opcode(Opcode::StringConcat, expr->get_line());
+        emit_operand_1(expr->expressions.size(), expr->get_line());
+    }
 }
 
 void AstCompiler::visit_and_expr(AndExpression *expr) {

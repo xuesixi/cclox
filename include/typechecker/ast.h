@@ -12,6 +12,7 @@
 
 #include "typechecker/statement.h"
 
+class FmtStringExpression;
 class LambdaExpression;
 class WhileStatement;
 class IfStatement;
@@ -79,6 +80,8 @@ public:
     void visit_while_statement(WhileStatement *while_statement);
 
     // ----------------分割线------------------------
+
+    void visit_fmt_string_expr(FmtStringExpression *expr);
 
     void visit_and_expr(AndExpression *expr);
 

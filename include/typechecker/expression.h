@@ -29,7 +29,8 @@ public:
         Lambda,
         Or,
         Primary,
-        Unary
+        Unary,
+        FmtString,
     };
 
     virtual ~Expression() {
@@ -76,6 +77,11 @@ public:
         type_parser = std::make_unique<TypeParser>(th);
     }
 
+    explicit ExpressionParser(std::string && src, int line) {
+        tokens = std::make_shared<TokenHolder>(std::move(src), line);
+        type_parser = std::make_unique<TypeParser>(tokens);
+    }
+
     ExprPtr parse_expression();
 
 private:
@@ -84,6 +90,8 @@ private:
     std::unique_ptr<TypeParser> type_parser;
 
     ExprPtr parse_primary();
+
+    ExprPtr parse_fmt_string(const Token &token);
 
     /**
      * 包括函数调用和成员访问

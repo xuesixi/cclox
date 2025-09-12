@@ -14,8 +14,8 @@
  */
 class TokenHolder {
 public:
-    explicit TokenHolder(std::string &&src) {
-        Scanner scanner{std::move(src)};
+    explicit TokenHolder(std::string &&src, int line = 1) {
+        Scanner scanner{std::move(src), line};
         while (scanner.has_more()) {
             tokens.push_back(scanner.scan_token());
         }

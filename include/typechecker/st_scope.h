@@ -16,7 +16,6 @@ using TypePtr = std::shared_ptr<LoxType>;
 
 class ST_ClassScope {
 public:
-    friend class Compiler;
     friend class AstCompiler;
 
     void add_field(const std::string &name) {
