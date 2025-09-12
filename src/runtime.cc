@@ -7,6 +7,7 @@
 #include <latch>
 
 #include "cclox_util.h"
+#include "typechecker/st_runtime.h"
 #include "common.h"
 #include "fmt/core.h"
 #include "vm.h"
@@ -179,6 +180,9 @@ namespace Runtime {
         std::queue<LoxReference> queue;
         for (auto & pair : globals) {
             LoxValue::mark_value(pair.second, queue);
+        }
+        for (auto & global : st_runtime.get_globals()) {
+            LoxValue::mark_value(global, queue);
         }
         for (const auto vm : vm_list) {
             for (auto & value : vm->stack()) {

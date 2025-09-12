@@ -41,11 +41,26 @@ using StmtPtr = std::unique_ptr<Statement>;
 class StatementParser {
 public:
 
-    explicit StatementParser(std::string && src): depth( ) {
+    StatementParser() = default;
+
+    explicit StatementParser(std::string && src) {
         tokens = std::make_shared<TokenHolder>(std::move(src));
         expr_parser = std::make_unique<ExpressionParser>(tokens);
     }
 
+    /**
+     * 用给定的源代码建立token列表
+     * @param src 源代码
+     * @throws ScannerError 如果出现了扫描错误
+     */
+    void scan_all(std::string &&src) {
+        tokens = std::make_shared<TokenHolder>(std::move(src));
+        expr_parser = std::make_unique<ExpressionParser>(tokens);
+    }
+
+    /**
+     * 解析tokenholder中的所有token，返回语句列表，也就是所谓的ast
+     */
     std::vector<StmtPtr> parse_all() {
         std::vector<StmtPtr> statements;
         while (tokens->match(TokenType::END_OF_FILE) == false) {
@@ -96,7 +111,7 @@ private:
 
     std::unique_ptr<ExpressionParser> expr_parser;
     std::shared_ptr<TokenHolder> tokens;
-    int depth; // 作用域深度，用于判断当前是否处于全局作用域
+    int depth = 0; // 作用域深度，用于判断当前是否处于全局作用域
     bool in_class = false; // 是否处于 class 内部
 };
 

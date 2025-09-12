@@ -40,6 +40,10 @@ public:
         globals.at(index) = value;
     }
 
+    std::vector<Value> & get_globals() {
+        return globals;
+    }
+
 private:
     std::vector<Value> globals;
 };

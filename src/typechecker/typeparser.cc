@@ -21,12 +21,7 @@ bool LoxType::int_and_float(const TypePtr &a, const TypePtr &b) {
 }
 
 TypePtr TypeParser::parse_type() {
-    try {
-        return parse_function();
-    } catch (CompilerError &error) {
-        std::cerr << "error: " << error.what();
-        std::abort();
-    }
+    return parse_function();
 }
 
 TypePtr TypeParser::parse_function() {

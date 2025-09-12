@@ -35,7 +35,7 @@ public:\
 }
 
 /**
- * 在scan_token中可能会被抛出。只在interpret()中被捕获。
+ * 在scan_token中可能会被抛出。
  */
 declare_error(ScannerError, runtime_error);
 

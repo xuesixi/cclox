@@ -30,7 +30,13 @@
 #include "typechecker/types/union_type.h"
 
 std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
-    StatementParser parser(std::move(source));
+    StatementParser parser;
+    try {
+        parser.scan_all(std::move(source));
+    } catch (ScannerError &error) {
+        std::cerr << error.what() << std::endl;
+        return nullptr;
+    }
 
     try {
         statements = parser.parse_all();
@@ -40,7 +46,12 @@ std::shared_ptr<LoxClosure> AstCompiler::compile(std::string &&source) {
     }
 
     for (auto &each: statements) {
-        visit_statement(each);
+        try {
+            visit_statement(each);
+        } catch (CompilerError &error) {
+            std::cerr << error.what() << std::endl;
+            has_error = true;
+        }
     }
     if (has_error) {
         return nullptr;
@@ -100,10 +111,12 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
 
     if (fun_return_type->type_enum != LoxTypeEnum::Void && accepted_return == false) {
         // 如果有标注返回值，但函数体内没有返回，则抛出异常
-        throw MismatchedTypeError(fmt::format("for function {}, not all control flows return the expected type: '{}'",
-                                              fun->fun_name.get_lexeme(), fun_return_type->to_string()));
+        throw MismatchedTypeError(fmt::format(
+            "line {}: for function '{}', not all control flows return the expected type: '{}'",
+            fun->fun_name.get_line(),
+            fun->fun_name.get_lexeme(), fun_return_type->to_string()));
     } else {
-        // 如果没有标注返回值，那么返回nil（但这里的nil只是占位符，让 return 指令实现起来更简单），typechecker 会阻止真的试图使用它的人
+        // 如果没有标注返回值，那么返回nil（但这里的nil只是占位符，让 return 指令实现起来更简单，typechecker 会阻止真的试图使用它的人）
         current_chunk().write_opcode(Opcode::LoadNil, -1);
         current_chunk().write_opcode(Opcode::Return, -1);
     }
@@ -118,7 +131,7 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
 
     auto [type, index] = name_resolver.resolve_name(fun->fun_name.get_lexeme());
 
-    auto closure = std::make_shared<LoxClosure>(scope->function_);
+    auto closure = Runtime::allocate_as<LoxClosure>(scope->function());
 
     st_runtime.define_global(index, closure);
     Runtime::record_allocation(closure);
@@ -503,7 +516,6 @@ void AstCompiler::visit_lambda_expr(LambdaExpression *expr) {
         emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local), -1);
         emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index), -1);
     }
-
 }
 
 void AstCompiler::visit_unary_expr(UnaryExpression *expr) {

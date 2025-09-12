@@ -48,15 +48,10 @@ public:
     std::shared_ptr<LoxClosure> compile(std::string &&source);
 
     /**
-     * 编译指定的语句。该函数内部会捕获编译错误，并设置 has_error
+     * 编译指定的语句。
      */
     void visit_statement(const StmtPtr &stmt) {
-        try {
-            stmt.get()->accept(*this);
-        } catch (CompilerError &error) {
-            has_error = true;
-            std::cerr << error.what() << std::endl;
-        }
+        stmt.get()->accept(*this);
     }
 
     /**
