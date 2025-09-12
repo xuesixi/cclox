@@ -16,6 +16,7 @@
 #include "typechecker/expressions/binary_expression.h"
 #include "typechecker/expressions/call_expression.h"
 #include "typechecker/expressions/is_expression.h"
+#include "typechecker/expressions/lambda_expression.h"
 #include "typechecker/expressions/or_expression.h"
 #include "typechecker/expressions/primary_expression.h"
 #include "typechecker/statements/expression_statement.h"
@@ -90,7 +91,7 @@ void AstCompiler::visit_fun_statement(FunStatement *fun) {
         if (fun_return_type->type_enum != LoxTypeEnum::Void) {
             const auto &stmt_type = stmt->resolve_return_type();
             if (stmt_type->type_enum != LoxTypeEnum::Unspecified) {
-                // 有返回值！不检察返回值类型是否匹配，因为return语句本身会检察
+                // 有返回值！不检查返回值类型是否匹配，因为return语句本身会检查
                 accepted_return = true;
                 break;
             }
@@ -152,7 +153,7 @@ void AstCompiler::visit_var_statement(VarStatement *stmt) {
 
         if (stmt->initializer != nullptr) {
             // 初始值不为空, 判断指定的类型是否和初始值的实际类型匹配
-            const auto type = stmt->initializer->resolve_type(scope);
+            const auto type = stmt->initializer->resolve_type(scope, stmt->type);
             if (stmt->type->accept(type)) {
                 visit_expression(stmt->initializer);
             } else {
@@ -230,7 +231,7 @@ void AstCompiler::visit_return_statement(ReturnStatement *return_statement) {
                                                   "void"));
         }
     }
-    const auto type = return_statement->value->resolve_type(scope);
+    const auto type = return_statement->value->resolve_type(scope, scope->function()->get_type()->get_return_type());
     return_statement->cached_return_type = type;
     if (scope == nullptr) {
         throw DefinitionPositionError(fmt::format("line {}: can only return inside a function",
@@ -463,9 +464,46 @@ void AstCompiler::visit_primary_expr(PrimaryExpression *expr) {
                                                     lexeme));
             break;
         }
+        case TokenType::AT: {
+            const auto local_index = scope->resolve_local(expr->value_token);
+            // 只在本地寻找
+            if (local_index.has_value()) {
+                current_chunk().write_opcode(Opcode::LoadLocal, line);
+                current_chunk().write_operand_1(local_index.value(), line);
+                break;
+            }
+            throw VariableNotFoundError(fmt::format("line {}: no such variable: {}", expr->value_token.get_line(),
+                                                    lexeme));
+        }
         default:
             ASSERT_UNREACHABLE();
     }
+}
+
+void AstCompiler::visit_lambda_expr(LambdaExpression *expr) {
+    // var f: (int, int) -> bool = $(@1 > @2)
+
+    scope = expr->scope; // 进入lambda内部
+
+    visit_expression(expr->expr);
+    current_chunk().write_opcode(Opcode::Return, expr->get_line());
+    auto fun = scope->function();
+    Runtime::record_allocation(fun);
+    const auto fun_scope = scope; // 保存lambda内部scope
+
+    scope = scope->outer_; // 回到外层函数
+
+    // 将lambda置于外层的栈顶，然后用其制作闭包
+    emit_constant(fun, expr->get_line());
+
+    emit_opcode(Opcode::MakeClosure, -1);
+    emit_operand_1(fun_scope->upvalues.size(), -1);
+
+    for (uint8_t i = 0; i < fun_scope->upvalues.size(); i++) {
+        emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).is_local), -1);
+        emit_operand_1(static_cast<uint8_t>(fun_scope->upvalues.at(i).index), -1);
+    }
+
 }
 
 void AstCompiler::visit_unary_expr(UnaryExpression *expr) {

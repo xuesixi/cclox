@@ -11,6 +11,7 @@
 #include "typechecker/expressions/call_expression.h"
 #include "typechecker/expressions/dot_expression.h"
 #include "typechecker/expressions/is_expression.h"
+#include "typechecker/expressions/lambda_expression.h"
 #include "typechecker/expressions/or_expression.h"
 #include "typechecker/expressions/primary_expression.h"
 #include "typechecker/expressions/unary_expression.h"
@@ -44,14 +45,22 @@ ExprPtr ExpressionParser::parse_primary() {
         return expr;
     }
     if (tokens->match_one_of({
-        TokenType::INTEGER, TokenType::FLOAT, TokenType::Nil, TokenType::True, TokenType::False, TokenType::STRING, TokenType::FMT_STRING, TokenType::IDENTIFIER
+        TokenType::INTEGER, TokenType::FLOAT, TokenType::Nil, TokenType::True, TokenType::False, TokenType::STRING,
+        TokenType::FMT_STRING, TokenType::IDENTIFIER, TokenType::AT
     })) {
         return std::make_unique<PrimaryExpression>(tokens->last_token());
-    } else {
-        auto &next = tokens->peek_next();
-        throw tokens->error_at(0, fmt::format("expect a token here, but got: '{}'",
-            next.get_lexeme()));
     }
+    if (tokens->match(TokenType::DOLLAR)) {
+        // $(@1 + @2)
+        tokens->consume(TokenType::LEFT_PAREN, "expect '(' after '$' to start a lambda expression");
+        auto expr = parse_expression();
+        tokens->consume(TokenType::RIGHT_PAREN, "expect a ')' to end the lambda expression");
+        return std::make_unique<LambdaExpression>(std::move(expr));
+    }
+
+    auto &next = tokens->peek_next();
+    throw tokens->error_at(0, fmt::format("expect a token here, but got: '{}'",
+                                          next.get_lexeme()));
 }
 
 ExprPtr ExpressionParser::parse_call() {

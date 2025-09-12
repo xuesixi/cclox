@@ -12,6 +12,7 @@
 
 #include "typechecker/statement.h"
 
+class LambdaExpression;
 class WhileStatement;
 class IfStatement;
 class IsExpression;
@@ -104,6 +105,8 @@ public:
     void visit_or_expr(OrExpression *expr);
 
     void visit_primary_expr(PrimaryExpression *expr);
+
+    void visit_lambda_expr(LambdaExpression *expr);
 
     void visit_unary_expr(UnaryExpression *expr);
 

@@ -29,7 +29,7 @@ TypePtr PrimaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePt
             /**
              * 有多种可能：
              * - 本地变量
-             * - todo: 外部变量
+             * - 外部变量
              * - 全局标识符
              */
             auto type = scope->resolve_local_type(value_token);
@@ -45,6 +45,14 @@ TypePtr PrimaryExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePt
                 throw VariableNotFoundError(fmt::format("line {}: the variable: '{}' is not defined", line, value_token.get_lexeme()));
             }
             return type;
+        }
+        case TokenType::AT: {
+            // 只查询本地变量
+            auto type = scope->resolve_local_type(value_token);
+            if (type->type_enum != LoxTypeEnum::Unspecified) {
+                return type;
+            }
+            throw VariableNotFoundError(fmt::format("line {}: the variable: '{}' is not defined", line, value_token.get_lexeme()));
         }
         default:
             ASSERT_UNREACHABLE();

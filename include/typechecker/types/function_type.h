@@ -22,6 +22,14 @@ public:
      */
     bool accept(TypePtr other) const override;
 
+    const std::vector<TypePtr> &get_params() const {
+        return parameters;
+    }
+
+    const TypePtr &get_return_type() const {
+        return return_type;
+    }
+
 private:
     std::string to_no_parenthesis_string() override;
 

@@ -20,6 +20,7 @@ public:
 
     Token value_token;
 
+    // todo: @
     TypePtr resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr hint = nullptr) override;
 
     void accept(AstCompiler &compiler) override;

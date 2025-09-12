@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <fmt/core.h>
 
+#include "cclox_util.h"
 #include "error.h"
 
 static std::unordered_map<std::string, TokenType> keyword_map{
@@ -51,6 +52,19 @@ TokenType Scanner::get_identifier_type() {
         return found->second;
     } else {
         return TokenType::IDENTIFIER;
+    }
+}
+
+std::optional<uint8_t> Scanner::get_at_num(const Token &token) {
+    DEBUG_ASSERT(token.type == TokenType::AT, "the token is not of at type");
+    if (token.get_lexeme().size() == 1) {
+        return 1;
+    }
+    const int num = std::stoi(token.get_lexeme().substr(1));
+    if (num > UINT8_MAX) {
+        return std::nullopt;
+    } else {
+        return num;
     }
 }
 
@@ -105,6 +119,13 @@ Token Scanner::scan_identifier() {
     return make_token(get_identifier_type());
 }
 
+Token Scanner::scan_at() {
+    while (!is_at_end() && isdigit(peek_next())) {
+        advance();
+    }
+    return make_token(TokenType::AT);
+}
+
 Token Scanner::scan_token() {
     skip_whitespace();
     start_index = next_index;
@@ -123,6 +144,7 @@ Token Scanner::scan_token() {
 
     switch (c) {
         case '(': return make_token(TokenType::LEFT_PAREN);
+        case '@': return scan_at();
         case ')': return make_token(TokenType::RIGHT_PAREN);
         case '{': return make_token(TokenType::LEFT_BRACE);
         case '}': return make_token(TokenType::RIGHT_BRACE);
@@ -130,6 +152,7 @@ Token Scanner::scan_token() {
         case ',': return make_token(TokenType::COMMA);
         case '.': return make_token(TokenType::DOT);
         case ':': return make_token(TokenType::COLON);
+        case '$': return make_token(TokenType::DOLLAR);
         case '|': return make_token(TokenType::BAR);
         case '&': return make_token(TokenType::AMPERSAND);
         case '[': return make_token(TokenType::LEFT_BRACKET);

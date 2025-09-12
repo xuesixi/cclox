@@ -131,6 +131,10 @@ public:
      */
     TypePtr resolve_upvalue_type(const Token &token);
 
+    [[nodiscard]] const std::shared_ptr<LoxFunction> & function() const {
+        return function_;
+    }
+
 private:
     struct ST_Local {
 
@@ -170,6 +174,8 @@ private:
     std::vector<ST_Upvalue> upvalues; // 本层级捕获的外层变量
     int depth = 0; // 深度。包括函数层级和{}层级
     std::shared_ptr<LoxFunction> function_;
+
+private:
     std::shared_ptr<ST_Scope> outer_;
 };
 

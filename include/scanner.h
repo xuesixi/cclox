@@ -12,7 +12,7 @@ enum class TokenType {
     LEFT_PAREN, RIGHT_PAREN,
     LEFT_BRACE, RIGHT_BRACE,
     COMMA, DOT, MINUS, PLUS,
-    SEMICOLON, SLASH, STAR, STAR_STAR, COLON,
+    SEMICOLON, SLASH, STAR, STAR_STAR, COLON, AT, DOLLAR,
     // One or two character tokens.
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
@@ -200,9 +200,16 @@ private:
     Token scan_identifier();
 
     /**
+     * 在'@'被消费后，调用该函数
+     */
+    Token scan_at();
+
+    /**
      * 判断当前start_index和next_index范围内的标识符的类型（可能是普通标识符，也可能是某个具体的关键字）
      * */
     TokenType get_identifier_type();
+
+    static std::optional<uint8_t> get_at_num(const Token &token);
 
     const std::string text;
     size_t start_index; // 当前token的起始位置。当读取一个新的token时，会被赋值为next_index

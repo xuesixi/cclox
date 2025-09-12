@@ -26,6 +26,7 @@ public:
         Call,
         Dot,
         Is,
+        Lambda,
         Or,
         Primary,
         Unary

@@ -20,7 +20,7 @@ TypePtr CallExpression::resolve_type(std::shared_ptr<ST_Scope> &scope, TypePtr h
                                               callable->parameters.size(), arguments.size()));
     }
     for (size_t i = 0; i < arguments.size(); i++) {
-        const auto arg_type = arguments.at(i)->resolve_type(scope);
+        const auto arg_type = arguments.at(i)->resolve_type(scope, callable->parameters.at(i));
         if (callable->parameters.at(i)->accept(arg_type) == false) {
             throw MismatchedTypeError(fmt::format("line {}: the {}th argument is expected to be '{}', but got '{}'",
                                                   arguments.at(i)->get_line(),

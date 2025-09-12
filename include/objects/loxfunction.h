@@ -42,7 +42,7 @@ public:
 
     void set_type(const std::shared_ptr<FunctionType> &type);
 
-    std::shared_ptr<FunctionType> get_type() const {
+    const std::shared_ptr<FunctionType> & get_type() const {
         return this->type;
     }
 

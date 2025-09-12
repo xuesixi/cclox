@@ -22,6 +22,8 @@ add_executable(stlox
         ../objects/loxfunction.cc
         ../objects/loxclosure.cc
         ../objects/loxstring.cc
+        expressions/lambda_expression.cc
+        ../../include/typechecker/expressions/lambda_expression.h
 )
 
 target_include_directories(stlox PRIVATE ${incl})
